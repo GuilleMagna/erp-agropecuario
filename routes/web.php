@@ -17,6 +17,10 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('can:admin.usuarios.ver')
         ->name('admin.usuarios.index');
 
+    Route::get('/admin/establecimientos', fn () => view('admin.gestion-establecimientos'))
+        ->middleware('can:admin.establecimientos.gestionar')
+        ->name('admin.establecimientos.index');
+
 });
 
 require __DIR__.'/auth.php';

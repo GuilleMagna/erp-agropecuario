@@ -124,6 +124,14 @@
             </a>
         </li>
         @endcan
+        @can('admin.establecimientos.gestionar')
+        <li class="nav-item">
+            <a href="{{ route('admin.establecimientos.index') }}"
+               class="nav-link {{ request()->routeIs('admin.establecimientos.*') ? 'active' : '' }}">
+                <i class="bi bi-geo-alt me-2"></i> Establecimientos
+            </a>
+        </li>
+        @endcan
 
         <li class="nav-item mt-3">
             <form method="POST" action="{{ route('logout') }}">
