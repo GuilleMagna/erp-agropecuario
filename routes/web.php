@@ -13,9 +13,9 @@ Route::middleware(['auth'])->group(function () {
     })->name('dashboard');
 
     // Módulo Admin
-    Route::get('/admin/usuarios', function () {
-        return view('livewire.admin.gestion-usuarios');
-    })->name('admin.usuarios.index');
+    Route::get('/admin/usuarios', fn () => view('admin.gestion-usuarios'))
+        ->middleware('can:admin.usuarios.ver')
+        ->name('admin.usuarios.index');
 
 });
 
