@@ -106,6 +106,8 @@ class RolesSeeder extends Seeder
             'finanzas.transacciones.ver',
             'finanzas.transacciones.crear',
             'finanzas.transacciones.editar',
+            'finanzas.periodos.gestionar',
+            'finanzas.reintegros.gestionar',
 
             // --- RRHH ---
             'rrhh.personal.ver',
@@ -158,6 +160,7 @@ class RolesSeeder extends Seeder
             'ventas.granos.ver', 'ventas.granos.aprobar',
             'ventas.hacienda.ver', 'ventas.hacienda.aprobar',
             'finanzas.cuentas.ver', 'finanzas.transacciones.ver',
+            'finanzas.periodos.gestionar', 'finanzas.reintegros.gestionar',
             'rrhh.personal.ver', 'rrhh.jornales.ver',
             'reportes.productivos.ver', 'reportes.economicos.ver',
             'reportes.fiscales.ver', 'reportes.exportar',
@@ -200,6 +203,7 @@ class RolesSeeder extends Seeder
             'insumos.catalogo.ver', 'insumos.movimientos.ver', 'insumos.movimientos.registrar',
             'finanzas.cuentas.ver', 'finanzas.cuentas.gestionar',
             'finanzas.transacciones.ver', 'finanzas.transacciones.crear', 'finanzas.transacciones.editar',
+            'finanzas.periodos.gestionar', 'finanzas.reintegros.gestionar',
             'rrhh.personal.ver', 'rrhh.personal.gestionar',
             'rrhh.jornales.ver', 'rrhh.jornales.registrar',
             'reportes.economicos.ver', 'reportes.fiscales.ver', 'reportes.exportar',

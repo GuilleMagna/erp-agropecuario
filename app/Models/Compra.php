@@ -21,6 +21,7 @@ class Compra extends Model
         'fecha', 'fecha_vencimiento', 'estado',
         'subtotal', 'iva_porc', 'iva_importe', 'total',
         'stock_registrado', 'observaciones',
+        'actividad', 'id_lote', 'id_campana',
     ];
 
     protected $casts = [
@@ -50,10 +51,17 @@ class Compra extends Model
         'cancelada'  => 'Cancelada',
     ];
 
+    const ACTIVIDADES = [
+        'agricultura' => 'Agricultura',
+        'ganaderia'   => 'Ganadería',
+        'feedlot'     => 'Feedlot',
+        'general'     => 'General',
+    ];
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['tipo_comprobante', 'numero_comprobante', 'fecha', 'estado', 'subtotal', 'iva_importe', 'total', 'id_proveedor'])
+            ->logOnly(['tipo_comprobante', 'numero_comprobante', 'fecha', 'estado', 'subtotal', 'iva_importe', 'total', 'id_proveedor', 'actividad'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -66,6 +74,11 @@ class Compra extends Model
     public function getEstadoLabelAttribute(): string
     {
         return self::ESTADOS[$this->estado] ?? $this->estado;
+    }
+
+    public function getActividadLabelAttribute(): string
+    {
+        return self::ACTIVIDADES[$this->actividad] ?? ($this->actividad ?? '—');
     }
 
     public function proveedor()
@@ -81,5 +94,15 @@ class Compra extends Model
     public function items()
     {
         return $this->hasMany(CompraItem::class, 'id_compra');
+    }
+
+    public function lote()
+    {
+        return $this->belongsTo(Lote::class, 'id_lote');
+    }
+
+    public function campana()
+    {
+        return $this->belongsTo(Campana::class, 'id_campana');
     }
 }

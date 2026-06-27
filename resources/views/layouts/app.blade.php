@@ -286,7 +286,7 @@
         @endcanany
 
         {{-- ── FINANZAS ─────────────────────────────────────── --}}
-        @canany(['finanzas.cuentas.ver','finanzas.transacciones.ver'])
+        @canany(['finanzas.cuentas.ver','finanzas.transacciones.ver','finanzas.periodos.gestionar','finanzas.reintegros.gestionar'])
         <li>
             <button class="sec-toggle" type="button"
                     data-bs-toggle="collapse" data-bs-target="#secFinanzas"
@@ -305,6 +305,18 @@
                 <a href="{{ route('finanzas.transacciones.index') }}"
                    class="nav-link {{ request()->routeIs('finanzas.transacciones.*') ? 'active' : '' }}">
                     <i class="bi bi-arrow-left-right me-2"></i> Transacciones
+                </a>
+                @endcan
+                @can('finanzas.periodos.gestionar')
+                <a href="{{ route('finanzas.periodos.index') }}"
+                   class="nav-link {{ request()->routeIs('finanzas.periodos.*') ? 'active' : '' }}">
+                    <i class="bi bi-calendar-check me-2"></i> Períodos Fiscales
+                </a>
+                @endcan
+                @can('finanzas.reintegros.gestionar')
+                <a href="{{ route('finanzas.reintegros.index') }}"
+                   class="nav-link {{ request()->routeIs('finanzas.reintegros.*') ? 'active' : '' }}">
+                    <i class="bi bi-arrow-return-left me-2"></i> Reintegros IVA
                 </a>
                 @endcan
             </div>

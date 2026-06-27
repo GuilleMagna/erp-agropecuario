@@ -155,6 +155,15 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('can:feedlot.consumos.registrar')
         ->name('feedlot.consumos.index');
 
+    // Períodos Fiscales y Reintegros IVA
+    Route::get('/finanzas/periodos-fiscales', fn () => view('finanzas.gestion-periodos-fiscales'))
+        ->middleware('can:finanzas.periodos.gestionar')
+        ->name('finanzas.periodos.index');
+
+    Route::get('/finanzas/reintegros-iva', fn () => view('finanzas.gestion-reintegros-iva'))
+        ->middleware('can:finanzas.reintegros.gestionar')
+        ->name('finanzas.reintegros.index');
+
 });
 
 require __DIR__.'/auth.php';

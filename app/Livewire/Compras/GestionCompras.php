@@ -2,10 +2,12 @@
 
 namespace App\Livewire\Compras;
 
+use App\Models\Campana;
 use App\Models\Compra;
 use App\Models\CompraItem;
 use App\Models\Establecimiento;
 use App\Models\Insumo;
+use App\Models\Lote;
 use App\Models\MovimientoInsumo;
 use App\Models\Proveedor;
 use Illuminate\Support\Facades\Gate;
@@ -16,13 +18,16 @@ class GestionCompras extends Component
 {
     use WithPagination;
 
+    // Filtros
     public string $busqueda              = '';
     public string $filtroProveedor       = '';
     public string $filtroEstado          = '';
+    public string $filtroActividad       = '';
     public string $filtroEstablecimiento = '';
     public string $filtroFechaDesde      = '';
     public string $filtroFechaHasta      = '';
 
+    // Modal individual
     public bool    $modalAbierto     = false;
     public bool    $modoEdicion      = false;
     public ?string $compraEditandoId = null;
@@ -38,13 +43,28 @@ class GestionCompras extends Component
     public string $iva_porc           = '';
     public string $observaciones      = '';
 
-    // Totales (computed)
+    // Imputación
+    public string $actividad  = 'general';
+    public string $id_lote    = '';
+    public string $id_campana = '';
+
+    // Totales
     public string $subtotal    = '0.00';
     public string $iva_importe = '0.00';
     public string $total       = '0.00';
 
     // Ítems
     public array $items = [];
+
+    // ── Selección masiva ────────────────────────────────────────
+    public array  $seleccionados      = [];
+    public bool   $seleccionarTodos   = false;
+    public bool   $modalMasivoAbierto = false;
+    public string $accionMasiva       = 'estado';      // 'estado' | 'actividad' | 'imputacion'
+    public string $valorMasivoEstado  = '';
+    public string $valorMasivoActividad = '';
+    public string $lotesMasivo        = '';
+    public string $campanaMasivo      = '';
 
     protected function rules(): array
     {
@@ -56,6 +76,9 @@ class GestionCompras extends Component
             'fecha'               => 'required|date',
             'fecha_vencimiento'   => 'nullable|date',
             'estado'              => 'required|in:' . implode(',', array_keys(Compra::ESTADOS)),
+            'actividad'           => 'nullable|in:' . implode(',', array_keys(Compra::ACTIVIDADES)),
+            'id_lote'             => 'nullable|exists:lotes,id',
+            'id_campana'          => 'nullable|exists:campanas,id',
             'iva_porc'            => 'nullable|numeric|min:0|max:100',
             'observaciones'       => 'nullable|string',
             'items'               => 'required|array|min:1',
@@ -65,12 +88,13 @@ class GestionCompras extends Component
         ];
     }
 
-    public function updatedBusqueda(): void              { $this->resetPage(); }
-    public function updatedFiltroProveedor(): void       { $this->resetPage(); }
-    public function updatedFiltroEstado(): void          { $this->resetPage(); }
-    public function updatedFiltroEstablecimiento(): void { $this->resetPage(); }
-    public function updatedFiltroFechaDesde(): void      { $this->resetPage(); }
-    public function updatedFiltroFechaHasta(): void      { $this->resetPage(); }
+    public function updatedBusqueda(): void              { $this->resetPage(); $this->seleccionados = []; }
+    public function updatedFiltroProveedor(): void       { $this->resetPage(); $this->seleccionados = []; }
+    public function updatedFiltroEstado(): void          { $this->resetPage(); $this->seleccionados = []; }
+    public function updatedFiltroActividad(): void       { $this->resetPage(); $this->seleccionados = []; }
+    public function updatedFiltroEstablecimiento(): void { $this->resetPage(); $this->seleccionados = []; }
+    public function updatedFiltroFechaDesde(): void      { $this->resetPage(); $this->seleccionados = []; }
+    public function updatedFiltroFechaHasta(): void      { $this->resetPage(); $this->seleccionados = []; }
 
     public function updatedItems($value, $key): void
     {
@@ -100,10 +124,7 @@ class GestionCompras extends Component
         $this->calcularTotales();
     }
 
-    public function updatedIvaPorc(): void
-    {
-        $this->calcularTotales();
-    }
+    public function updatedIvaPorc(): void { $this->calcularTotales(); }
 
     public function agregarItem(): void
     {
@@ -136,12 +157,14 @@ class GestionCompras extends Component
         $this->total       = number_format($sub + $iva, 2, '.', '');
     }
 
+    // ── CRUD individual ─────────────────────────────────────────
+
     public function abrirModalCrear(): void
     {
         Gate::authorize('compras.crear');
         $this->resetForm();
-        $this->fecha       = now()->format('Y-m-d');
-        $this->modoEdicion = false;
+        $this->fecha        = now()->format('Y-m-d');
+        $this->modoEdicion  = false;
         $this->agregarItem();
         $this->modalAbierto = true;
     }
@@ -150,19 +173,22 @@ class GestionCompras extends Component
     {
         Gate::authorize('compras.editar');
         $compra = Compra::with('items')->findOrFail($id);
-        $this->compraEditandoId    = $id;
-        $this->id_proveedor        = $compra->id_proveedor ?? '';
-        $this->id_establecimiento  = $compra->id_establecimiento ?? '';
-        $this->tipo_comprobante    = $compra->tipo_comprobante;
-        $this->numero_comprobante  = $compra->numero_comprobante ?? '';
-        $this->fecha               = $compra->fecha->format('Y-m-d');
-        $this->fecha_vencimiento   = $compra->fecha_vencimiento?->format('Y-m-d') ?? '';
-        $this->estado              = $compra->estado;
-        $this->iva_porc            = $compra->iva_porc !== null ? (string) $compra->iva_porc : '';
-        $this->observaciones       = $compra->observaciones ?? '';
-        $this->subtotal            = (string) $compra->subtotal;
-        $this->iva_importe         = $compra->iva_importe !== null ? (string) $compra->iva_importe : '0.00';
-        $this->total               = (string) $compra->total;
+        $this->compraEditandoId   = $id;
+        $this->id_proveedor       = $compra->id_proveedor ?? '';
+        $this->id_establecimiento = $compra->id_establecimiento ?? '';
+        $this->tipo_comprobante   = $compra->tipo_comprobante;
+        $this->numero_comprobante = $compra->numero_comprobante ?? '';
+        $this->fecha              = $compra->fecha->format('Y-m-d');
+        $this->fecha_vencimiento  = $compra->fecha_vencimiento?->format('Y-m-d') ?? '';
+        $this->estado             = $compra->estado;
+        $this->actividad          = $compra->actividad ?? 'general';
+        $this->id_lote            = $compra->id_lote ?? '';
+        $this->id_campana         = $compra->id_campana ?? '';
+        $this->iva_porc           = $compra->iva_porc !== null ? (string) $compra->iva_porc : '';
+        $this->observaciones      = $compra->observaciones ?? '';
+        $this->subtotal           = (string) $compra->subtotal;
+        $this->iva_importe        = $compra->iva_importe !== null ? (string) $compra->iva_importe : '0.00';
+        $this->total              = (string) $compra->total;
 
         $this->items = $compra->items->map(fn ($item) => [
             'id_insumo'       => $item->id_insumo ?? '',
@@ -173,9 +199,7 @@ class GestionCompras extends Component
             'subtotal'        => (string) $item->subtotal,
         ])->toArray();
 
-        if (empty($this->items)) {
-            $this->agregarItem();
-        }
+        if (empty($this->items)) $this->agregarItem();
 
         $this->modoEdicion  = true;
         $this->modalAbierto = true;
@@ -193,7 +217,7 @@ class GestionCompras extends Component
         $this->calcularTotales();
         $this->validate();
 
-        $headerData = [
+        $data = [
             'id_proveedor'       => $this->id_proveedor ?: null,
             'id_establecimiento' => $this->id_establecimiento ?: null,
             'tipo_comprobante'   => $this->tipo_comprobante,
@@ -201,6 +225,9 @@ class GestionCompras extends Component
             'fecha'              => $this->fecha,
             'fecha_vencimiento'  => $this->fecha_vencimiento ?: null,
             'estado'             => $this->estado,
+            'actividad'          => $this->actividad ?: 'general',
+            'id_lote'            => $this->id_lote ?: null,
+            'id_campana'         => $this->id_campana ?: null,
             'subtotal'           => (float) $this->subtotal,
             'iva_porc'           => $this->iva_porc !== '' ? (float) $this->iva_porc : null,
             'iva_importe'        => $this->iva_importe !== '' ? (float) $this->iva_importe : null,
@@ -210,12 +237,11 @@ class GestionCompras extends Component
 
         if ($this->modoEdicion) {
             $compra = Compra::findOrFail($this->compraEditandoId);
-            // If already registered in stock, preserve that flag
-            $compra->update($headerData);
+            $compra->update($data);
             $compra->items()->delete();
             session()->flash('success', 'Compra actualizada correctamente.');
         } else {
-            $compra = Compra::create($headerData);
+            $compra = Compra::create($data);
             session()->flash('success', 'Compra registrada correctamente.');
         }
 
@@ -239,7 +265,7 @@ class GestionCompras extends Component
     {
         Gate::authorize('compras.editar');
         Compra::findOrFail($id)->update(['estado' => $estado]);
-        session()->flash('success', 'Estado de compra actualizado.');
+        session()->flash('success', 'Estado actualizado.');
     }
 
     public function registrarEnStock(string $id): void
@@ -255,7 +281,6 @@ class GestionCompras extends Component
         $registrados = 0;
         foreach ($compra->items as $item) {
             if (!$item->id_insumo) continue;
-
             MovimientoInsumo::create([
                 'id_insumo'          => $item->id_insumo,
                 'id_establecimiento' => $compra->id_establecimiento,
@@ -273,13 +298,94 @@ class GestionCompras extends Component
         }
 
         if ($registrados === 0) {
-            session()->flash('error', 'Ningún ítem tiene insumo vinculado al catálogo. Stock no registrado.');
+            session()->flash('error', 'Ningún ítem tiene insumo vinculado. Stock no registrado.');
             return;
         }
 
         $compra->update(['stock_registrado' => true]);
-        session()->flash('success', "{$registrados} ítem(s) registrado(s) en stock correctamente.");
+        session()->flash('success', "{$registrados} ítem(s) registrado(s) en stock.");
     }
+
+    // ── Selección y acciones masivas ────────────────────────────
+
+    public function updatedSeleccionarTodos(bool $value): void
+    {
+        // Se llama después de que el checkbox de "todos" cambia.
+        // La lógica real de poblar IDs se hace en toggleTodos() desde la vista.
+    }
+
+    public function toggleTodos(array $idsEnPagina): void
+    {
+        if (count($this->seleccionados) === count($idsEnPagina)
+            && empty(array_diff($idsEnPagina, $this->seleccionados))) {
+            $this->seleccionados    = [];
+            $this->seleccionarTodos = false;
+        } else {
+            $this->seleccionados    = $idsEnPagina;
+            $this->seleccionarTodos = true;
+        }
+    }
+
+    public function abrirModalMasivo(): void
+    {
+        Gate::authorize('compras.editar');
+        if (empty($this->seleccionados)) return;
+        $this->accionMasiva         = 'estado';
+        $this->valorMasivoEstado    = '';
+        $this->valorMasivoActividad = '';
+        $this->lotesMasivo          = '';
+        $this->campanaMasivo        = '';
+        $this->modalMasivoAbierto   = true;
+    }
+
+    public function aplicarMasivo(): void
+    {
+        Gate::authorize('compras.editar');
+        if (empty($this->seleccionados)) return;
+
+        $query = Compra::whereIn('id', $this->seleccionados);
+        $count = count($this->seleccionados);
+
+        switch ($this->accionMasiva) {
+            case 'estado':
+                $this->validate(['valorMasivoEstado' => 'required|in:' . implode(',', array_keys(Compra::ESTADOS))]);
+                $query->update(['estado' => $this->valorMasivoEstado]);
+                session()->flash('success', "{$count} comprobante(s) actualizados a estado «" . Compra::ESTADOS[$this->valorMasivoEstado] . "».");
+                break;
+
+            case 'actividad':
+                $this->validate(['valorMasivoActividad' => 'required|in:' . implode(',', array_keys(Compra::ACTIVIDADES))]);
+                $query->update(['actividad' => $this->valorMasivoActividad]);
+                session()->flash('success', "{$count} comprobante(s) imputados a «" . Compra::ACTIVIDADES[$this->valorMasivoActividad] . "».");
+                break;
+
+            case 'imputacion':
+                $this->validate([
+                    'valorMasivoActividad' => 'required|in:' . implode(',', array_keys(Compra::ACTIVIDADES)),
+                    'lotesMasivo'          => 'nullable|exists:lotes,id',
+                    'campanaMasivo'        => 'nullable|exists:campanas,id',
+                ]);
+                $query->update([
+                    'actividad'  => $this->valorMasivoActividad,
+                    'id_lote'    => $this->lotesMasivo ?: null,
+                    'id_campana' => $this->campanaMasivo ?: null,
+                ]);
+                session()->flash('success', "{$count} comprobante(s) con imputación actualizada.");
+                break;
+        }
+
+        $this->seleccionados      = [];
+        $this->seleccionarTodos   = false;
+        $this->modalMasivoAbierto = false;
+    }
+
+    public function limpiarSeleccion(): void
+    {
+        $this->seleccionados    = [];
+        $this->seleccionarTodos = false;
+    }
+
+    // ────────────────────────────────────────────────────────────
 
     private function resetForm(): void
     {
@@ -291,6 +397,9 @@ class GestionCompras extends Component
         $this->fecha              = '';
         $this->fecha_vencimiento  = '';
         $this->estado             = 'recibida';
+        $this->actividad          = 'general';
+        $this->id_lote            = '';
+        $this->id_campana         = '';
         $this->iva_porc           = '';
         $this->observaciones      = '';
         $this->subtotal           = '0.00';
@@ -309,28 +418,28 @@ class GestionCompras extends Component
                       $q->where('nombre', 'like', "%{$this->busqueda}%")
                   )
             ))
-            ->when($this->filtroProveedor, fn ($q) => $q->where('id_proveedor', $this->filtroProveedor))
-            ->when($this->filtroEstado, fn ($q) => $q->where('estado', $this->filtroEstado))
-            ->when($this->filtroEstablecimiento, fn ($q) => $q->where('id_establecimiento', $this->filtroEstablecimiento))
-            ->when($this->filtroFechaDesde, fn ($q) => $q->where('fecha', '>=', $this->filtroFechaDesde))
-            ->when($this->filtroFechaHasta, fn ($q) => $q->where('fecha', '<=', $this->filtroFechaHasta))
-            ->with(['proveedor', 'establecimiento'])
+            ->when($this->filtroProveedor,       fn ($q) => $q->where('id_proveedor', $this->filtroProveedor))
+            ->when($this->filtroEstado,           fn ($q) => $q->where('estado', $this->filtroEstado))
+            ->when($this->filtroActividad,        fn ($q) => $q->where('actividad', $this->filtroActividad))
+            ->when($this->filtroEstablecimiento,  fn ($q) => $q->where('id_establecimiento', $this->filtroEstablecimiento))
+            ->when($this->filtroFechaDesde,       fn ($q) => $q->where('fecha', '>=', $this->filtroFechaDesde))
+            ->when($this->filtroFechaHasta,       fn ($q) => $q->where('fecha', '<=', $this->filtroFechaHasta))
+            ->with(['proveedor', 'establecimiento', 'lote', 'campana'])
             ->withCount('items')
             ->orderBy('fecha', 'desc')
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        $proveedoresOpciones  = Proveedor::activos()->orderBy('nombre')->get();
-        $establecimientos     = Establecimiento::orderBy('nombre')->get();
-        $insumosOpciones      = Insumo::activos()->orderBy('nombre')->get();
-
         return view('livewire.compras.gestion-compras', [
             'compras'             => $compras,
-            'proveedoresOpciones' => $proveedoresOpciones,
-            'establecimientos'    => $establecimientos,
-            'insumosOpciones'     => $insumosOpciones,
+            'proveedoresOpciones' => Proveedor::activos()->orderBy('nombre')->get(),
+            'establecimientos'    => Establecimiento::orderBy('nombre')->get(),
+            'insumosOpciones'     => Insumo::activos()->orderBy('nombre')->get(),
+            'lotes'               => Lote::orderBy('nombre')->get(),
+            'campanas'            => Campana::orderBy('nombre')->get(),
             'tiposComprobante'    => Compra::TIPOS_COMPROBANTE,
             'estados'             => Compra::ESTADOS,
+            'actividades'         => Compra::ACTIVIDADES,
         ]);
     }
 }
