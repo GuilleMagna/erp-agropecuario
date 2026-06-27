@@ -1,4 +1,4 @@
-<div>
+﻿<div>
 
     {{-- Mensajes flash --}}
     @if (session('success'))
@@ -32,14 +32,14 @@
         <div class="card-body py-3">
             <div class="row g-3 align-items-end">
                 <div class="col-md-5">
-                    <label class="form-label small fw-semibold text-muted mb-1">Búsqueda</label>
+                    <label class="form-label small fw-semibold text-muted mb-1">BÃºsqueda</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0">
                             <i class="bi bi-search text-muted"></i>
                         </span>
                         <input type="text"
                                class="form-control border-start-0 ps-0"
-                               placeholder="Nombre, localidad, provincia…"
+                               placeholder="Nombre, localidad, provinciaâ€¦"
                                wire:model.live.debounce.300ms="busqueda">
                     </div>
                 </div>
@@ -76,7 +76,7 @@
                 <thead class="table-light">
                     <tr>
                         <th class="ps-4">Establecimiento</th>
-                        <th>Ubicación</th>
+                        <th>UbicaciÃ³n</th>
                         <th>Superficie</th>
                         <th>Tenencia</th>
                         <th>Responsable</th>
@@ -95,10 +95,10 @@
                         </td>
                         <td>
                             @if ($est->provincia || $est->localidad)
-                                <div>{{ $est->localidad ?? '—' }}</div>
+                                <div>{{ $est->localidad ?? 'â€”' }}</div>
                                 <small class="text-muted">{{ $est->provincia ?? '' }}</small>
                             @else
-                                <span class="text-muted">—</span>
+                                <span class="text-muted">â€”</span>
                             @endif
                         </td>
                         <td>
@@ -116,7 +116,7 @@
                                     </small>
                                 @endif
                             @else
-                                <span class="text-muted">—</span>
+                                <span class="text-muted">â€”</span>
                             @endif
                         </td>
                         <td>
@@ -136,7 +136,7 @@
                             @if ($est->responsable)
                                 <div>{{ $est->responsable->nombre_completo }}</div>
                             @else
-                                <span class="text-muted">—</span>
+                                <span class="text-muted">â€”</span>
                             @endif
                         </td>
                         <td>
@@ -157,7 +157,7 @@
                             <button class="btn btn-sm {{ $est->activo ? 'btn-outline-danger' : 'btn-outline-success' }}"
                                     wire:click="toggleActivo('{{ $est->id }}')"
                                     wire:loading.attr="disabled"
-                                    wire:confirm="{{ $est->activo ? '¿Desactivar este establecimiento?' : '¿Activar este establecimiento?' }}"
+                                    wire:confirm="{{ $est->activo ? 'Â¿Desactivar este establecimiento?' : 'Â¿Activar este establecimiento?' }}"
                                     title="{{ $est->activo ? 'Desactivar' : 'Activar' }}">
                                 <i class="bi bi-{{ $est->activo ? 'toggle-on' : 'toggle-off' }}"></i>
                             </button>
@@ -177,7 +177,7 @@
         </div>
         @if ($establecimientos->hasPages())
         <div class="card-footer bg-white border-top-0 py-3">
-            {{ $establecimientos->links('livewire::pagination.bootstrap') }}
+            {{ $establecimientos->links() }}
         </div>
         @endif
     </div>
@@ -198,7 +198,7 @@
                 <div class="modal-body pt-3">
                     <form wire:submit="guardar" id="form-est">
 
-                        {{-- Datos básicos --}}
+                        {{-- Datos bÃ¡sicos --}}
                         <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">
                             Datos del establecimiento
                         </h6>
@@ -230,14 +230,14 @@
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold">Localidad</label>
                                 <input type="text" class="form-control @error('localidad') is-invalid @enderror"
-                                       wire:model="localidad" placeholder="Ej: Médanos">
+                                       wire:model="localidad" placeholder="Ej: MÃ©danos">
                                 @error('localidad') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                         </div>
 
-                        {{-- Ubicación --}}
+                        {{-- UbicaciÃ³n --}}
                         <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">
-                            Ubicación geográfica
+                            UbicaciÃ³n geogrÃ¡fica
                         </h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
@@ -258,7 +258,7 @@
 
                         {{-- Superficies --}}
                         <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">
-                            Superficies (hectáreas)
+                            Superficies (hectÃ¡reas)
                         </h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-4">
@@ -273,7 +273,7 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold">
-                                    <i class="bi bi-flower1 text-success me-1"></i>Agrícola
+                                    <i class="bi bi-flower1 text-success me-1"></i>AgrÃ­cola
                                 </label>
                                 <div class="input-group">
                                     <input type="number" step="0.01" min="0"
@@ -297,9 +297,9 @@
                             </div>
                         </div>
 
-                        {{-- Configuración legal/admin --}}
+                        {{-- ConfiguraciÃ³n legal/admin --}}
                         <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">
-                            Información legal y administración
+                            InformaciÃ³n legal y administraciÃ³n
                         </h6>
                         <div class="row g-3">
                             <div class="col-md-4">

@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * Modelo Establecimiento
@@ -35,7 +37,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Establecimiento extends Model
 {
-    use HasFactory, UsaUuid, PerteneceAEmpresa;
+    use HasFactory, UsaUuid, PerteneceAEmpresa, LogsActivity;
 
     protected $table = 'establecimientos';
 
@@ -69,6 +71,14 @@ class Establecimiento extends Model
     // Relaciones
     // -------------------------------------------------------------------------
 
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['nombre', 'provincia', 'partido_departamento', 'localidad', 'superficie_total_ha', 'tipo_tenencia', 'activo'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
+
     public function responsable(): BelongsTo
     {
         return $this->belongsTo(Usuario::class, 'responsable_id');
@@ -85,10 +95,9 @@ class Establecimiento extends Model
         );
     }
 
-    /** Lotes y potreros del establecimiento (Documento 03, sección 5.1). */
-    public function unidadesManejo(): HasMany
+    public function lotes(): HasMany
     {
-        return $this->hasMany(UnidadManejo::class, 'id_establecimiento');
+        return $this->hasMany(Lote::class, 'id_establecimiento');
     }
 
     // -------------------------------------------------------------------------
