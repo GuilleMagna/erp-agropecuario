@@ -6,6 +6,8 @@ use App\Models\Compra;
 use App\Models\Establecimiento;
 use App\Models\VentaGrano;
 use App\Models\VentaHacienda;
+use App\Models\Campana;
+use App\Models\Lote;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 
@@ -50,6 +52,18 @@ class ReporteFiscal extends Component
                     number_format((float)$row->sum_iva, 2, '.', ''),
                     number_format((float)$row->sum_total, 2, '.', ''),
                 ], ';');
+            }
+
+            fputcsv($handle, [], ';');
+            fputcsv($handle, ['--- IMPUTACIÓN POR ACTIVIDAD ---'], ';');
+            fputcsv($handle, ['Actividad', 'Comprobantes', 'Neto', 'IVA', 'Total'], ';');
+            $impActividad = Compra::whereBetween('fecha', [$desde, $hasta])
+                ->whereNotIn('estado', ['cancelada'])
+                ->selectRaw('COALESCE(actividad, "sin_imputar") as actividad, count(*) as cantidad, sum(subtotal) as sum_subtotal, sum(iva_importe) as sum_iva, sum(total) as sum_total')
+                ->groupBy('actividad')->orderByDesc('sum_total')->get();
+            foreach ($impActividad as $row) {
+                $label = Compra::ACTIVIDADES[$row->actividad] ?? 'Sin imputar';
+                fputcsv($handle, [$label, $row->cantidad, number_format((float)$row->sum_subtotal, 2, '.', ''), number_format((float)$row->sum_iva, 2, '.', ''), number_format((float)$row->sum_total, 2, '.', '')], ';');
             }
 
             fputcsv($handle, [], ';');
@@ -113,6 +127,39 @@ class ReporteFiscal extends Component
         $totalVentasGranosUsd     = $ventasGranosPorCereal->where('moneda', 'USD')->sum('total_importe');
         $totalVentasHaciendaUsd   = $ventasHaciendaPorCategoria->where('moneda', 'USD')->sum('total_importe');
 
+        // === IMPUTACIÓN POR ACTIVIDAD ===
+        $comprasPorActividad = Compra::whereBetween('fecha', [$desde, $hasta])
+            ->when($estId, fn($q) => $q->where('id_establecimiento', $estId))
+            ->whereNotIn('estado', ['cancelada'])
+            ->selectRaw('COALESCE(actividad, "sin_imputar") as actividad, count(*) as cantidad, sum(subtotal) as sum_subtotal, sum(iva_importe) as sum_iva, sum(total) as sum_total')
+            ->groupBy('actividad')
+            ->orderByDesc('sum_total')
+            ->get();
+
+        // === IMPUTACIÓN POR LOTE ===
+        $comprasPorLote = Compra::whereBetween('fecha', [$desde, $hasta])
+            ->when($estId, fn($q) => $q->where('id_establecimiento', $estId))
+            ->whereNotIn('estado', ['cancelada'])
+            ->whereNotNull('id_lote')
+            ->with('lote')
+            ->selectRaw('id_lote, count(*) as cantidad, sum(subtotal) as sum_subtotal, sum(iva_importe) as sum_iva, sum(total) as sum_total')
+            ->groupBy('id_lote')
+            ->orderByDesc('sum_total')
+            ->get();
+
+        // === IMPUTACIÓN POR CAMPAÑA ===
+        $comprasPorCampana = Compra::whereBetween('fecha', [$desde, $hasta])
+            ->when($estId, fn($q) => $q->where('id_establecimiento', $estId))
+            ->whereNotIn('estado', ['cancelada'])
+            ->whereNotNull('id_campana')
+            ->with('campana')
+            ->selectRaw('id_campana, count(*) as cantidad, sum(subtotal) as sum_subtotal, sum(iva_importe) as sum_iva, sum(total) as sum_total')
+            ->groupBy('id_campana')
+            ->orderByDesc('sum_total')
+            ->get();
+
+        $totalSinImputar = $comprasPorActividad->where('actividad', 'sin_imputar')->sum('sum_total');
+
         $establecimientos = Establecimiento::orderBy('nombre')->get();
 
         return view('livewire.reportes.reporte-fiscal', compact(
@@ -121,6 +168,8 @@ class ReporteFiscal extends Component
             'ventasGranosPorCereal', 'ventasHaciendaPorCategoria',
             'totalVentasGranosArs', 'totalVentasHaciendaArs',
             'totalVentasGranosUsd', 'totalVentasHaciendaUsd',
+            'comprasPorActividad', 'comprasPorLote', 'comprasPorCampana',
+            'totalSinImputar',
             'establecimientos',
             'desde', 'hasta',
         ));

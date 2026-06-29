@@ -79,6 +79,27 @@
         </div>
     </div>
 
+    {{-- Tabs --}}
+    <ul class="nav nav-pills mb-3 gap-1">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#pane-fiscal-iva" type="button">
+                <i class="bi bi-receipt me-1"></i> Comprobantes
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="pill" data-bs-target="#pane-fiscal-imputacion" type="button">
+                <i class="bi bi-diagram-3 me-1"></i> Imputación
+                @if ($totalSinImputar > 0)
+                    <span class="badge bg-warning text-dark rounded-pill ms-1">!</span>
+                @endif
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+
+    {{-- TAB: Comprobantes --}}
+    <div class="tab-pane fade show active" id="pane-fiscal-iva" role="tabpanel">
     <div class="row g-4">
 
         {{-- Compras por tipo comprobante --}}
@@ -284,5 +305,182 @@
         </div>
     </div>
     @endif
+
+    </div>{{-- /tab-pane comprobantes --}}
+
+    {{-- TAB: Imputación --}}
+    <div class="tab-pane fade" id="pane-fiscal-imputacion" role="tabpanel">
+
+        @if ($totalSinImputar > 0)
+        <div class="alert alert-warning d-flex align-items-center gap-2 py-2 mb-4">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span>Hay <strong>${{ number_format((float)$totalSinImputar, 2, ',', '.') }}</strong> en compras sin imputar a ninguna actividad.</span>
+        </div>
+        @endif
+
+        <div class="row g-4">
+
+            {{-- Por actividad --}}
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom fw-semibold">
+                        <i class="bi bi-diagram-3 me-2 text-primary"></i>Gastos por actividad
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-3">Actividad</th>
+                                    <th class="text-center">Comprobantes</th>
+                                    <th class="text-end">Neto</th>
+                                    <th class="text-end">IVA crédito</th>
+                                    <th class="text-end pe-3">Total</th>
+                                    <th class="text-end pe-3" style="width:120px">% del gasto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @php $totalGastos = $comprasPorActividad->sum('sum_total') ?: 1; @endphp
+                                @forelse ($comprasPorActividad as $act)
+                                @php
+                                    $actKey   = $act->actividad;
+                                    $actLabel = \App\Models\Compra::ACTIVIDADES[$actKey] ?? 'Sin imputar';
+                                    $pct      = round((float)$act->sum_total / $totalGastos * 100, 1);
+                                    $badgeCls = match($actKey) {
+                                        'agricultura' => 'bg-success-subtle text-success',
+                                        'ganaderia'   => 'bg-primary-subtle text-primary',
+                                        'feedlot'     => 'bg-warning-subtle text-warning-emphasis',
+                                        'general'     => 'bg-secondary-subtle text-secondary',
+                                        default       => 'bg-danger-subtle text-danger',
+                                    };
+                                @endphp
+                                <tr>
+                                    <td class="ps-3">
+                                        <span class="badge rounded-pill {{ $badgeCls }}">{{ $actLabel }}</span>
+                                    </td>
+                                    <td class="text-center">{{ $act->cantidad }}</td>
+                                    <td class="text-end font-monospace text-muted">${{ number_format((float)$act->sum_subtotal, 2, ',', '.') }}</td>
+                                    <td class="text-end font-monospace text-danger">${{ number_format((float)$act->sum_iva, 2, ',', '.') }}</td>
+                                    <td class="text-end pe-3 fw-semibold">${{ number_format((float)$act->sum_total, 2, ',', '.') }}</td>
+                                    <td class="text-end pe-3">
+                                        <div class="d-flex align-items-center gap-2 justify-content-end">
+                                            <div class="progress flex-grow-1" style="height:6px;min-width:60px">
+                                                <div class="progress-bar bg-primary" style="width:{{ $pct }}%"></div>
+                                            </div>
+                                            <span class="text-muted small font-monospace" style="min-width:36px">{{ $pct }}%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr><td colspan="6" class="text-center text-muted py-4">Sin compras en el período</td></tr>
+                                @endforelse
+                                @if ($comprasPorActividad->count())
+                                <tr class="table-light fw-bold">
+                                    <td class="ps-3">Total</td>
+                                    <td class="text-center">{{ $comprasPorActividad->sum('cantidad') }}</td>
+                                    <td class="text-end font-monospace">${{ number_format((float)$comprasPorActividad->sum('sum_subtotal'), 2, ',', '.') }}</td>
+                                    <td class="text-end font-monospace text-danger">${{ number_format((float)$comprasPorActividad->sum('sum_iva'), 2, ',', '.') }}</td>
+                                    <td class="text-end pe-3">${{ number_format((float)$comprasPorActividad->sum('sum_total'), 2, ',', '.') }}</td>
+                                    <td></td>
+                                </tr>
+                                @endif
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Por lote --}}
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white border-bottom fw-semibold">
+                        <i class="bi bi-map me-2 text-success"></i>Gastos por lote
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-3">Lote</th>
+                                    <th class="text-center">Comp.</th>
+                                    <th class="text-end">IVA</th>
+                                    <th class="text-end pe-3">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($comprasPorLote as $cl)
+                                <tr>
+                                    <td class="ps-3">
+                                        <div class="fw-semibold small">{{ $cl->lote?->nombre ?? 'Lote #' . $cl->id_lote }}</div>
+                                        @if ($cl->lote?->superficie_ha)
+                                            <small class="text-muted">{{ number_format((float)$cl->lote->superficie_ha, 1, ',', '.') }} ha</small>
+                                        @endif
+                                    </td>
+                                    <td class="text-center">{{ $cl->cantidad }}</td>
+                                    <td class="text-end font-monospace text-danger small">${{ number_format((float)$cl->sum_iva, 2, ',', '.') }}</td>
+                                    <td class="text-end pe-3 fw-semibold">${{ number_format((float)$cl->sum_total, 2, ',', '.') }}</td>
+                                </tr>
+                                @empty
+                                <tr><td colspan="4" class="text-center text-muted py-4">Sin compras imputadas a lotes</td></tr>
+                                @endforelse
+                                @if ($comprasPorLote->count())
+                                <tr class="table-light fw-semibold">
+                                    <td class="ps-3">Total imputado</td>
+                                    <td class="text-center">{{ $comprasPorLote->sum('cantidad') }}</td>
+                                    <td class="text-end font-monospace text-danger">${{ number_format((float)$comprasPorLote->sum('sum_iva'), 2, ',', '.') }}</td>
+                                    <td class="text-end pe-3">${{ number_format((float)$comprasPorLote->sum('sum_total'), 2, ',', '.') }}</td>
+                                </tr>
+                                @endif
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Por campaña --}}
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white border-bottom fw-semibold">
+                        <i class="bi bi-calendar3 me-2 text-warning"></i>Gastos por campaña agrícola
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-3">Campaña</th>
+                                    <th class="text-center">Comp.</th>
+                                    <th class="text-end">IVA</th>
+                                    <th class="text-end pe-3">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($comprasPorCampana as $cc)
+                                <tr>
+                                    <td class="ps-3">
+                                        <div class="fw-semibold small">{{ $cc->campana?->nombre ?? 'Campaña #' . $cc->id_campana }}</div>
+                                    </td>
+                                    <td class="text-center">{{ $cc->cantidad }}</td>
+                                    <td class="text-end font-monospace text-danger small">${{ number_format((float)$cc->sum_iva, 2, ',', '.') }}</td>
+                                    <td class="text-end pe-3 fw-semibold">${{ number_format((float)$cc->sum_total, 2, ',', '.') }}</td>
+                                </tr>
+                                @empty
+                                <tr><td colspan="4" class="text-center text-muted py-4">Sin compras imputadas a campañas</td></tr>
+                                @endforelse
+                                @if ($comprasPorCampana->count())
+                                <tr class="table-light fw-semibold">
+                                    <td class="ps-3">Total imputado</td>
+                                    <td class="text-center">{{ $comprasPorCampana->sum('cantidad') }}</td>
+                                    <td class="text-end font-monospace text-danger">${{ number_format((float)$comprasPorCampana->sum('sum_iva'), 2, ',', '.') }}</td>
+                                    <td class="text-end pe-3">${{ number_format((float)$comprasPorCampana->sum('sum_total'), 2, ',', '.') }}</td>
+                                </tr>
+                                @endif
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>{{-- /row --}}
+    </div>{{-- /tab-pane imputacion --}}
+
+    </div>{{-- /tab-content --}}
 
 </div>
