@@ -111,9 +111,10 @@
                     @forelse ($reintegros as $r)
                     @php
                         $badgeEstado = [
-                            'pendiente'  => 'bg-warning-subtle text-warning-emphasis',
-                            'acreditado' => 'bg-success-subtle text-success',
-                            'rechazado'  => 'bg-danger-subtle text-danger',
+                            'pendiente'   => 'bg-warning-subtle text-warning-emphasis',
+                            'presentado'  => 'bg-info-subtle text-info-emphasis',
+                            'acreditado'  => 'bg-success-subtle text-success',
+                            'rechazado'   => 'bg-danger-subtle text-danger',
                         ][$r->estado] ?? 'bg-secondary-subtle text-secondary';
                     @endphp
                     <tr>

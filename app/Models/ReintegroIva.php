@@ -33,6 +33,7 @@ class ReintegroIva extends Model
 
     const ESTADOS = [
         'pendiente'   => 'Pendiente',
+        'presentado'  => 'Presentado',
         'acreditado'  => 'Acreditado',
         'rechazado'   => 'Rechazado',
     ];
