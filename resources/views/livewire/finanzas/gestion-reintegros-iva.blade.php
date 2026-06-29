@@ -27,7 +27,7 @@
 
     {{-- Cards resumen --}}
     <div class="row g-3 mb-4">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-body">
                     <div class="d-flex align-items-center justify-content-between">
@@ -44,7 +44,24 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="text-muted small fw-semibold text-uppercase">En trámite</div>
+                            <div class="fs-4 fw-bold text-info">
+                                ${{ number_format($totalPresentado, 2, ',', '.') }}
+                            </div>
+                        </div>
+                        <div class="bg-info-subtle rounded-circle d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
+                            <i class="bi bi-send text-info fs-5"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-body">
                     <div class="d-flex align-items-center justify-content-between">
@@ -200,7 +217,36 @@
                                 @error('id_periodo_fiscal') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 <div class="form-text">Si selecciona un período, el campo "Período" se puede dejar como referencia.</div>
                             </div>
-                            <div class="col-md-3">
+                            @if ($ivaCredito !== null)
+                            <div class="col-12">
+                                <div class="alert alert-info py-2 mb-0 small">
+                                    <div class="row g-2 text-center">
+                                        <div class="col-4">
+                                            <div class="text-muted">IVA crédito (compras)</div>
+                                            <div class="fw-bold">${{ number_format($ivaCredito, 2, ',', '.') }}</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="text-muted">IVA débito (ventas est.)</div>
+                                            <div class="fw-bold">${{ number_format($ivaDebito, 2, ',', '.') }}</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="text-muted">Saldo a favor</div>
+                                            <div class="fw-bold {{ $saldoFavor > 0 ? 'text-success' : 'text-danger' }}">
+                                                ${{ number_format($saldoFavor, 2, ',', '.') }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @if ($saldoFavor <= 0)
+                                        <div class="text-center text-warning mt-1">
+                                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                            No hay saldo a favor en este período.
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        @endif
+
+                        <div class="col-md-3">
                                 <label class="form-label fw-semibold">Período <span class="text-danger">*</span></label>
                                 <input type="text"
                                        class="form-control font-monospace @error('periodo') is-invalid @enderror"

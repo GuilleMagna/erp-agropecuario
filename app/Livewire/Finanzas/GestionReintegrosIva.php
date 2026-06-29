@@ -29,6 +29,11 @@ class GestionReintegrosIva extends Component
     public string  $numero_expediente   = '';
     public string  $observaciones       = '';
 
+    // Desglose IVA calculado al seleccionar período fiscal
+    public ?float  $ivaCredito  = null;
+    public ?float  $ivaDebito   = null;
+    public ?float  $saldoFavor  = null;
+
     protected function rules(): array
     {
         return [
@@ -52,6 +57,31 @@ class GestionReintegrosIva extends Component
 
     public function updatedFiltroEstado(): void  { $this->resetPage(); }
     public function updatedFiltroPeriodo(): void { $this->resetPage(); }
+
+    public function updatedIdPeriodoFiscal(string $value): void
+    {
+        if (!$value) {
+            $this->ivaCredito = null;
+            $this->ivaDebito  = null;
+            $this->saldoFavor = null;
+            return;
+        }
+
+        $pf = PeriodoFiscal::find($value);
+        if (!$pf) return;
+
+        $this->ivaCredito = $pf->ivaCredito();
+        $this->ivaDebito  = $pf->ivaDebito();
+        $this->saldoFavor = max(0, $this->ivaCredito - $this->ivaDebito);
+
+        // Auto-completar período y sugerir importe solo al crear
+        if (!$this->modoEdicion) {
+            $this->periodo = $pf->periodo;
+            if ($this->saldoFavor > 0) {
+                $this->importe = number_format($this->saldoFavor, 2, '.', '');
+            }
+        }
+    }
 
     // ── Modal ─────────────────────────────────────────────────────────────────
 
@@ -143,6 +173,9 @@ class GestionReintegrosIva extends Component
         $this->estado              = 'pendiente';
         $this->numero_expediente   = '';
         $this->observaciones       = '';
+        $this->ivaCredito          = null;
+        $this->ivaDebito           = null;
+        $this->saldoFavor          = null;
         $this->resetValidation();
     }
 
@@ -158,8 +191,9 @@ class GestionReintegrosIva extends Component
             ->orderByDesc('created_at')
             ->paginate(20);
 
-        $totalPendiente  = ReintegroIva::where('estado', 'pendiente')->sum('importe');
-        $totalAcreditado = ReintegroIva::where('estado', 'acreditado')->sum('importe');
+        $totalPendiente   = ReintegroIva::where('estado', 'pendiente')->sum('importe');
+        $totalPresentado  = ReintegroIva::where('estado', 'presentado')->sum('importe');
+        $totalAcreditado  = ReintegroIva::where('estado', 'acreditado')->sum('importe');
 
         $periodosFiscales = PeriodoFiscal::orderByDesc('periodo')->get();
 
@@ -167,6 +201,7 @@ class GestionReintegrosIva extends Component
             'reintegros'       => $reintegros,
             'estados'          => ReintegroIva::ESTADOS,
             'totalPendiente'   => (float) $totalPendiente,
+            'totalPresentado'  => (float) $totalPresentado,
             'totalAcreditado'  => (float) $totalAcreditado,
             'periodosFiscales' => $periodosFiscales,
         ]);
