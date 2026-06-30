@@ -16,6 +16,7 @@ class Compra extends Model
     protected $table = 'compras';
 
     protected $fillable = [
+        'id_empresa',
         'id_proveedor', 'id_establecimiento',
         'tipo_comprobante', 'numero_comprobante',
         'fecha', 'fecha_vencimiento', 'estado',

@@ -18,6 +18,9 @@
         <h1 class="h3 mb-0">Comprobantes de Compra</h1>
         <div class="d-flex gap-2">
             @can('compras.crear')
+                <a href="{{ route('compras.sincronizar-arca') }}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-cloud-arrow-down me-1"></i> Sincronizar ARCA
+                </a>
                 <a href="{{ route('compras.importar-arca') }}" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-upload me-1"></i> Importar ARCA
                 </a>

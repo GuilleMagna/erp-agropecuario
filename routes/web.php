@@ -113,6 +113,10 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('can:compras.crear')
         ->name('compras.importar-arca');
 
+    Route::get('/compras/sincronizar-arca', fn () => view('compras.sincronizar-arca'))
+        ->middleware('can:compras.crear')
+        ->name('compras.sincronizar-arca');
+
     // Módulo Sistema / Configuración
     Route::get('/sistema/perfil', fn () => view('sistema.perfil'))
         ->name('sistema.perfil');
