@@ -25,10 +25,13 @@ process.argv.slice(2).forEach((val, i, arr) => {
     }
 });
 
-const CUIT      = args.cuit       || '';
-const CLAVE     = args.clave      || '';
-const DESDE     = args.desde      || '';
-const HASTA     = args.hasta      || '';
+const CUIT               = args.cuit                || '';
+const CLAVE              = args.clave               || '';
+const DESDE              = args.desde               || '';
+const HASTA              = args.hasta               || '';
+// Si se pasa --cuit-representado, en la pantalla "Elegí una persona" se selecciona ESE CUIT
+// en lugar del CUIT de login. Permite acceder a empresas representadas con un CUIT propio.
+const CUIT_REPRESENTADO  = args['cuit-representado'] || CUIT;
 const DEBUG     = !!args.debug;
 const SS        = !!args.screenshots || DEBUG;
 const SS_DIR    = args['debug-dir'] || path.join(__dirname, '..', 'storage', 'app', 'arca', 'debug');
@@ -258,11 +261,11 @@ async function seleccionarPersonaSiAparece(page) {
     fs.mkdirSync(SS_DIR, { recursive: true });
     fs.writeFileSync(path.join(SS_DIR, 'persona_selection.html'), html);
 
-    const cuitNorm = CUIT.replace(/-/g, '');
+    const cuitNorm = CUIT_REPRESENTADO.replace(/-/g, '');
 
     // La página tiene un <form name="seleccionaEmpresaForm" action="setearContribuyente.do">
     // con <a onclick="document.getElementById('idcontribuyente').value='N'; form.submit()">
-    // Buscamos el <a> del formulario cuyo textContent contiene el CUIT.
+    // Buscamos el <a> del formulario cuyo textContent contiene el CUIT representado.
     await page.evaluate((cuit) => {
         const anchors = Array.from(document.querySelectorAll('form a'));
         const match = anchors.find(a => a.textContent.replace(/[-\s]/g, '').includes(cuit));

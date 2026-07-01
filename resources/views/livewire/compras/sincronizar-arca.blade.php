@@ -12,22 +12,15 @@
         </a>
     </div>
 
-    @if (!$configurado)
-        {{-- Sin configuración --}}
+    @if ($empresasArca->isEmpty())
+        {{-- Sin empresas configuradas --}}
         <div class="alert alert-warning d-flex align-items-start gap-3">
             <i class="bi bi-exclamation-triangle-fill fs-4 mt-1"></i>
             <div>
-                <div class="fw-semibold mb-1">Credenciales ARCA no configuradas</div>
+                <div class="fw-semibold mb-1">Ninguna empresa tiene ARCA configurado</div>
                 <div class="small">
-                    Completá en el archivo <code>.env</code>:
-                    <ul class="mt-2 mb-0">
-                        <li><code>MRBOT_CUIT_LOGIN</code> — CUIT con el que iniciás sesión en AFIP</li>
-                        <li><code>MRBOT_CLAVE_FISCAL</code> — tu clave fiscal</li>
-                    </ul>
-                    <div class="mt-2">
-                        También instalá Playwright una sola vez desde la consola:<br>
-                        <code>pip install playwright &amp;&amp; playwright install chromium</code>
-                    </div>
+                    Para sincronizar comprobantes, configurá las credenciales ARCA de al menos una empresa en
+                    <a href="{{ route('admin.empresas.index') }}" class="alert-link">Sistema → Empresas</a>.
                 </div>
             </div>
         </div>
@@ -35,22 +28,40 @@
         {{-- Formulario --}}
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-body">
-                <h6 class="fw-semibold mb-3">Período a sincronizar</h6>
+                <h6 class="fw-semibold mb-3">Seleccioná empresa y período</h6>
 
                 <div class="row g-3 align-items-end">
-                    <div class="col-sm-4">
+
+                    {{-- Empresa --}}
+                    <div class="col-sm-12 col-md-4">
+                        <label class="form-label small fw-medium">Empresa</label>
+                        <select wire:model="idEmpresa"
+                                class="form-select @error('idEmpresa') is-invalid @enderror">
+                            <option value="">— Seleccionar —</option>
+                            @foreach ($todasEmpresas as $emp)
+                                <option value="{{ $emp->id }}"
+                                    @if (!$emp->arca_activo) disabled @endif>
+                                    {{ $emp->razon_social }}
+                                    @if (!$emp->arca_activo) (sin ARCA) @endif
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('idEmpresa') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="col-sm-6 col-md-3">
                         <label class="form-label small fw-medium">Desde</label>
                         <input type="date" wire:model="desde"
                                class="form-control @error('desde') is-invalid @enderror">
                         @error('desde') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
-                    <div class="col-sm-4">
+                    <div class="col-sm-6 col-md-3">
                         <label class="form-label small fw-medium">Hasta</label>
                         <input type="date" wire:model="hasta"
                                class="form-control @error('hasta') is-invalid @enderror">
                         @error('hasta') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
-                    <div class="col-sm-4">
+                    <div class="col-md-2">
                         <button wire:click="sincronizar"
                                 wire:loading.attr="disabled"
                                 class="btn btn-primary w-100"
@@ -60,7 +71,7 @@
                             </span>
                             <span wire:loading wire:target="sincronizar">
                                 <span class="spinner-border spinner-border-sm me-1"></span>
-                                Consultando ARCA... (puede tardar hasta 90 seg)
+                                Consultando... (hasta 90 seg)
                             </span>
                         </button>
                     </div>
@@ -76,15 +87,35 @@
                     <span class="text-muted small">|</span>
                     <small class="text-muted">
                         <i class="bi bi-terminal me-1"></i>
-                        Para depurar con navegador visible:
+                        Con navegador visible:
                         <code>php artisan arca:sincronizar --debug</code>
                     </small>
                 </div>
             </div>
         </div>
 
+        {{-- Empresas con ARCA activo --}}
+        @if ($empresasArca->count() > 1)
+            <div class="mb-4">
+                <small class="text-muted fw-semibold text-uppercase">Empresas con ARCA configurado</small>
+                <div class="d-flex gap-2 mt-1 flex-wrap">
+                    @foreach ($empresasArca as $emp)
+                        <span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle">
+                            <i class="bi bi-building me-1"></i>{{ $emp->razon_social }}
+                            <span class="font-monospace ms-1">{{ $emp->arca_cuit_representado ?? $emp->cuit }}</span>
+                        </span>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         {{-- Resultado OK --}}
         @if ($estado === 'ok')
+            <div class="mb-3">
+                <div class="text-muted small fw-semibold mb-2">
+                    <i class="bi bi-building me-1"></i>{{ $empresaSincronizada }}
+                </div>
+            </div>
             <div class="row g-3 mb-4">
                 <div class="col-sm-4">
                     <div class="card border-0 shadow-sm text-center py-3">
@@ -111,13 +142,13 @@
             @if ($resultado['importadas'] > 0)
                 <div class="alert alert-success">
                     <i class="bi bi-check-circle-fill me-2"></i>
-                    Se importaron <strong>{{ $resultado['importadas'] }} comprobante(s)</strong>.
+                    Se importaron <strong>{{ $resultado['importadas'] }} comprobante(s)</strong> de <strong>{{ $empresaSincronizada }}</strong>.
                     <a href="{{ route('compras.index') }}" class="alert-link ms-2">Ver en compras →</a>
                 </div>
             @else
                 <div class="alert alert-info">
                     <i class="bi bi-info-circle-fill me-2"></i>
-                    No hay comprobantes nuevos en el período.
+                    No hay comprobantes nuevos en el período para <strong>{{ $empresaSincronizada }}</strong>.
                 </div>
             @endif
         @endif
@@ -128,7 +159,7 @@
                 <i class="bi bi-x-circle-fill me-2"></i>
                 <strong>Error:</strong> {{ $mensajeError }}
                 <div class="mt-2 small">
-                    Para diagnosticar, ejecutá desde la consola con el navegador visible:<br>
+                    Para diagnosticar con navegador visible:<br>
                     <code>php artisan arca:sincronizar --debug --desde {{ $desde }} --hasta {{ $hasta }}</code>
                 </div>
             </div>

@@ -108,6 +108,7 @@ class RolesSeeder extends Seeder
             'finanzas.transacciones.editar',
             'finanzas.periodos.gestionar',
             'finanzas.reintegros.gestionar',
+            'finanzas.gastos.gestionar',
 
             // --- RRHH ---
             'rrhh.personal.ver',

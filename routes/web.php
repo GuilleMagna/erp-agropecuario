@@ -21,6 +21,10 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('can:admin.establecimientos.gestionar')
         ->name('admin.establecimientos.index');
 
+    Route::get('/admin/empresas', fn () => view('admin.gestion-empresas'))
+        ->middleware('can:admin.roles.gestionar')
+        ->name('admin.empresas.index');
+
     // Módulo Campos
     Route::get('/campos/lotes', fn () => view('campos.gestion-lotes'))
         ->middleware('can:campos.lotes.ver')
@@ -167,6 +171,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/finanzas/reintegros-iva', fn () => view('finanzas.gestion-reintegros-iva'))
         ->middleware('can:finanzas.reintegros.gestionar')
         ->name('finanzas.reintegros.index');
+
+    Route::get('/finanzas/gastos-no-arca', fn () => view('finanzas.gestion-gastos-no-arca'))
+        ->middleware('can:finanzas.gastos.gestionar')
+        ->name('finanzas.gastos.index');
 
 });
 

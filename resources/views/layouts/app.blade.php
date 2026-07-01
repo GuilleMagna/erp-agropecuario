@@ -255,6 +255,10 @@
                    class="nav-link {{ request()->routeIs('compras.importar-arca') ? 'active' : '' }}">
                     <i class="bi bi-cloud-upload me-2"></i> Importar ARCA
                 </a>
+                <a href="{{ route('compras.sincronizar-arca') }}"
+                   class="nav-link {{ request()->routeIs('compras.sincronizar-arca') ? 'active' : '' }}">
+                    <i class="bi bi-cloud-arrow-down me-2"></i> Sincronizar ARCA
+                </a>
                 @endcan
             </div>
         </li>
@@ -317,6 +321,12 @@
                 <a href="{{ route('finanzas.reintegros.index') }}"
                    class="nav-link {{ request()->routeIs('finanzas.reintegros.*') ? 'active' : '' }}">
                     <i class="bi bi-arrow-return-left me-2"></i> Reintegros IVA
+                </a>
+                @endcan
+                @can('finanzas.gastos.gestionar')
+                <a href="{{ route('finanzas.gastos.index') }}"
+                   class="nav-link {{ request()->routeIs('finanzas.gastos.*') ? 'active' : '' }}">
+                    <i class="bi bi-cash-stack me-2"></i> Gastos NO ARCA
                 </a>
                 @endcan
             </div>
@@ -407,9 +417,13 @@
                 </a>
                 @endcan
                 @can('admin.roles.gestionar')
+                <a href="{{ route('admin.empresas.index') }}"
+                   class="nav-link {{ request()->routeIs('admin.empresas.*') ? 'active' : '' }}">
+                    <i class="bi bi-buildings me-2"></i> Empresas
+                </a>
                 <a href="{{ route('sistema.empresa') }}"
                    class="nav-link {{ request()->routeIs('sistema.empresa') ? 'active' : '' }}">
-                    <i class="bi bi-building-gear me-2"></i> Empresa
+                    <i class="bi bi-building-gear me-2"></i> Mi empresa
                 </a>
                 <a href="{{ route('sistema.roles') }}"
                    class="nav-link {{ request()->routeIs('sistema.roles') ? 'active' : '' }}">

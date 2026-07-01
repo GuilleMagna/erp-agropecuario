@@ -45,10 +45,17 @@ class Empresa extends Model
         'logo_url',
         'moneda_default',
         'activa',
+        'arca_cuit_login',
+        'arca_clave_fiscal',
+        'arca_cuit_representado',
+        'arca_nombre_representado',
+        'arca_activo',
     ];
 
     protected $casts = [
-        'activa' => 'boolean',
+        'activa'      => 'boolean',
+        'arca_activo' => 'boolean',
+        'arca_clave_fiscal' => 'encrypted',
     ];
 
     public function establecimientos(): HasMany
