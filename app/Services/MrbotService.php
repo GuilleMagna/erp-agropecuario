@@ -76,9 +76,20 @@ class MrbotService
         foreach ($comprobantes as $item) {
             $fila = $this->parsearComprobante($item);
 
-            if ($fila === null) { $resultado['errores']++; continue; }
+            if ($fila === null) {
+                Log::warning('MrbotService: comprobante descartado (datos insuficientes)', ['item' => $item]);
+                $resultado['errores']++;
+                continue;
+            }
             if ($fila['estado'] === 'duplicado') { $resultado['duplicadas']++; continue; }
-            if ($fila['estado'] === 'error') { $resultado['errores']++; continue; }
+            if ($fila['estado'] === 'error') {
+                Log::warning('MrbotService: comprobante con error de validación', [
+                    'motivo' => $fila['error_msg'],
+                    'fila'   => $fila,
+                ]);
+                $resultado['errores']++;
+                continue;
+            }
 
             try {
                 $proveedor = null;

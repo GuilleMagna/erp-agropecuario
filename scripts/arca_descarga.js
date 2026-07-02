@@ -55,24 +55,36 @@ function screenshot(page, nombre) {
 }
 
 // ── Helpers de interacción ────────────────────────────────────────────────────
+
+// Devuelve todos los contextos donde buscar: la página principal + cada iframe
+function allFrames(page) {
+    return [page, ...page.frames().filter(f => f !== page.mainFrame()).map(f => f)];
+}
+
 async function clickFirst(page, selectors, timeout = 5000) {
-    for (const sel of selectors) {
-        try {
-            await page.click(sel, { timeout });
-            return true;
-        } catch { }
+    const contexts = allFrames(page);
+    for (const ctx of contexts) {
+        for (const sel of selectors) {
+            try {
+                await ctx.click(sel, { timeout });
+                return true;
+            } catch { }
+        }
     }
     return false;
 }
 
 async function fillFirst(page, selectors, value, timeout = 5000) {
-    for (const sel of selectors) {
-        try {
-            const el = page.locator(sel).first();
-            await el.waitFor({ state: 'visible', timeout });
-            await el.fill(value);
-            return true;
-        } catch { }
+    const contexts = allFrames(page);
+    for (const ctx of contexts) {
+        for (const sel of selectors) {
+            try {
+                const el = ctx.locator(sel).first();
+                await el.waitFor({ state: 'visible', timeout });
+                await el.fill(value);
+                return true;
+            } catch { }
+        }
     }
     return false;
 }
@@ -87,10 +99,13 @@ function fmtFecha(iso) {
 async function login(page) {
     log('Navegando al login de ARCA...');
     await page.goto('https://auth.afip.gob.ar/contribuyente_/login.xhtml', {
-        waitUntil: 'domcontentloaded', timeout: 30000
+        waitUntil: 'load', timeout: 30000
     });
-    await page.waitForTimeout(1500);
+    await page.waitForTimeout(3000);
     await screenshot(page, '01_login_inicio');
+
+    // AFIP espera solo dígitos en el campo CUIT (sin guiones)
+    const cuitSoloDigitos = CUIT.replace(/-/g, '');
 
     // Ingresar CUIT
     log('Ingresando CUIT...');
@@ -99,7 +114,7 @@ async function login(page) {
         'input#F1', 'input[name="F1"]',
         'input[placeholder*="CUIT" i]', 'input[placeholder*="cuit" i]',
         'input[id*="cuit" i]', 'input[type="text"]',
-    ], CUIT);
+    ], cuitSoloDigitos);
     if (!okCuit) {
         await screenshot(page, '01_error_cuit');
         throw new Error('No se encontró el campo CUIT.');
