@@ -176,6 +176,14 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('can:finanzas.gastos.gestionar')
         ->name('finanzas.gastos.index');
 
+    // Switcher de empresa para administrador_sistema
+    Route::post('/empresa/cambiar', function (\Illuminate\Http\Request $request) {
+        abort_unless(auth()->user()->hasRole('administrador_sistema'), 403);
+        $empresa = \App\Models\Empresa::findOrFail($request->input('empresa_id'));
+        session(['empresa_activa_id' => $empresa->id]);
+        return redirect()->back();
+    })->name('empresa.cambiar');
+
 });
 
 require __DIR__.'/auth.php';

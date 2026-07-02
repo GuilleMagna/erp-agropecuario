@@ -47,30 +47,47 @@ trait PerteneceAEmpresa
         }
 
         static::addGlobalScope('empresa', function (Builder $builder) {
-            if (auth()->check() && auth()->user()->id_empresa) {
-                $builder->where(
-                    $builder->getModel()->getTable().'.id_empresa',
-                    auth()->user()->id_empresa
-                );
+            if (auth()->check()) {
+                $empresaId = self::resolverEmpresaActiva();
+                if ($empresaId) {
+                    $builder->where(
+                        $builder->getModel()->getTable().'.id_empresa',
+                        $empresaId
+                    );
+                }
             }
         });
 
-        // Al crear un registro nuevo, completar automáticamente id_empresa
-        // con la empresa del usuario autenticado, para no tener que pasarlo
-        // a mano en cada Livewire::component o Controller que da de alta algo.
+        // Al crear un registro nuevo, completar automáticamente id_empresa.
         static::creating(function (Model $model) {
             if (auth()->check() && empty($model->id_empresa)) {
-                $model->id_empresa = auth()->user()->id_empresa;
+                $model->id_empresa = self::resolverEmpresaActiva();
             }
         });
     }
 
     /**
-     * Scope local explícito para los casos donde sí se necesita consultar
-     * a través de empresas (por ejemplo, un panel de soporte interno de
-     * Nakama que diera servicio a más de un cliente con este mismo sistema,
-     * escenario contemplado pero no activo en el MVP de esta empresa,
-     * ver Documento 03, criterios de diseño, sección 1).
+     * Devuelve el UUID de la empresa activa para el request actual.
+     * Para administrador_sistema usa la empresa elegida en sesión si la hay;
+     * para el resto siempre usa la empresa asignada al usuario.
+     */
+    public static function resolverEmpresaActiva(): ?string
+    {
+        if (!auth()->check()) return null;
+
+        $user = auth()->user();
+
+        if ($user->hasRole('administrador_sistema')) {
+            $enSesion = session('empresa_activa_id');
+            if ($enSesion) return $enSesion;
+        }
+
+        return $user->id_empresa;
+    }
+
+    /**
+     * Scope local para consultas que deben cruzar todas las empresas
+     * (reportes consolidados, paneles de administración, etc.).
      */
     public function scopeSinFiltroDeEmpresa(Builder $query): Builder
     {

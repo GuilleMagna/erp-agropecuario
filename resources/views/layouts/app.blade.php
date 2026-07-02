@@ -457,10 +457,33 @@
     <div class="topbar">
         <span class="page-title">@yield('title', 'Dashboard')</span>
         <div class="d-flex align-items-center gap-3">
+            @if($todasEmpresas->count() > 1)
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle py-1 px-2"
+                        type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                        style="font-size:.8rem;">
+                    <i class="bi bi-building me-1"></i>{{ $empresaActiva?->razon_social ?? '—' }}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                    @foreach($todasEmpresas as $emp)
+                    <li>
+                        <form method="POST" action="{{ route('empresa.cambiar') }}">
+                            @csrf
+                            <input type="hidden" name="empresa_id" value="{{ $emp->id }}">
+                            <button type="submit"
+                                    class="dropdown-item {{ $emp->id === ($empresaActiva?->id) ? 'active' : '' }}">
+                                <i class="bi bi-building me-2"></i>{{ $emp->razon_social }}
+                            </button>
+                        </form>
+                    </li>
+                    @endforeach
+                </ul>
+            </div>
+            @else
             <span class="text-muted small">
-                <i class="bi bi-building me-1"></i>
-                {{ auth()->user()->empresa->razon_social ?? '' }}
+                <i class="bi bi-building me-1"></i>{{ $empresaActiva?->razon_social ?? auth()->user()->empresa?->razon_social ?? '' }}
             </span>
+            @endif
             <span class="fw-semibold small text-secondary">
                 {{ auth()->user()->nombre_completo }}
             </span>

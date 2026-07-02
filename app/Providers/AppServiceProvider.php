@@ -2,8 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\Empresa;
+use App\Traits\PerteneceAEmpresa;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -33,5 +36,19 @@ class AppServiceProvider extends ServiceProvider
         if (app()->isProduction()) {
             URL::forceScheme('https');
         }
+
+        // Pasa empresa activa y lista de empresas al layout principal
+        View::composer('layouts.app', function ($view) {
+            if (!auth()->check()) return;
+
+            $empresaActivaId = PerteneceAEmpresa::resolverEmpresaActiva();
+            $empresaActiva   = $empresaActivaId ? Empresa::find($empresaActivaId) : null;
+
+            $todasEmpresas = auth()->user()->hasRole('administrador_sistema')
+                ? Empresa::where('activa', true)->orderBy('razon_social')->get()
+                : collect();
+
+            $view->with(compact('empresaActiva', 'todasEmpresas'));
+        });
     }
 }
