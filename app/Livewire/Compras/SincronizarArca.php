@@ -34,6 +34,7 @@ class SincronizarArca extends Component
     public function sincronizar(MrbotService $mrbot): void
     {
         Gate::authorize('compras.crear');
+        set_time_limit(300); // el script Node puede tardar hasta 90s por empresa
 
         $this->validate([
             'desde'     => 'required|date',
