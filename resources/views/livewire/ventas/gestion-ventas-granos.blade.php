@@ -54,11 +54,11 @@
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small fw-semibold text-muted mb-1">Desde</label>
-                    <input type="date" class="form-control" wire:model.live="filtroFechaDesde">
+                    <input type="date" class="form-control" wire:model.live="filtroFechaDesde" value="{{ $filtroFechaDesde }}">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small fw-semibold text-muted mb-1">Hasta</label>
-                    <input type="date" class="form-control" wire:model.live="filtroFechaHasta">
+                    <input type="date" class="form-control" wire:model.live="filtroFechaHasta" value="{{ $filtroFechaHasta }}">
                 </div>
             </div>
         </div>

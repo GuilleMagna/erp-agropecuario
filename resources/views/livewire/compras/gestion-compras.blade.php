@@ -65,11 +65,11 @@
                 </div>
                 <div class="col-md-1">
                     <input type="date" class="form-control form-control-sm" wire:model.live="filtroFechaDesde"
-                           title="Desde">
+                           value="{{ $filtroFechaDesde }}" title="Desde">
                 </div>
                 <div class="col-md-1">
                     <input type="date" class="form-control form-control-sm" wire:model.live="filtroFechaHasta"
-                           title="Hasta">
+                           value="{{ $filtroFechaHasta }}" title="Hasta">
                 </div>
                 <div class="col-md-1">
                     <select class="form-select form-select-sm" wire:model.live="filtroEstablecimiento">
