@@ -103,6 +103,26 @@
                             @php $valor = $datosMes['empresas'][$empresa->id][$clave]; @endphp
                             <td class="text-end font-monospace small {{ $clave === 'saldo' && $valor < 0 ? 'text-info' : '' }}">
                                 ${{ number_format($valor, 2, ',', '.') }}
+                                @if ($clave === 'credito')
+                                    <a href="{{ route('compras.index', ['filtroFechaDesde' => $datosMes['desde'], 'filtroFechaHasta' => $datosMes['hasta'], 'empresa' => $empresa->id]) }}"
+                                       target="_blank" class="text-muted ms-1" title="Ver comprobantes de compra del período">
+                                        <i class="bi bi-box-arrow-up-right"></i>
+                                    </a>
+                                @elseif ($clave === 'debito')
+                                    <a href="{{ route('ventas.granos.index', ['filtroFechaDesde' => $datosMes['desde'], 'filtroFechaHasta' => $datosMes['hasta'], 'empresa' => $empresa->id]) }}"
+                                       target="_blank" class="text-muted ms-1" title="Ver ventas de granos del período">
+                                        <i class="bi bi-basket"></i>
+                                    </a>
+                                    <a href="{{ route('ventas.hacienda.index', ['filtroFechaDesde' => $datosMes['desde'], 'filtroFechaHasta' => $datosMes['hasta'], 'empresa' => $empresa->id]) }}"
+                                       target="_blank" class="text-muted ms-1" title="Ver ventas de hacienda del período">
+                                        <i class="bi bi-cursor"></i>
+                                    </a>
+                                @elseif ($clave === 'devolucion')
+                                    <a href="{{ route('finanzas.reintegros.index', ['filtroPeriodo' => $datosMes['periodo'], 'empresa' => $empresa->id]) }}"
+                                       target="_blank" class="text-muted ms-1" title="Ver reintegros de IVA del período">
+                                        <i class="bi bi-box-arrow-up-right"></i>
+                                    </a>
+                                @endif
                             </td>
                         @endforeach
                         <td class="text-end pe-3 font-monospace fw-semibold small">

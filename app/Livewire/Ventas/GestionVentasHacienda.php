@@ -4,19 +4,28 @@ namespace App\Livewire\Ventas;
 
 use App\Models\Establecimiento;
 use App\Models\VentaHacienda;
+use App\Traits\CambiaEmpresaDesdeQuery;
 use Illuminate\Support\Facades\Gate;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 class GestionVentasHacienda extends Component
 {
-    use WithPagination;
+    use WithPagination, CambiaEmpresaDesdeQuery;
 
     public string $busqueda         = '';
     public string $filtroCategoria  = '';
     public string $filtroEstado     = '';
+    #[Url]
     public string $filtroFechaDesde = '';
+    #[Url]
     public string $filtroFechaHasta = '';
+
+    public function mount(): void
+    {
+        $this->switchEmpresaDesdeQuery();
+    }
 
     public bool    $modalAbierto    = false;
     public bool    $modoEdicion     = false;

@@ -4,16 +4,24 @@ namespace App\Livewire\Finanzas;
 
 use App\Models\PeriodoFiscal;
 use App\Models\ReintegroIva;
+use App\Traits\CambiaEmpresaDesdeQuery;
 use Illuminate\Support\Facades\Gate;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 class GestionReintegrosIva extends Component
 {
-    use WithPagination;
+    use WithPagination, CambiaEmpresaDesdeQuery;
 
     public string $filtroEstado  = '';
+    #[Url]
     public string $filtroPeriodo = '';
+
+    public function mount(): void
+    {
+        $this->switchEmpresaDesdeQuery();
+    }
 
     public bool    $modalAbierto       = false;
     public bool    $modoEdicion        = false;

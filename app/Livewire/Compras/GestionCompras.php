@@ -10,13 +10,15 @@ use App\Models\Insumo;
 use App\Models\Lote;
 use App\Models\MovimientoInsumo;
 use App\Models\Proveedor;
+use App\Traits\CambiaEmpresaDesdeQuery;
 use Illuminate\Support\Facades\Gate;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 class GestionCompras extends Component
 {
-    use WithPagination;
+    use WithPagination, CambiaEmpresaDesdeQuery;
 
     // Filtros
     public string $busqueda              = '';
@@ -24,8 +26,15 @@ class GestionCompras extends Component
     public string $filtroEstado          = '';
     public string $filtroActividad       = '';
     public string $filtroEstablecimiento = '';
+    #[Url]
     public string $filtroFechaDesde      = '';
+    #[Url]
     public string $filtroFechaHasta      = '';
+
+    public function mount(): void
+    {
+        $this->switchEmpresaDesdeQuery();
+    }
 
     // Modal individual
     public bool    $modalAbierto     = false;

@@ -56,6 +56,9 @@ class ReporteIva extends Component
 
             $meses[$mes] = [
                 'nombre' => ucfirst(Carbon::createFromDate($anio, $mes, 1)->locale('es')->isoFormat('MMM')),
+                'desde' => Carbon::createFromDate($anio, $mes, 1)->format('Y-m-d'),
+                'hasta' => Carbon::createFromDate($anio, $mes, 1)->endOfMonth()->format('Y-m-d'),
+                'periodo' => $periodo,
                 'empresas' => $filaEmpresas,
                 'total' => $totalMes,
             ];
