@@ -92,8 +92,24 @@
                         @php $e = $datosMes['empresas'][$empresa->id]; @endphp
                         <tr>
                             <td class="ps-3">{{ $datosMes['nombre'] }}</td>
-                            <td class="text-end font-monospace text-success small">${{ number_format($e['ingresos'], 2, ',', '.') }}</td>
-                            <td class="text-end font-monospace text-danger small">${{ number_format($e['egresos'], 2, ',', '.') }}</td>
+                            <td class="text-end font-monospace text-success small">
+                                ${{ number_format($e['ingresos'], 2, ',', '.') }}
+                                <a href="{{ route('ventas.granos.index', ['filtroFechaDesde' => $datosMes['desde'], 'filtroFechaHasta' => $datosMes['hasta'], 'empresa' => $empresa->id]) }}"
+                                   target="_blank" class="text-muted ms-1" title="Ver ventas de granos del período">
+                                    <i class="bi bi-basket"></i>
+                                </a>
+                                <a href="{{ route('ventas.hacienda.index', ['filtroFechaDesde' => $datosMes['desde'], 'filtroFechaHasta' => $datosMes['hasta'], 'empresa' => $empresa->id]) }}"
+                                   target="_blank" class="text-muted ms-1" title="Ver ventas de hacienda del período">
+                                    <i class="bi bi-cursor"></i>
+                                </a>
+                            </td>
+                            <td class="text-end font-monospace text-danger small">
+                                ${{ number_format($e['egresos'], 2, ',', '.') }}
+                                <a href="{{ route('compras.index', ['filtroFechaDesde' => $datosMes['desde'], 'filtroFechaHasta' => $datosMes['hasta'], 'empresa' => $empresa->id]) }}"
+                                   target="_blank" class="text-muted ms-1" title="Ver comprobantes de compra del período">
+                                    <i class="bi bi-box-arrow-up-right"></i>
+                                </a>
+                            </td>
                             <td class="text-end font-monospace small fw-semibold {{ $e['resultado'] < 0 ? 'text-warning-emphasis' : '' }}">${{ number_format($e['resultado'], 2, ',', '.') }}</td>
                             <td class="text-end pe-3 font-monospace small {{ $e['acumulado'] < 0 ? 'text-warning-emphasis' : 'text-primary' }}">${{ number_format($e['acumulado'], 2, ',', '.') }}</td>
                         </tr>
@@ -127,7 +143,13 @@
                             <td class="ps-3">{{ $datosMes['nombre'] }}</td>
                             <td class="text-end font-monospace text-success small">${{ number_format($datosMes['total']['ingresos'], 2, ',', '.') }}</td>
                             <td class="text-end font-monospace text-danger small">${{ number_format($datosMes['total']['egresos'] - $datosMes['total']['gastos_no_arca'], 2, ',', '.') }}</td>
-                            <td class="text-end font-monospace text-danger small">${{ number_format($datosMes['total']['gastos_no_arca'], 2, ',', '.') }}</td>
+                            <td class="text-end font-monospace text-danger small">
+                                ${{ number_format($datosMes['total']['gastos_no_arca'], 2, ',', '.') }}
+                                <a href="{{ route('finanzas.gastos.index', ['mesSeleccionado' => $datosMes['periodo']]) }}"
+                                   target="_blank" class="text-muted ms-1" title="Ver gastos NO ARCA del período">
+                                    <i class="bi bi-box-arrow-up-right"></i>
+                                </a>
+                            </td>
                             <td class="text-end font-monospace small fw-semibold {{ $datosMes['total']['resultado'] < 0 ? 'text-warning-emphasis' : '' }}">${{ number_format($datosMes['total']['resultado'], 2, ',', '.') }}</td>
                             <td class="text-end pe-3 font-monospace small fw-semibold {{ $datosMes['total']['acumulado'] < 0 ? 'text-warning-emphasis' : 'text-primary' }}">${{ number_format($datosMes['total']['acumulado'], 2, ',', '.') }}</td>
                         </tr>

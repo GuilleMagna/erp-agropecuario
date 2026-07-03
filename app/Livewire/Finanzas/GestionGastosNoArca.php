@@ -7,12 +7,14 @@ use App\Models\PagoGastoNoArca;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class GestionGastosNoArca extends Component
 {
     // ── Vista ────────────────────────────────────────────────────────────────
     public string $vistaActiva  = 'pagos';   // pagos | catalogo
+    #[Url]
     public string $mesSeleccionado = '';     // YYYY-MM
 
     // ── Pagos del mes (grilla inline) ────────────────────────────────────────
@@ -35,7 +37,7 @@ class GestionGastosNoArca extends Component
 
     public function mount(): void
     {
-        $this->mesSeleccionado = now()->format('Y-m');
+        $this->mesSeleccionado = $this->mesSeleccionado ?: now()->format('Y-m');
         $this->cargarPagos();
     }
 
