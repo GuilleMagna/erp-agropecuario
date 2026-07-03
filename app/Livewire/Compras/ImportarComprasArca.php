@@ -335,16 +335,29 @@ class ImportarComprasArca extends Component
         // Nombre del proveedor
         $nombre = $c['nombre'] !== null ? trim((string)($row[$c['nombre']] ?? '')) : '';
 
-        // Importes
-        $neto   = ($c['neto']    !== null ? $this->parsearImporte($row[$c['neto']]    ?? null) : null) ?? 0.0;
-        $netoNg = ($c['neto_ng'] !== null ? $this->parsearImporte($row[$c['neto_ng']] ?? null) : null) ?? 0.0;
-        $exento = ($c['exento']  !== null ? $this->parsearImporte($row[$c['exento']]  ?? null) : null) ?? 0.0;
+        // Moneda y tipo de cambio: ARCA informa el neto/IVA/total en la moneda
+        // original del comprobante (por ej. USD). Si no se convierte a ARS acá,
+        // un comprobante en dólares queda guardado con el valor numérico del
+        // dólar tratado como si fuera pesos.
+        $monedaRaw  = $c['moneda'] !== null ? strtoupper(trim((string)($row[$c['moneda']] ?? ''))) : '';
+        $tipoCambio = $c['tc']     !== null ? ($this->parsearImporte($row[$c['tc']] ?? null) ?? 1.0) : 1.0;
+        $factorConversion = (!in_array($monedaRaw, ['', 'ARS', '$', 'PESOS', 'PES'], true) && $tipoCambio > 0)
+            ? $tipoCambio
+            : 1.0;
+        if ($total !== null) {
+            $total *= $factorConversion;
+        }
 
-        $iva21  = ($c['iva_21']  !== null ? $this->parsearImporte($row[$c['iva_21']]  ?? null) : null) ?? 0.0;
-        $iva105 = ($c['iva_105'] !== null ? $this->parsearImporte($row[$c['iva_105']] ?? null) : null) ?? 0.0;
-        $iva27  = ($c['iva_27']  !== null ? $this->parsearImporte($row[$c['iva_27']]  ?? null) : null) ?? 0.0;
-        $iva25  = ($c['iva_25']  !== null ? $this->parsearImporte($row[$c['iva_25']]  ?? null) : null) ?? 0.0;
-        $iva5   = ($c['iva_5']   !== null ? $this->parsearImporte($row[$c['iva_5']]   ?? null) : null) ?? 0.0;
+        // Importes (ya convertidos a ARS)
+        $neto   = (($c['neto']    !== null ? $this->parsearImporte($row[$c['neto']]    ?? null) : null) ?? 0.0) * $factorConversion;
+        $netoNg = (($c['neto_ng'] !== null ? $this->parsearImporte($row[$c['neto_ng']] ?? null) : null) ?? 0.0) * $factorConversion;
+        $exento = (($c['exento']  !== null ? $this->parsearImporte($row[$c['exento']]  ?? null) : null) ?? 0.0) * $factorConversion;
+
+        $iva21  = (($c['iva_21']  !== null ? $this->parsearImporte($row[$c['iva_21']]  ?? null) : null) ?? 0.0) * $factorConversion;
+        $iva105 = (($c['iva_105'] !== null ? $this->parsearImporte($row[$c['iva_105']] ?? null) : null) ?? 0.0) * $factorConversion;
+        $iva27  = (($c['iva_27']  !== null ? $this->parsearImporte($row[$c['iva_27']]  ?? null) : null) ?? 0.0) * $factorConversion;
+        $iva25  = (($c['iva_25']  !== null ? $this->parsearImporte($row[$c['iva_25']]  ?? null) : null) ?? 0.0) * $factorConversion;
+        $iva5   = (($c['iva_5']   !== null ? $this->parsearImporte($row[$c['iva_5']]   ?? null) : null) ?? 0.0) * $factorConversion;
 
         $ivaTotal = round($iva21 + $iva105 + $iva27 + $iva25 + $iva5, 2);
         $subtotal = round($neto + $netoNg + $exento, 2);

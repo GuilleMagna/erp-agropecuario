@@ -249,22 +249,38 @@ class MrbotService
         $cuit    = $this->normalizarCuit($cuitRaw);
         $nombre  = (string)($n['denominacion'] ?? $n['denominacion_emisor'] ?? $n['denominaci_n_emisor'] ?? $n['razon_social'] ?? $n['nombre'] ?? '');
 
-        // ── Importes ──────────────────────────────────────────────────────
-        $neto   = $this->parsearImporte($n['imp_neto_gravado'] ?? $n['imp_neto_gravado_total'] ?? $n['neto_gravado'] ?? $n['neto'] ?? null) ?? 0.0;
-        $netoNg = $this->parsearImporte($n['imp_neto_no_gravado'] ?? $n['neto_no_gravado'] ?? null) ?? 0.0;
-        $exento = $this->parsearImporte($n['imp_op_exentas']      ?? $n['exento']          ?? null) ?? 0.0;
+        // ── Moneda y tipo de cambio ────────────────────────────────────────
+        // ARCA informa el neto/IVA/total del comprobante en su moneda original
+        // (por ej. USD). Si no se convierte a ARS acá, un comprobante en dólares
+        // queda guardado con el valor numérico del dólar tratado como si fuera
+        // pesos (undercount de ~1/tipo_cambio).
+        $monedaRaw  = strtoupper(trim((string)($n['moneda'] ?? $n['tipo_moneda'] ?? $n['divisa'] ?? '')));
+        $tipoCambio = $this->parsearImporte(
+            $n['tipo_cambio'] ?? $n['tipo_de_cambio'] ?? $n['cotizacion'] ?? $n['tc'] ?? null
+        ) ?? 1.0;
+        $factorConversion = (!in_array($monedaRaw, ['', 'ARS', '$', 'PESOS', 'PES'], true) && $tipoCambio > 0)
+            ? $tipoCambio
+            : 1.0;
 
-        $iva21  = $this->parsearImporte($n['iva_21']  ?? $n['iva_21_']  ?? null) ?? 0.0;
-        $iva105 = $this->parsearImporte($n['iva_105'] ?? $n['iva_10_5'] ?? $n['iva_10,5'] ?? null) ?? 0.0;
-        $iva27  = $this->parsearImporte($n['iva_27']  ?? null) ?? 0.0;
-        $iva25  = $this->parsearImporte($n['iva_25']  ?? $n['iva_2_5']  ?? null) ?? 0.0;
-        $iva5   = $this->parsearImporte($n['iva_5']   ?? null) ?? 0.0;
+        // ── Importes (ya convertidos a ARS) ─────────────────────────────────
+        $neto   = ($this->parsearImporte($n['imp_neto_gravado'] ?? $n['imp_neto_gravado_total'] ?? $n['neto_gravado'] ?? $n['neto'] ?? null) ?? 0.0) * $factorConversion;
+        $netoNg = ($this->parsearImporte($n['imp_neto_no_gravado'] ?? $n['neto_no_gravado'] ?? null) ?? 0.0) * $factorConversion;
+        $exento = ($this->parsearImporte($n['imp_op_exentas']      ?? $n['exento']          ?? null) ?? 0.0) * $factorConversion;
+
+        $iva21  = ($this->parsearImporte($n['iva_21']  ?? $n['iva_21_']  ?? null) ?? 0.0) * $factorConversion;
+        $iva105 = ($this->parsearImporte($n['iva_105'] ?? $n['iva_10_5'] ?? $n['iva_10,5'] ?? null) ?? 0.0) * $factorConversion;
+        $iva27  = ($this->parsearImporte($n['iva_27']  ?? null) ?? 0.0) * $factorConversion;
+        $iva25  = ($this->parsearImporte($n['iva_25']  ?? $n['iva_2_5']  ?? null) ?? 0.0) * $factorConversion;
+        $iva5   = ($this->parsearImporte($n['iva_5']   ?? null) ?? 0.0) * $factorConversion;
 
         $ivaTotal = round($iva21 + $iva105 + $iva27 + $iva25 + $iva5, 2);
         $subtotal = round($neto + $netoNg + $exento, 2);
 
         $totalRaw = $n['imp_total'] ?? $n['total'] ?? $n['importe_total'] ?? null;
         $total    = $this->parsearImporte($totalRaw);
+        if ($total !== null) {
+            $total *= $factorConversion;
+        }
 
         if ($subtotal === 0.0 && $total !== null && $ivaTotal > 0) {
             $subtotal = round($total - $ivaTotal, 2);
