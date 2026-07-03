@@ -114,13 +114,18 @@ class ImportarVentasExcel extends Command
             $cantidadKg = (float) ($row[4] ?? 0);
             $precioKg = (float) ($row[6] ?? 0);
 
-            // Columna P (Subtotal, neto sin IVA/retenciones) es una fórmula con referencias
-            // estructuradas de tabla que PhpSpreadsheet no puede recalcular: se lee el valor
-            // cacheado que Excel guardó la última vez que se abrió/guardó el archivo.
-            $subtotal = (float) $sheet->getCell('P' . ($i + 1))->getOldCalculatedValue();
+            // Columna P (Subtotal, neto sin IVA/retenciones) suele ser una fórmula con
+            // referencias estructuradas de tabla que PhpSpreadsheet no puede recalcular: se
+            // lee el valor cacheado que Excel guardó la última vez que se abrió/guardó el
+            // archivo. Pero algunas filas tienen el subtotal tipeado a mano (sin fórmula),
+            // ahí getOldCalculatedValue() da null porque no hay nada cacheado.
+            $celdaSubtotal = $sheet->getCell('P' . ($i + 1));
+            $subtotal = (float) ($celdaSubtotal->isFormula()
+                ? $celdaSubtotal->getOldCalculatedValue()
+                : $celdaSubtotal->getValue());
 
-            if ($cantidadKg <= 0) {
-                $this->warn("Fila " . ($i + 1) . ": cantidad en 0, se omite.");
+            if ($cantidadKg <= 0 && $subtotal <= 0) {
+                $this->warn("Fila " . ($i + 1) . ": sin cantidad ni subtotal, se omite.");
                 $omitidas++;
                 continue;
             }
