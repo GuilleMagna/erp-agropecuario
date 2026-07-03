@@ -68,26 +68,43 @@ class PeriodoFiscal extends Model
 
     /**
      * Suma el IVA de compras del período (crédito fiscal).
+     *
+     * @param  string|null  $idEmpresa  Si se pasa, filtra por esa empresa cruzando el
+     *                                  scope multiempresa; si no, respeta la empresa activa.
      */
-    public function ivaCredito(): float
+    public function ivaCredito(?string $idEmpresa = null): float
     {
-        return (float) Compra::where('fecha', 'like', $this->periodo . '%')
-            ->where('estado', '!=', 'cancelada')
-            ->sum('iva_importe');
+        $query = Compra::where('fecha', 'like', $this->periodo . '%')
+            ->where('estado', '!=', 'cancelada');
+
+        if ($idEmpresa) {
+            $query = $query->sinFiltroDeEmpresa()->where('id_empresa', $idEmpresa);
+        }
+
+        return (float) $query->sum('iva_importe');
     }
 
     /**
      * Estima el IVA débito del período (10.5% sobre ventas confirmadas/cobradas).
+     *
+     * @param  string|null  $idEmpresa  Si se pasa, filtra por esa empresa cruzando el
+     *                                  scope multiempresa; si no, respeta la empresa activa.
      */
-    public function ivaDebito(): float
+    public function ivaDebito(?string $idEmpresa = null): float
     {
-        $granos = (float) VentaGrano::where('fecha', 'like', $this->periodo . '%')
-            ->whereNotIn('estado', ['cancelada', 'borrador'])
-            ->sum('importe_total');
+        $granosQuery = VentaGrano::where('fecha', 'like', $this->periodo . '%')
+            ->whereNotIn('estado', ['cancelada', 'borrador']);
 
-        $hacienda = (float) VentaHacienda::where('fecha', 'like', $this->periodo . '%')
-            ->where('estado', '!=', 'cancelada')
-            ->sum('importe_total');
+        $haciendaQuery = VentaHacienda::where('fecha', 'like', $this->periodo . '%')
+            ->where('estado', '!=', 'cancelada');
+
+        if ($idEmpresa) {
+            $granosQuery = $granosQuery->sinFiltroDeEmpresa()->where('id_empresa', $idEmpresa);
+            $haciendaQuery = $haciendaQuery->sinFiltroDeEmpresa()->where('id_empresa', $idEmpresa);
+        }
+
+        $granos = (float) $granosQuery->sum('importe_total');
+        $hacienda = (float) $haciendaQuery->sum('importe_total');
 
         return ($granos + $hacienda) * 0.105;
     }
@@ -95,8 +112,8 @@ class PeriodoFiscal extends Model
     /**
      * Saldo IVA: positivo = a pagar, negativo = a favor del contribuyente.
      */
-    public function saldoIva(): float
+    public function saldoIva(?string $idEmpresa = null): float
     {
-        return $this->ivaDebito() - $this->ivaCredito();
+        return $this->ivaDebito($idEmpresa) - $this->ivaCredito($idEmpresa);
     }
 }

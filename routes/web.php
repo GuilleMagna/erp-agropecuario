@@ -150,6 +150,14 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('can:reportes.fiscales.ver')
         ->name('reportes.fiscal');
 
+    Route::get('/reportes/iva', fn () => view('reportes.reporte-iva'))
+        ->middleware('can:reportes.iva.ver')
+        ->name('reportes.iva');
+
+    Route::get('/reportes/ganancias', fn () => view('reportes.reporte-ganancias'))
+        ->middleware('can:reportes.ganancias.ver')
+        ->name('reportes.ganancias');
+
     // Feedlot
     Route::get('/feedlot/corrales', fn () => view('feedlot.gestion-corrales'))
         ->middleware('can:feedlot.corrales.ver')

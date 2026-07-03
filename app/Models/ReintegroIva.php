@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\PerteneceAEmpresa;
 use App\Traits\UsaUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,11 +11,12 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class ReintegroIva extends Model
 {
-    use HasFactory, UsaUuid, LogsActivity;
+    use HasFactory, UsaUuid, PerteneceAEmpresa, LogsActivity;
 
     protected $table = 'reintegros_iva';
 
     protected $fillable = [
+        'id_empresa',
         'periodo',
         'id_periodo_fiscal',
         'importe',

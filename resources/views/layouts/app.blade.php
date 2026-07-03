@@ -360,7 +360,7 @@
         @endcanany
 
         {{-- ── REPORTES ─────────────────────────────────────── --}}
-        @canany(['reportes.productivos.ver','reportes.economicos.ver','reportes.fiscales.ver'])
+        @canany(['reportes.productivos.ver','reportes.economicos.ver','reportes.fiscales.ver','reportes.iva.ver','reportes.ganancias.ver'])
         <li>
             <button class="sec-toggle" type="button"
                     data-bs-toggle="collapse" data-bs-target="#secReportes"
@@ -385,6 +385,18 @@
                 <a href="{{ route('reportes.fiscal') }}"
                    class="nav-link {{ request()->routeIs('reportes.fiscal') ? 'active' : '' }}">
                     <i class="bi bi-receipt-cutoff me-2"></i> Fiscal / IVA
+                </a>
+                @endcan
+                @can('reportes.iva.ver')
+                <a href="{{ route('reportes.iva') }}"
+                   class="nav-link {{ request()->routeIs('reportes.iva') ? 'active' : '' }}">
+                    <i class="bi bi-percent me-2"></i> IVA Mensual
+                </a>
+                @endcan
+                @can('reportes.ganancias.ver')
+                <a href="{{ route('reportes.ganancias') }}"
+                   class="nav-link {{ request()->routeIs('reportes.ganancias') ? 'active' : '' }}">
+                    <i class="bi bi-graph-up-arrow me-2"></i> Ganancias
                 </a>
                 @endcan
             </div>
