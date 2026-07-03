@@ -133,11 +133,16 @@
                         </tr>
                     @endforeach
                 </tbody>
+                @php
+                    $totalGastosNoArca = collect($meses)->sum(fn ($m) => $m['total']['gastos_no_arca']);
+                    $totalEgresosCompras = $totalesAnio['egresos'] - $totalGastosNoArca;
+                @endphp
                 <tfoot class="table-light fw-bold">
                     <tr>
                         <td class="ps-3">Total {{ $anio }}</td>
                         <td class="text-end font-monospace">${{ number_format($totalesAnio['ingresos'], 2, ',', '.') }}</td>
-                        <td colspan="2" class="text-end font-monospace">${{ number_format($totalesAnio['egresos'], 2, ',', '.') }}</td>
+                        <td class="text-end font-monospace">${{ number_format($totalEgresosCompras, 2, ',', '.') }}</td>
+                        <td class="text-end font-monospace">${{ number_format($totalGastosNoArca, 2, ',', '.') }}</td>
                         <td class="text-end font-monospace">${{ number_format($totalesAnio['resultado'], 2, ',', '.') }}</td>
                         <td class="text-end pe-3"></td>
                     </tr>
