@@ -23,7 +23,7 @@
             <button class="btn btn-outline-success"
                     wire:click="liquidarPendientes"
                     wire:loading.attr="disabled"
-                    wire:confirm="Â¿Liquidar todos los jornales pendientes del filtro actual?">
+                    wire:confirm="¿Liquidar todos los jornales pendientes del filtro actual?">
                 <i class="bi bi-check2-all me-1"></i> Liquidar pendientes
             </button>
             <button class="btn btn-primary" wire:click="abrirModalCrear" wire:loading.attr="disabled">
@@ -93,13 +93,13 @@
         <div class="card-body py-3">
             <div class="row g-3 align-items-end">
                 <div class="col-md-3">
-                    <label class="form-label small fw-semibold text-muted mb-1">BÃºsqueda</label>
+                    <label class="form-label small fw-semibold text-muted mb-1">Búsqueda</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0">
                             <i class="bi bi-search text-muted"></i>
                         </span>
                         <input type="text" class="form-control border-start-0 ps-0"
-                               placeholder="Empleado, tareaâ€¦"
+                               placeholder="Empleado, tarea…"
                                wire:model.live.debounce.300ms="busqueda">
                     </div>
                 </div>
@@ -171,25 +171,25 @@
                         <td class="ps-4 text-nowrap">{{ $jornal->fecha->format('d/m/Y') }}</td>
                         <td>
                             <div class="fw-semibold">
-                                {{ $jornal->empleado ? $jornal->empleado->apellido . ', ' . $jornal->empleado->nombre : 'â€”' }}
+                                {{ $jornal->empleado ? $jornal->empleado->apellido . ', ' . $jornal->empleado->nombre : '—' }}
                             </div>
                             @if ($jornal->empleado?->categoria)
                                 <small class="text-muted">{{ $jornal->empleado->categoria_label }}</small>
                             @endif
                         </td>
-                        <td><small class="text-muted">{{ $jornal->establecimiento?->nombre ?? 'â€”' }}</small></td>
+                        <td><small class="text-muted">{{ $jornal->establecimiento?->nombre ?? '—' }}</small></td>
                         <td>
                             <span class="badge rounded-pill {{ $badgeJornada }}">{{ $jornal->tipo_jornada_label }}</span>
                         </td>
                         <td class="text-center">
-                            {{ $jornal->horas_trabajadas !== null ? number_format((float)$jornal->horas_trabajadas, 1, ',', '') . ' hs' : 'â€”' }}
+                            {{ $jornal->horas_trabajadas !== null ? number_format((float)$jornal->horas_trabajadas, 1, ',', '') . ' hs' : '—' }}
                         </td>
-                        <td><small>{{ $jornal->tarea ?? 'â€”' }}</small></td>
+                        <td><small>{{ $jornal->tarea ?? '—' }}</small></td>
                         <td class="text-end fw-semibold {{ $jornal->tipo_jornada === 'ausencia' ? 'text-muted' : '' }}">
                             @if ($jornal->tipo_jornada !== 'ausencia')
                                 ${{ number_format((float)$jornal->importe, 2, ',', '.') }}
                             @else
-                                <span class="text-muted">â€”</span>
+                                <span class="text-muted">—</span>
                             @endif
                         </td>
                         <td>
@@ -235,7 +235,7 @@
                 @if ($jornales->count())
                 <tfoot class="table-light">
                     <tr>
-                        <td colspan="6" class="ps-4 text-muted small">Total de la pÃ¡gina</td>
+                        <td colspan="6" class="ps-4 text-muted small">Total de la página</td>
                         <td class="text-end fw-bold">
                             ${{ number_format($jornales->sum(fn($j) => $j->tipo_jornada !== 'ausencia' ? (float)$j->importe : 0), 2, ',', '.') }}
                         </td>
@@ -346,7 +346,7 @@
                             <div class="col-12">
                                 <label class="form-label fw-semibold">Tarea realizada</label>
                                 <input type="text" class="form-control @error('tarea') is-invalid @enderror"
-                                       wire:model="tarea" placeholder="DescripciÃ³n de la tarea (siembra, cosecha, fumigaciÃ³nâ€¦)">
+                                       wire:model="tarea" placeholder="Descripción de la tarea (siembra, cosecha, fumigación…)">
                                 @error('tarea') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-12">

@@ -24,13 +24,13 @@
         <div class="card-body py-3">
             <div class="row g-3 align-items-end">
                 <div class="col-md-5">
-                    <label class="form-label small fw-semibold text-muted mb-1">BÃºsqueda</label>
+                    <label class="form-label small fw-semibold text-muted mb-1">Búsqueda</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0">
                             <i class="bi bi-search text-muted"></i>
                         </span>
                         <input type="text" class="form-control border-start-0 ps-0"
-                               placeholder="Nombre, banco, nÃºmeroâ€¦"
+                               placeholder="Nombre, banco, número…"
                                wire:model.live.debounce.300ms="busqueda">
                     </div>
                 </div>
@@ -106,7 +106,7 @@
                     @if ($cuenta->banco || $cuenta->numero_cuenta)
                     <div class="text-muted small mb-2">
                         @if ($cuenta->banco) {{ $cuenta->banco }} @endif
-                        @if ($cuenta->banco && $cuenta->numero_cuenta) Â· @endif
+                        @if ($cuenta->banco && $cuenta->numero_cuenta) · @endif
                         @if ($cuenta->numero_cuenta) <span class="font-monospace">{{ $cuenta->numero_cuenta }}</span> @endif
                     </div>
                     @endif
@@ -210,11 +210,11 @@
                             <div class="col-md-7">
                                 <label class="form-label fw-semibold">Banco / Entidad</label>
                                 <input type="text" class="form-control @error('banco') is-invalid @enderror"
-                                       wire:model="banco" placeholder="Ej: Banco NaciÃ³n Argentina">
+                                       wire:model="banco" placeholder="Ej: Banco Nación Argentina">
                                 @error('banco') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-5">
-                                <label class="form-label fw-semibold">NÂ° de cuenta / CBU</label>
+                                <label class="form-label fw-semibold">N° de cuenta / CBU</label>
                                 <input type="text" class="form-control font-monospace @error('numero_cuenta') is-invalid @enderror"
                                        wire:model="numero_cuenta" placeholder="0000000000">
                                 @error('numero_cuenta') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -245,7 +245,7 @@
                                 <label class="form-label fw-semibold">Observaciones</label>
                                 <textarea class="form-control @error('observaciones') is-invalid @enderror"
                                           wire:model="observaciones" rows="2"
-                                          placeholder="Notas internas sobre esta cuentaâ€¦"></textarea>
+                                          placeholder="Notas internas sobre esta cuenta…"></textarea>
                                 @error('observaciones') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                         </div>

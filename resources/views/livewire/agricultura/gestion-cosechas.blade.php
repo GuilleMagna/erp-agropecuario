@@ -29,18 +29,18 @@
         <div class="card-body py-3">
             <div class="row g-3 align-items-end">
                 <div class="col-md-4">
-                    <label class="form-label small fw-semibold text-muted mb-1">BÃºsqueda</label>
+                    <label class="form-label small fw-semibold text-muted mb-1">Búsqueda</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0">
                             <i class="bi bi-search text-muted"></i>
                         </span>
                         <input type="text" class="form-control border-start-0 ps-0"
-                               placeholder="Cultivo o variedadâ€¦"
+                               placeholder="Cultivo o variedad…"
                                wire:model.live.debounce.300ms="busqueda">
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label small fw-semibold text-muted mb-1">CampaÃ±a</label>
+                    <label class="form-label small fw-semibold text-muted mb-1">Campaña</label>
                     <select class="form-select" wire:model.live="filtroCampana">
                         <option value="">Todas</option>
                         @foreach ($campanas as $c)
@@ -55,7 +55,7 @@
                         @foreach ($siembrasOpciones as $s)
                             <option value="{{ $s->id }}">
                                 {{ \App\Models\Siembra::CULTIVOS[$s->cultivo] ?? $s->cultivo }}
-                                â€” {{ $s->lote->nombre ?? '?' }}
+                                — {{ $s->lote->nombre ?? '?' }}
                             </option>
                         @endforeach
                     </select>
@@ -73,11 +73,11 @@
                 <thead class="table-light">
                     <tr>
                         <th class="ps-4">Siembra</th>
-                        <th>CampaÃ±a / Lote</th>
+                        <th>Campaña / Lote</th>
                         <th>Fecha</th>
                         <th>Superficie</th>
                         <th>Rinde</th>
-                        <th>ProducciÃ³n</th>
+                        <th>Producción</th>
                         <th>Humedad</th>
                         <th class="pe-4 text-end">Acciones</th>
                     </tr>
@@ -87,15 +87,15 @@
                     <tr>
                         <td class="ps-4">
                             <div class="fw-semibold">
-                                {{ $cosecha->siembra ? ($cultivos[$cosecha->siembra->cultivo] ?? $cosecha->siembra->cultivo) : 'â€”' }}
+                                {{ $cosecha->siembra ? ($cultivos[$cosecha->siembra->cultivo] ?? $cosecha->siembra->cultivo) : '—' }}
                             </div>
                             @if ($cosecha->siembra?->variedad)
                                 <small class="text-muted">{{ $cosecha->siembra->variedad }}</small>
                             @endif
                         </td>
                         <td>
-                            <div>{{ $cosecha->siembra?->campana->nombre ?? 'â€”' }}</div>
-                            <small class="text-muted">{{ $cosecha->siembra?->lote->nombre ?? 'â€”' }}</small>
+                            <div>{{ $cosecha->siembra?->campana->nombre ?? '—' }}</div>
+                            <small class="text-muted">{{ $cosecha->siembra?->lote->nombre ?? '—' }}</small>
                         </td>
                         <td>{{ $cosecha->fecha_cosecha->format('d/m/Y') }}</td>
                         <td>{{ number_format($cosecha->superficie_cosechada_ha, 1) }} ha</td>
@@ -108,14 +108,14 @@
                                 <span class="fw-semibold">{{ number_format($cosecha->produccion_total_kg / 1000, 1) }}</span>
                                 <small class="text-muted">t</small>
                             @else
-                                <span class="text-muted">â€”</span>
+                                <span class="text-muted">—</span>
                             @endif
                         </td>
                         <td>
                             @if ($cosecha->humedad_porc !== null)
                                 {{ number_format($cosecha->humedad_porc, 1) }} %
                             @else
-                                <span class="text-muted">â€”</span>
+                                <span class="text-muted">—</span>
                             @endif
                         </td>
                         <td class="pe-4 text-end">
@@ -168,11 +168,11 @@
                                 <label class="form-label fw-semibold">Siembra <span class="text-danger">*</span></label>
                                 <select class="form-select @error('id_siembra') is-invalid @enderror"
                                         wire:model="id_siembra">
-                                    <option value="">Seleccionar siembraâ€¦</option>
+                                    <option value="">Seleccionar siembra…</option>
                                     @foreach ($siembrasOpciones as $s)
                                         <option value="{{ $s->id }}">
                                             {{ \App\Models\Siembra::CULTIVOS[$s->cultivo] ?? $s->cultivo }}
-                                            @if($s->variedad) â€” {{ $s->variedad }}@endif
+                                            @if($s->variedad) — {{ $s->variedad }}@endif
                                             | Lote: {{ $s->lote->nombre ?? '?' }}
                                             | {{ $s->campana->nombre ?? '?' }}
                                             ({{ $s->fecha_siembra->format('d/m/Y') }})
@@ -227,7 +227,7 @@
                                 <label class="form-label fw-semibold">Observaciones</label>
                                 <textarea class="form-control @error('observaciones') is-invalid @enderror"
                                           wire:model="observaciones" rows="2"
-                                          placeholder="Condiciones de cosecha, calidad del granoâ€¦"></textarea>
+                                          placeholder="Condiciones de cosecha, calidad del grano…"></textarea>
                                 @error('observaciones') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                         </div>

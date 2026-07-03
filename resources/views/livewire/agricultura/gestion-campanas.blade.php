@@ -15,12 +15,12 @@
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h5 class="mb-0 fw-bold text-dark">CampaÃ±as AgrÃ­colas</h5>
-            <small class="text-muted">PerÃ­odos productivos de la empresa</small>
+            <h5 class="mb-0 fw-bold text-dark">Campañas Agrícolas</h5>
+            <small class="text-muted">Períodos productivos de la empresa</small>
         </div>
         @can('agricultura.campanas.gestionar')
         <button class="btn btn-primary" wire:click="abrirModalCrear" wire:loading.attr="disabled">
-            <i class="bi bi-plus-lg me-1"></i> Nueva campaÃ±a
+            <i class="bi bi-plus-lg me-1"></i> Nueva campaña
         </button>
         @endcan
     </div>
@@ -29,13 +29,13 @@
         <div class="card-body py-3">
             <div class="row g-3 align-items-end">
                 <div class="col-md-7">
-                    <label class="form-label small fw-semibold text-muted mb-1">BÃºsqueda</label>
+                    <label class="form-label small fw-semibold text-muted mb-1">Búsqueda</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0">
                             <i class="bi bi-search text-muted"></i>
                         </span>
                         <input type="text" class="form-control border-start-0 ps-0"
-                               placeholder="Nombre de campaÃ±aâ€¦"
+                               placeholder="Nombre de campaña…"
                                wire:model.live.debounce.300ms="busqueda">
                     </div>
                 </div>
@@ -48,7 +48,7 @@
                     </select>
                 </div>
                 <div class="col-md-2 text-end">
-                    <span class="text-muted small">{{ $campanas->total() }} campaÃ±as</span>
+                    <span class="text-muted small">{{ $campanas->total() }} campañas</span>
                 </div>
             </div>
         </div>
@@ -59,7 +59,7 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th class="ps-4">CampaÃ±a</th>
+                        <th class="ps-4">Campaña</th>
                         <th class="text-center">Siembras</th>
                         <th class="text-center">Labores</th>
                         <th>Estado</th>
@@ -102,7 +102,7 @@
                             <button class="btn btn-sm {{ $campana->activo ? 'btn-outline-danger' : 'btn-outline-success' }}"
                                     wire:click="toggleActivo('{{ $campana->id }}')"
                                     wire:loading.attr="disabled"
-                                    wire:confirm="{{ $campana->activo ? 'Â¿Desactivar esta campaÃ±a?' : 'Â¿Activar esta campaÃ±a?' }}"
+                                    wire:confirm="{{ $campana->activo ? '¿Desactivar esta campaña?' : '¿Activar esta campaña?' }}"
                                     title="{{ $campana->activo ? 'Desactivar' : 'Activar' }}">
                                 <i class="bi bi-{{ $campana->activo ? 'toggle-on' : 'toggle-off' }}"></i>
                             </button>
@@ -113,7 +113,7 @@
                     <tr>
                         <td colspan="5" class="text-center text-muted py-5">
                             <i class="bi bi-calendar3 display-6 d-block mb-2 opacity-25"></i>
-                            No se encontraron campaÃ±as.
+                            No se encontraron campañas.
                         </td>
                     </tr>
                     @endforelse
@@ -134,7 +134,7 @@
                 <div class="modal-header border-bottom-0 pb-0">
                     <h5 class="modal-title fw-bold">
                         <i class="bi bi-calendar3 me-2 text-primary"></i>
-                        {{ $modoEdicion ? 'Editar campaÃ±a' : 'Nueva campaÃ±a' }}
+                        {{ $modoEdicion ? 'Editar campaña' : 'Nueva campaña' }}
                     </h5>
                     <button type="button" class="btn-close" wire:click="cerrarModal"></button>
                 </div>
@@ -144,14 +144,14 @@
                             <div class="col-12">
                                 <label class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control @error('nombre') is-invalid @enderror"
-                                       wire:model="nombre" placeholder="Ej: 2024/25, CampaÃ±a Fina 2025">
+                                       wire:model="nombre" placeholder="Ej: 2024/25, Campaña Fina 2025">
                                 @error('nombre') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-12">
-                                <label class="form-label fw-semibold">DescripciÃ³n</label>
+                                <label class="form-label fw-semibold">Descripción</label>
                                 <textarea class="form-control @error('descripcion') is-invalid @enderror"
                                           wire:model="descripcion" rows="3"
-                                          placeholder="Observaciones sobre la campaÃ±aâ€¦"></textarea>
+                                          placeholder="Observaciones sobre la campaña…"></textarea>
                                 @error('descripcion') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             @if ($modoEdicion)
@@ -160,7 +160,7 @@
                                     <input class="form-check-input" type="checkbox"
                                            wire:model="activo" id="switch-campana-activo">
                                     <label class="form-check-label fw-semibold" for="switch-campana-activo">
-                                        CampaÃ±a activa
+                                        Campaña activa
                                     </label>
                                 </div>
                             </div>
@@ -178,7 +178,7 @@
                         <span wire:loading.remove wire:target="guardar">
                             <i class="bi bi-check-lg me-1"></i>
                         </span>
-                        {{ $modoEdicion ? 'Guardar cambios' : 'Crear campaÃ±a' }}
+                        {{ $modoEdicion ? 'Guardar cambios' : 'Crear campaña' }}
                     </button>
                 </div>
             </div>

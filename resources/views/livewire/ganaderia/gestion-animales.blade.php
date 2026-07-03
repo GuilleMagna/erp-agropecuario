@@ -16,7 +16,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h5 class="mb-0 fw-bold text-dark">Animales</h5>
-            <small class="text-muted">PadrÃ³n individual de hacienda</small>
+            <small class="text-muted">Padrón individual de hacienda</small>
         </div>
         @can('ganaderia.animales.crear')
         <button class="btn btn-primary" wire:click="abrirModalCrear" wire:loading.attr="disabled">
@@ -30,13 +30,13 @@
         <div class="card-body py-3">
             <div class="row g-3 align-items-end">
                 <div class="col-md-3">
-                    <label class="form-label small fw-semibold text-muted mb-1">BÃºsqueda</label>
+                    <label class="form-label small fw-semibold text-muted mb-1">Búsqueda</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0">
                             <i class="bi bi-search text-muted"></i>
                         </span>
                         <input type="text" class="form-control border-start-0 ps-0"
-                               placeholder="Caravana, colorâ€¦"
+                               placeholder="Caravana, color…"
                                wire:model.live.debounce.300ms="busqueda">
                     </div>
                 </div>
@@ -50,7 +50,7 @@
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small fw-semibold text-muted mb-1">CategorÃ­a</label>
+                    <label class="form-label small fw-semibold text-muted mb-1">Categoría</label>
                     <select class="form-select" wire:model.live="filtroCategoria">
                         <option value="">Todas</option>
                         @foreach ($categorias as $val => $etq)
@@ -98,7 +98,7 @@
                 <thead class="table-light">
                     <tr>
                         <th class="ps-4">Caravana</th>
-                        <th>CategorÃ­a</th>
+                        <th>Categoría</th>
                         <th>Raza</th>
                         <th>Establecimiento</th>
                         <th>Ingreso</th>
@@ -114,20 +114,20 @@
                             @if ($animal->caravana)
                                 <span class="fw-semibold font-monospace">{{ $animal->caravana }}</span>
                             @else
-                                <span class="text-muted">â€”</span>
+                                <span class="text-muted">—</span>
                             @endif
                             <br><small class="text-muted">{{ $animal->sexo === 'macho' ? 'â™‚' : 'â™€' }}</small>
                         </td>
                         <td>{{ $animal->categoria_label }}</td>
-                        <td>{{ $animal->raza_label ?: 'â€”' }}</td>
-                        <td>{{ $animal->establecimiento->nombre ?? 'â€”' }}</td>
+                        <td>{{ $animal->raza_label ?: '—' }}</td>
+                        <td>{{ $animal->establecimiento->nombre ?? '—' }}</td>
                         <td>{{ $animal->fecha_ingreso->format('d/m/Y') }}</td>
                         <td>
                             @if ($animal->peso_actual_kg !== null)
                                 <span class="fw-semibold">{{ number_format($animal->peso_actual_kg, 0) }}</span>
                                 <small class="text-muted">kg</small>
                             @else
-                                <span class="text-muted">â€”</span>
+                                <span class="text-muted">—</span>
                             @endif
                         </td>
                         <td>
@@ -147,7 +147,7 @@
                             <button class="btn btn-sm {{ $animal->activo ? 'btn-outline-danger' : 'btn-outline-success' }}"
                                     wire:click="toggleActivo('{{ $animal->id }}')"
                                     wire:loading.attr="disabled"
-                                    wire:confirm="{{ $animal->activo ? 'Â¿Dar de baja este animal?' : 'Â¿Reactivar este animal?' }}"
+                                    wire:confirm="{{ $animal->activo ? '¿Dar de baja este animal?' : '¿Reactivar este animal?' }}"
                                     title="{{ $animal->activo ? 'Dar de baja' : 'Reactivar' }}">
                                 <i class="bi bi-{{ $animal->activo ? 'x-circle' : 'arrow-counterclockwise' }}"></i>
                             </button>
@@ -187,13 +187,13 @@
                 <div class="modal-body pt-3">
                     <form wire:submit="guardar" id="form-animal">
 
-                        <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">IdentificaciÃ³n</h6>
+                        <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">Identificación</h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Establecimiento <span class="text-danger">*</span></label>
                                 <select class="form-select @error('id_establecimiento') is-invalid @enderror"
                                         wire:model="id_establecimiento">
-                                    <option value="">Seleccionar establecimientoâ€¦</option>
+                                    <option value="">Seleccionar establecimiento…</option>
                                     @foreach ($establecimientos as $est)
                                         <option value="{{ $est->id }}">{{ $est->nombre }}</option>
                                     @endforeach
@@ -214,7 +214,7 @@
                             </div>
                         </div>
 
-                        <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">ClasificaciÃ³n zootÃ©cnica</h6>
+                        <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">Clasificación zootécnica</h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-3">
                                 <label class="form-label fw-semibold">Sexo <span class="text-danger">*</span></label>
@@ -226,7 +226,7 @@
                                 @error('sexo') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label fw-semibold">CategorÃ­a <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold">Categoría <span class="text-danger">*</span></label>
                                 <select class="form-select @error('categoria') is-invalid @enderror" wire:model="categoria">
                                     @foreach ($categorias as $val => $etq)
                                         <option value="{{ $val }}">{{ $etq }}</option>
@@ -274,7 +274,7 @@
                                 <label class="form-label fw-semibold">Observaciones</label>
                                 <textarea class="form-control @error('observaciones') is-invalid @enderror"
                                           wire:model="observaciones" rows="2"
-                                          placeholder="Notas adicionales sobre el animalâ€¦"></textarea>
+                                          placeholder="Notas adicionales sobre el animal…"></textarea>
                                 @error('observaciones') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             @if ($modoEdicion)

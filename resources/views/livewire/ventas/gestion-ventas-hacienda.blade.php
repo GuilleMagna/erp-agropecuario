@@ -24,18 +24,18 @@
         <div class="card-body py-3">
             <div class="row g-3 align-items-end">
                 <div class="col-md-4">
-                    <label class="form-label small fw-semibold text-muted mb-1">BÃºsqueda</label>
+                    <label class="form-label small fw-semibold text-muted mb-1">Búsqueda</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0">
                             <i class="bi bi-search text-muted"></i>
                         </span>
                         <input type="text" class="form-control border-start-0 ps-0"
-                               placeholder="Comprador, corredor, NÂ° guÃ­aâ€¦"
+                               placeholder="Comprador, corredor, N° guía…"
                                wire:model.live.debounce.300ms="busqueda">
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small fw-semibold text-muted mb-1">CategorÃ­a</label>
+                    <label class="form-label small fw-semibold text-muted mb-1">Categoría</label>
                     <select class="form-select" wire:model.live="filtroCategoria">
                         <option value="">Todas</option>
                         @foreach ($categorias as $val => $etq)
@@ -71,10 +71,10 @@
                 <thead class="table-light">
                     <tr>
                         <th class="ps-4">Fecha</th>
-                        <th>CategorÃ­a</th>
+                        <th>Categoría</th>
                         <th>Comprador / Corredor</th>
                         <th>Establecimiento</th>
-                        <th>OperaciÃ³n</th>
+                        <th>Operación</th>
                         <th class="text-center">Cabezas</th>
                         <th class="text-end">Peso total (kg)</th>
                         <th class="text-end">Importe</th>
@@ -97,16 +97,16 @@
                             <span class="badge rounded-pill bg-primary-subtle text-primary">{{ $venta->categoria_label }}</span>
                         </td>
                         <td>
-                            <div>{{ $venta->comprador ?? 'â€”' }}</div>
+                            <div>{{ $venta->comprador ?? '—' }}</div>
                             @if ($venta->corredor_feria)
                                 <small class="text-muted"><i class="bi bi-person me-1"></i>{{ $venta->corredor_feria }}</small>
                             @endif
                         </td>
-                        <td><small class="text-muted">{{ $venta->establecimiento?->nombre ?? 'â€”' }}</small></td>
+                        <td><small class="text-muted">{{ $venta->establecimiento?->nombre ?? '—' }}</small></td>
                         <td><small>{{ $venta->tipo_operacion_label }}</small></td>
                         <td class="text-center fw-semibold">{{ number_format($venta->cantidad_cabezas, 0, ',', '.') }}</td>
                         <td class="text-end font-monospace">
-                            {{ $venta->peso_total_kg !== null ? number_format((float)$venta->peso_total_kg, 0, ',', '.') : 'â€”' }}
+                            {{ $venta->peso_total_kg !== null ? number_format((float)$venta->peso_total_kg, 0, ',', '.') : '—' }}
                         </td>
                         <td class="text-end fw-bold">
                             {{ $venta->moneda === 'USD' ? 'U$S' : '$' }} {{ number_format((float)$venta->importe_total, 2, ',', '.') }}
@@ -154,7 +154,7 @@
                 @if ($ventas->count())
                 <tfoot class="table-light">
                     <tr>
-                        <td colspan="5" class="ps-4 text-muted small">Total de la pÃ¡gina</td>
+                        <td colspan="5" class="ps-4 text-muted small">Total de la página</td>
                         <td class="text-center fw-semibold">
                             {{ number_format($ventas->sum(fn($v) => $v->cantidad_cabezas), 0, ',', '.') }} cab.
                         </td>
@@ -192,7 +192,7 @@
                 <div class="modal-body pt-3">
                     <form wire:submit="guardar" id="form-venta-hacienda">
 
-                        <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">OperaciÃ³n</h6>
+                        <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">Operación</h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-3">
                                 <label class="form-label fw-semibold">Fecha <span class="text-danger">*</span></label>
@@ -201,7 +201,7 @@
                                 @error('fecha') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold">Tipo de operaciÃ³n <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold">Tipo de operación <span class="text-danger">*</span></label>
                                 <select class="form-select @error('tipo_operacion') is-invalid @enderror"
                                         wire:model="tipo_operacion">
                                     @foreach ($tiposOperacion as $val => $etq)
@@ -240,9 +240,9 @@
                                 @error('id_establecimiento') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label fw-semibold">NÂ° guÃ­a / tropa</label>
+                                <label class="form-label fw-semibold">N° guía / tropa</label>
                                 <input type="text" class="form-control font-monospace @error('numero_guia') is-invalid @enderror"
-                                       wire:model="numero_guia" placeholder="NÂ° guÃ­a de hacienda">
+                                       wire:model="numero_guia" placeholder="N° guía de hacienda">
                                 @error('numero_guia') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                         </div>
@@ -250,9 +250,9 @@
                         <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">Animales</h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold">CategorÃ­a <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold">Categoría <span class="text-danger">*</span></label>
                                 <select class="form-select @error('categoria') is-invalid @enderror" wire:model="categoria">
-                                    <option value="">Seleccionarâ€¦</option>
+                                    <option value="">Seleccionar…</option>
                                     @foreach ($categorias as $val => $etq)
                                         <option value="{{ $val }}">{{ $etq }}</option>
                                     @endforeach
@@ -277,7 +277,7 @@
                                 <label class="form-label fw-semibold">Peso total (kg)</label>
                                 <input type="number" step="0.01" min="0"
                                        class="form-control font-monospace @error('peso_total_kg') is-invalid @enderror"
-                                       wire:model.live="peso_total_kg" placeholder="Calculado automÃ¡tico">
+                                       wire:model.live="peso_total_kg" placeholder="Calculado automático">
                                 @error('peso_total_kg') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                         </div>
@@ -287,7 +287,7 @@
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Comprador</label>
                                 <input type="text" class="form-control @error('comprador') is-invalid @enderror"
-                                       wire:model="comprador" placeholder="Nombre o razÃ³n social">
+                                       wire:model="comprador" placeholder="Nombre o razón social">
                                 @error('comprador') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-6">
@@ -326,7 +326,7 @@
                                            wire:model="importe_total" placeholder="0.00">
                                     @error('importe_total') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
-                                <div class="form-text">Calculado automÃ¡ticamente. Ajustable manualmente.</div>
+                                <div class="form-text">Calculado automáticamente. Ajustable manualmente.</div>
                             </div>
                         </div>
 

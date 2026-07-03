@@ -30,7 +30,7 @@
                             <i class="bi bi-search text-muted"></i>
                         </span>
                         <input type="text" class="form-control border-start-0 ps-0"
-                               placeholder="Nombre o cÃ³digoâ€¦"
+                               placeholder="Nombre o código…"
                                wire:model.live.debounce.300ms="busqueda">
                     </div>
                 </div>
@@ -96,7 +96,7 @@
                     <tr>
                         <td class="ps-4 text-nowrap">{{ $mov->fecha->format('d/m/Y') }}</td>
                         <td>
-                            <div class="fw-semibold">{{ $mov->insumo->nombre ?? 'â€”' }}</div>
+                            <div class="fw-semibold">{{ $mov->insumo->nombre ?? '—' }}</div>
                             @if ($mov->insumo?->codigo)
                                 <small class="text-muted font-monospace">{{ $mov->insumo->codigo }}</small>
                             @endif
@@ -116,14 +116,14 @@
                             @if ($mov->precio_unitario !== null)
                                 <small>${{ number_format((float)$mov->precio_unitario, 2, ',', '.') }}</small>
                             @else
-                                <small class="text-muted">â€”</small>
+                                <small class="text-muted">—</small>
                             @endif
                         </td>
                         <td class="text-end pe-4">
                             @if ($mov->importe_total !== null)
                                 <span class="fw-semibold">${{ number_format((float)$mov->importe_total, 2, ',', '.') }}</span>
                             @else
-                                <small class="text-muted">â€”</small>
+                                <small class="text-muted">—</small>
                             @endif
                         </td>
                         <td class="pe-4 text-end">
@@ -206,12 +206,12 @@
                                 <label class="form-label fw-semibold">Insumo <span class="text-danger">*</span></label>
                                 <select class="form-select @error('id_insumo') is-invalid @enderror"
                                         wire:model="id_insumo">
-                                    <option value="">Seleccionar insumoâ€¦</option>
+                                    <option value="">Seleccionar insumo…</option>
                                     @foreach ($insumosOpciones as $ins)
                                         <option value="{{ $ins->id }}">
                                             {{ $ins->nombre }}
                                             @if ($ins->codigo) ({{ $ins->codigo }}) @endif
-                                            â€” {{ $ins->unidad }}
+                                            — {{ $ins->unidad }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -221,7 +221,7 @@
                                 <label class="form-label fw-semibold">Motivo <span class="text-danger">*</span></label>
                                 <select class="form-select @error('motivo') is-invalid @enderror"
                                         wire:model="motivo">
-                                    <option value="">Seleccionar motivoâ€¦</option>
+                                    <option value="">Seleccionar motivo…</option>
                                     @foreach ($motivosFiltrados as $val => $etq)
                                         <option value="{{ $val }}">{{ $etq }}</option>
                                     @endforeach
@@ -288,7 +288,7 @@
 
                         <div class="row g-3">
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold">NÂ° remito / comprobante</label>
+                                <label class="form-label fw-semibold">N° remito / comprobante</label>
                                 <input type="text" class="form-control font-monospace @error('numero_remito') is-invalid @enderror"
                                        wire:model="numero_remito" placeholder="R-0001-00001234">
                                 @error('numero_remito') <div class="invalid-feedback">{{ $message }}</div> @enderror

@@ -24,13 +24,13 @@
         <div class="card-body py-3">
             <div class="row g-3 align-items-end">
                 <div class="col-md-3">
-                    <label class="form-label small fw-semibold text-muted mb-1">BÃºsqueda</label>
+                    <label class="form-label small fw-semibold text-muted mb-1">Búsqueda</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0">
                             <i class="bi bi-search text-muted"></i>
                         </span>
                         <input type="text" class="form-control border-start-0 ps-0"
-                               placeholder="Concepto, comprobanteâ€¦"
+                               placeholder="Concepto, comprobante…"
                                wire:model.live.debounce.300ms="busqueda">
                     </div>
                 </div>
@@ -52,7 +52,7 @@
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small fw-semibold text-muted mb-1">CategorÃ­a</label>
+                    <label class="form-label small fw-semibold text-muted mb-1">Categoría</label>
                     <select class="form-select" wire:model.live="filtroCategoria">
                         <option value="">Todas</option>
                         <optgroup label="Ingresos">
@@ -87,7 +87,7 @@
                     <tr>
                         <th class="ps-4">Fecha</th>
                         <th>Concepto</th>
-                        <th>CategorÃ­a</th>
+                        <th>Categoría</th>
                         <th>Cuenta</th>
                         <th>Establecimiento</th>
                         <th>Tipo</th>
@@ -107,12 +107,12 @@
                         </td>
                         <td><small class="text-muted">{{ $t->categoria_label }}</small></td>
                         <td>
-                            <small>{{ $t->cuenta->nombre ?? 'â€”' }}</small>
+                            <small>{{ $t->cuenta->nombre ?? '—' }}</small>
                             @if ($t->cuenta)
                                 <br><small class="text-muted" style="font-size:.7rem;">{{ $t->cuenta->moneda }}</small>
                             @endif
                         </td>
-                        <td><small class="text-muted">{{ $t->establecimiento->nombre ?? 'â€”' }}</small></td>
+                        <td><small class="text-muted">{{ $t->establecimiento->nombre ?? '—' }}</small></td>
                         <td>
                             @if ($t->tipo === 'ingreso')
                                 <span class="badge rounded-pill bg-success-subtle text-success">Ingreso</span>
@@ -162,7 +162,7 @@
                 <div class="modal-header border-bottom-0 pb-0">
                     <h5 class="modal-title fw-bold">
                         <i class="bi bi-journal-plus me-2 text-primary"></i>
-                        {{ $modoEdicion ? 'Editar transacciÃ³n' : 'Registrar transacciÃ³n' }}
+                        {{ $modoEdicion ? 'Editar transacción' : 'Registrar transacción' }}
                     </h5>
                     <button type="button" class="btn-close" wire:click="cerrarModal"></button>
                 </div>
@@ -193,7 +193,7 @@
                                 <label class="form-label fw-semibold">Cuenta <span class="text-danger">*</span></label>
                                 <select class="form-select @error('id_cuenta') is-invalid @enderror"
                                         wire:model="id_cuenta">
-                                    <option value="">Seleccionar cuentaâ€¦</option>
+                                    <option value="">Seleccionar cuenta…</option>
                                     @foreach ($cuentasOpciones as $c)
                                         <option value="{{ $c->id }}">{{ $c->nombre }} ({{ $c->moneda }})</option>
                                     @endforeach
@@ -201,10 +201,10 @@
                                 @error('id_cuenta') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">CategorÃ­a <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold">Categoría <span class="text-danger">*</span></label>
                                 <select class="form-select @error('categoria') is-invalid @enderror"
                                         wire:model="categoria">
-                                    <option value="">Seleccionar categorÃ­aâ€¦</option>
+                                    <option value="">Seleccionar categoría…</option>
                                     @foreach ($categoriasFormulario as $val => $etq)
                                         <option value="{{ $val }}">{{ $etq }}</option>
                                     @endforeach
@@ -216,7 +216,7 @@
                                 <input type="text"
                                        class="form-control @error('concepto') is-invalid @enderror"
                                        wire:model="concepto"
-                                       placeholder="DescripciÃ³n del movimiento">
+                                       placeholder="Descripción del movimiento">
                                 @error('concepto') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-5">
@@ -237,11 +237,11 @@
                                 @error('fecha') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold">NÂ° comprobante</label>
+                                <label class="form-label fw-semibold">N° comprobante</label>
                                 <input type="text"
                                        class="form-control font-monospace @error('numero_comprobante') is-invalid @enderror"
                                        wire:model="numero_comprobante"
-                                       placeholder="Factura, reciboâ€¦">
+                                       placeholder="Factura, recibo…">
                                 @error('numero_comprobante') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                         </div>
@@ -263,7 +263,7 @@
                                 <label class="form-label fw-semibold">Observaciones</label>
                                 <textarea class="form-control @error('observaciones') is-invalid @enderror"
                                           wire:model="observaciones" rows="2"
-                                          placeholder="Notas adicionalesâ€¦"></textarea>
+                                          placeholder="Notas adicionales…"></textarea>
                                 @error('observaciones') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                         </div>

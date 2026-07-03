@@ -24,13 +24,13 @@
         <div class="card-body py-3">
             <div class="row g-3 align-items-end">
                 <div class="col-md-4">
-                    <label class="form-label small fw-semibold text-muted mb-1">BÃºsqueda</label>
+                    <label class="form-label small fw-semibold text-muted mb-1">Búsqueda</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0">
                             <i class="bi bi-search text-muted"></i>
                         </span>
                         <input type="text" class="form-control border-start-0 ps-0"
-                               placeholder="Nombre, apellido, DNI, CUILâ€¦"
+                               placeholder="Nombre, apellido, DNI, CUIL…"
                                wire:model.live.debounce.300ms="busqueda">
                     </div>
                 </div>
@@ -72,7 +72,7 @@
                     <tr>
                         <th class="ps-4">Empleado</th>
                         <th>DNI / CUIL</th>
-                        <th>CategorÃ­a</th>
+                        <th>Categoría</th>
                         <th>Contrato</th>
                         <th>Establecimiento</th>
                         <th>Ingreso</th>
@@ -99,24 +99,24 @@
                                 <div class="font-monospace small text-muted">{{ $emp->cuil }}</div>
                             @endif
                             @if (!$emp->dni && !$emp->cuil)
-                                <span class="text-muted">â€”</span>
+                                <span class="text-muted">—</span>
                             @endif
                         </td>
                         <td>
                             @if ($emp->categoria)
                                 <span class="badge rounded-pill bg-secondary-subtle text-secondary">{{ $emp->categoria_label }}</span>
                             @else
-                                <span class="text-muted">â€”</span>
+                                <span class="text-muted">—</span>
                             @endif
                         </td>
                         <td><small>{{ $emp->tipo_contrato_label }}</small></td>
-                        <td><small class="text-muted">{{ $emp->establecimiento?->nombre ?? 'â€”' }}</small></td>
+                        <td><small class="text-muted">{{ $emp->establecimiento?->nombre ?? '—' }}</small></td>
                         <td class="text-nowrap"><small>{{ $emp->fecha_ingreso->format('d/m/Y') }}</small></td>
                         <td class="text-end font-monospace">
                             @if ($emp->sueldo_base !== null)
                                 ${{ number_format((float)$emp->sueldo_base, 2, ',', '.') }}
                             @else
-                                <span class="text-muted">â€”</span>
+                                <span class="text-muted">—</span>
                             @endif
                         </td>
                         <td class="text-center">
@@ -138,7 +138,7 @@
                             </button>
                             <button class="btn btn-sm {{ $emp->activo ? 'btn-outline-danger' : 'btn-outline-success' }}"
                                     wire:click="toggleActivo('{{ $emp->id }}')"
-                                    wire:confirm="{{ $emp->activo ? 'Â¿Dar de baja a este empleado?' : 'Â¿Reactivar este empleado?' }}"
+                                    wire:confirm="{{ $emp->activo ? '¿Dar de baja a este empleado?' : '¿Reactivar este empleado?' }}"
                                     wire:loading.attr="disabled"
                                     title="{{ $emp->activo ? 'Dar de baja' : 'Reactivar' }}">
                                 <i class="bi bi-{{ $emp->activo ? 'x-circle' : 'arrow-counterclockwise' }}"></i>
@@ -179,7 +179,7 @@
                 <div class="modal-body pt-3">
                     <form wire:submit="guardar" id="form-personal">
 
-                        <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">IdentificaciÃ³n</h6>
+                        <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">Identificación</h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold">Apellido <span class="text-danger">*</span></label>
@@ -206,7 +206,7 @@
                                 @error('cuil') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold">TelÃ©fono</label>
+                                <label class="form-label fw-semibold">Teléfono</label>
                                 <input type="text" class="form-control @error('telefono') is-invalid @enderror"
                                        wire:model="telefono" placeholder="+54 ...">
                                 @error('telefono') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -218,14 +218,14 @@
                                 @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-12">
-                                <label class="form-label fw-semibold">DirecciÃ³n</label>
+                                <label class="form-label fw-semibold">Dirección</label>
                                 <input type="text" class="form-control @error('direccion') is-invalid @enderror"
-                                       wire:model="direccion" placeholder="Calle, nÃºmero, localidad">
+                                       wire:model="direccion" placeholder="Calle, número, localidad">
                                 @error('direccion') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                         </div>
 
-                        <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">Contrato y funciÃ³n</h6>
+                        <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">Contrato y función</h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold">Tipo de contrato <span class="text-danger">*</span></label>
@@ -238,7 +238,7 @@
                                 @error('tipo_contrato') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold">CategorÃ­a / Puesto</label>
+                                <label class="form-label fw-semibold">Categoría / Puesto</label>
                                 <select class="form-select @error('categoria') is-invalid @enderror" wire:model="categoria">
                                     <option value="">Sin especificar</option>
                                     @foreach ($categorias as $val => $etq)
@@ -296,7 +296,7 @@
                             <div class="col-md-5">
                                 <label class="form-label fw-semibold">CBU</label>
                                 <input type="text" class="form-control font-monospace @error('cbu') is-invalid @enderror"
-                                       wire:model="cbu" placeholder="22 dÃ­gitos" maxlength="22">
+                                       wire:model="cbu" placeholder="22 dígitos" maxlength="22">
                                 @error('cbu') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-4">

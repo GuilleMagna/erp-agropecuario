@@ -29,18 +29,18 @@
         <div class="card-body py-3">
             <div class="row g-3 align-items-end">
                 <div class="col-md-3">
-                    <label class="form-label small fw-semibold text-muted mb-1">BÃºsqueda</label>
+                    <label class="form-label small fw-semibold text-muted mb-1">Búsqueda</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0">
                             <i class="bi bi-search text-muted"></i>
                         </span>
                         <input type="text" class="form-control border-start-0 ps-0"
-                               placeholder="Tipo o descripciÃ³nâ€¦"
+                               placeholder="Tipo o descripción…"
                                wire:model.live.debounce.300ms="busqueda">
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label small fw-semibold text-muted mb-1">CampaÃ±a</label>
+                    <label class="form-label small fw-semibold text-muted mb-1">Campaña</label>
                     <select class="form-select" wire:model.live="filtroCampana">
                         <option value="">Todas</option>
                         @foreach ($campanas as $c)
@@ -79,7 +79,7 @@
                 <thead class="table-light">
                     <tr>
                         <th class="ps-4">Tipo de labor</th>
-                        <th>CampaÃ±a</th>
+                        <th>Campaña</th>
                         <th>Lote</th>
                         <th>Fecha</th>
                         <th>Superficie</th>
@@ -95,14 +95,14 @@
                                 <small class="text-muted">{{ $labor->descripcion }}</small>
                             @endif
                         </td>
-                        <td>{{ $labor->campana->nombre ?? 'â€”' }}</td>
-                        <td>{{ $labor->lote->nombre ?? 'â€”' }}</td>
+                        <td>{{ $labor->campana->nombre ?? '—' }}</td>
+                        <td>{{ $labor->lote->nombre ?? '—' }}</td>
                         <td>{{ $labor->fecha->format('d/m/Y') }}</td>
                         <td>
                             @if ($labor->superficie_trabajada_ha !== null)
                                 {{ number_format($labor->superficie_trabajada_ha, 1) }} ha
                             @else
-                                <span class="text-muted">â€”</span>
+                                <span class="text-muted">—</span>
                             @endif
                         </td>
                         <td class="pe-4 text-end">
@@ -152,10 +152,10 @@
                         </h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">CampaÃ±a <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold">Campaña <span class="text-danger">*</span></label>
                                 <select class="form-select @error('id_campana') is-invalid @enderror"
                                         wire:model="id_campana">
-                                    <option value="">Seleccionar campaÃ±aâ€¦</option>
+                                    <option value="">Seleccionar campaña…</option>
                                     @foreach ($campanas as $c)
                                         <option value="{{ $c->id }}">{{ $c->nombre }}</option>
                                     @endforeach
@@ -166,7 +166,7 @@
                                 <label class="form-label fw-semibold">Lote <span class="text-danger">*</span></label>
                                 <select class="form-select @error('id_lote') is-invalid @enderror"
                                         wire:model="id_lote">
-                                    <option value="">Seleccionar loteâ€¦</option>
+                                    <option value="">Seleccionar lote…</option>
                                     @foreach ($lotes as $l)
                                         <option value="{{ $l->id }}">{{ $l->nombre }}</option>
                                     @endforeach
@@ -181,7 +181,7 @@
                                     @foreach ($siembrasOpciones as $s)
                                         <option value="{{ $s->id }}">
                                             {{ \App\Models\Siembra::CULTIVOS[$s->cultivo] ?? $s->cultivo }}
-                                            â€” {{ $s->lote->nombre ?? '?' }}
+                                            — {{ $s->lote->nombre ?? '?' }}
                                             ({{ $s->campana->nombre ?? '?' }},
                                             {{ $s->fecha_siembra->format('d/m/Y') }})
                                         </option>
@@ -199,7 +199,7 @@
                                 <label class="form-label fw-semibold">Tipo de labor <span class="text-danger">*</span></label>
                                 <select class="form-select @error('tipo_labor') is-invalid @enderror"
                                         wire:model="tipo_labor">
-                                    <option value="">Seleccionar tipoâ€¦</option>
+                                    <option value="">Seleccionar tipo…</option>
                                     @foreach ($tiposLabor as $val => $etq)
                                         <option value="{{ $val }}">{{ $etq }}</option>
                                     @endforeach
@@ -223,17 +223,17 @@
                                 </div>
                             </div>
                             <div class="col-12">
-                                <label class="form-label fw-semibold">DescripciÃ³n</label>
+                                <label class="form-label fw-semibold">Descripción</label>
                                 <input type="text" class="form-control @error('descripcion') is-invalid @enderror"
                                        wire:model="descripcion"
-                                       placeholder="Ej: PulverizaciÃ³n postemergente con glifosato 2L/ha">
+                                       placeholder="Ej: Pulverización postemergente con glifosato 2L/ha">
                                 @error('descripcion') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-12">
                                 <label class="form-label fw-semibold">Observaciones</label>
                                 <textarea class="form-control @error('observaciones') is-invalid @enderror"
                                           wire:model="observaciones" rows="2"
-                                          placeholder="Condiciones, equipos, dosisâ€¦"></textarea>
+                                          placeholder="Condiciones, equipos, dosis…"></textarea>
                                 @error('observaciones') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                         </div>

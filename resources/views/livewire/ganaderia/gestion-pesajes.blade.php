@@ -29,7 +29,7 @@
                             <i class="bi bi-search text-muted"></i>
                         </span>
                         <input type="text" class="form-control border-start-0 ps-0"
-                               placeholder="NÂ° de caravanaâ€¦"
+                               placeholder="N° de caravana…"
                                wire:model.live.debounce.300ms="busqueda">
                     </div>
                 </div>
@@ -43,7 +43,7 @@
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small fw-semibold text-muted mb-1">CategorÃ­a</label>
+                    <label class="form-label small fw-semibold text-muted mb-1">Categoría</label>
                     <select class="form-select" wire:model.live="filtroCategoria">
                         <option value="">Todas</option>
                         @foreach ($categorias as $val => $etq)
@@ -84,7 +84,7 @@
                     <tr>
                         <td class="ps-4">
                             @if ($pesaje->animal)
-                                <span class="fw-semibold font-monospace">{{ $pesaje->animal->caravana ?? 'â€”' }}</span>
+                                <span class="fw-semibold font-monospace">{{ $pesaje->animal->caravana ?? '—' }}</span>
                                 <br><small class="text-muted">{{ $pesaje->animal->categoria_label }}</small>
                             @else
                                 <span class="badge bg-secondary-subtle text-secondary rounded-pill">Grupal</span>
@@ -93,7 +93,7 @@
                                 @endif
                             @endif
                         </td>
-                        <td>{{ $pesaje->establecimiento->nombre ?? 'â€”' }}</td>
+                        <td>{{ $pesaje->establecimiento->nombre ?? '—' }}</td>
                         <td>{{ $pesaje->fecha->format('d/m/Y') }}</td>
                         <td>{{ $pesaje->cantidad }}</td>
                         <td class="text-end">
@@ -147,7 +147,7 @@
                                 <label class="form-label fw-semibold">Establecimiento <span class="text-danger">*</span></label>
                                 <select class="form-select @error('id_establecimiento') is-invalid @enderror"
                                         wire:model.live="id_establecimiento">
-                                    <option value="">Seleccionarâ€¦</option>
+                                    <option value="">Seleccionar…</option>
                                     @foreach ($establecimientos as $est)
                                         <option value="{{ $est->id }}">{{ $est->nombre }}</option>
                                     @endforeach
@@ -176,7 +176,7 @@
                                     @foreach ($animalesOpciones as $a)
                                         <option value="{{ $a->id }}">
                                             {{ $a->caravana ?? '(sin caravana)' }}
-                                            â€” {{ \App\Models\Animal::CATEGORIAS[$a->categoria] ?? $a->categoria }}
+                                            — {{ \App\Models\Animal::CATEGORIAS[$a->categoria] ?? $a->categoria }}
                                             {{ $a->raza ? '(' . $a->raza . ')' : '' }}
                                         </option>
                                     @endforeach
@@ -187,7 +187,7 @@
                         @else
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">CategorÃ­a</label>
+                                <label class="form-label fw-semibold">Categoría</label>
                                 <select class="form-select @error('categoria') is-invalid @enderror"
                                         wire:model="categoria">
                                     <option value="">Sin especificar</option>

@@ -9,8 +9,8 @@
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h5 class="mb-0 fw-bold text-dark">CatÃ¡logo de insumos</h5>
-            <small class="text-muted">Semillas, agroquÃ­micos, fertilizantes y mÃ¡s</small>
+            <h5 class="mb-0 fw-bold text-dark">Catálogo de insumos</h5>
+            <small class="text-muted">Semillas, agroquímicos, fertilizantes y más</small>
         </div>
         @can('insumos.catalogo.gestionar')
         <button class="btn btn-primary" wire:click="abrirModalCrear" wire:loading.attr="disabled">
@@ -24,13 +24,13 @@
         <div class="card-body py-3">
             <div class="row g-3 align-items-end">
                 <div class="col-md-5">
-                    <label class="form-label small fw-semibold text-muted mb-1">BÃºsqueda</label>
+                    <label class="form-label small fw-semibold text-muted mb-1">Búsqueda</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0">
                             <i class="bi bi-search text-muted"></i>
                         </span>
                         <input type="text" class="form-control border-start-0 ps-0"
-                               placeholder="Nombre, cÃ³digo, marcaâ€¦"
+                               placeholder="Nombre, código, marca…"
                                wire:model.live.debounce.300ms="busqueda">
                     </div>
                 </div>
@@ -100,7 +100,7 @@
                         </td>
                         <td><span class="badge rounded-pill {{ $badgeTipo }}">{{ $insumo->tipo_label }}</span></td>
                         <td><small class="text-muted">{{ $insumo->unidad }}</small></td>
-                        <td><small>{{ $insumo->marca ?? 'â€”' }}</small></td>
+                        <td><small>{{ $insumo->marca ?? '—' }}</small></td>
                         <td class="text-end">
                             <span class="fw-semibold {{ $stockBajo ? 'text-danger' : '' }}">
                                 {{ number_format($stockActual, 2, ',', '.') }}
@@ -108,14 +108,14 @@
                             <small class="text-muted ms-1">{{ $insumo->unidad }}</small>
                             @if ($stockBajo)
                                 <i class="bi bi-exclamation-triangle-fill text-danger ms-1"
-                                   title="Stock bajo mÃ­nimo ({{ number_format((float)$insumo->stock_minimo, 2, ',', '.') }} {{ $insumo->unidad }})"></i>
+                                   title="Stock bajo mínimo ({{ number_format((float)$insumo->stock_minimo, 2, ',', '.') }} {{ $insumo->unidad }})"></i>
                             @endif
                         </td>
                         <td class="text-end">
                             @if ($insumo->precio_referencia !== null)
                                 <small>${{ number_format((float)$insumo->precio_referencia, 2, ',', '.') }}</small>
                             @else
-                                <small class="text-muted">â€”</small>
+                                <small class="text-muted">—</small>
                             @endif
                         </td>
                         <td>
@@ -134,7 +134,7 @@
                             </button>
                             <button class="btn btn-sm {{ $insumo->activo ? 'btn-outline-danger' : 'btn-outline-success' }}"
                                     wire:click="toggleActivo('{{ $insumo->id }}')"
-                                    wire:confirm="{{ $insumo->activo ? 'Â¿Dar de baja este insumo?' : 'Â¿Reactivar este insumo?' }}"
+                                    wire:confirm="{{ $insumo->activo ? '¿Dar de baja este insumo?' : '¿Reactivar este insumo?' }}"
                                     wire:loading.attr="disabled"
                                     title="{{ $insumo->activo ? 'Dar de baja' : 'Reactivar' }}">
                                 <i class="bi bi-{{ $insumo->activo ? 'x-circle' : 'arrow-counterclockwise' }}"></i>
@@ -146,7 +146,7 @@
                     <tr>
                         <td colspan="8" class="text-center text-muted py-5">
                             <i class="bi bi-box-seam display-6 d-block mb-2 opacity-25"></i>
-                            No se encontraron insumos en el catÃ¡logo.
+                            No se encontraron insumos en el catálogo.
                         </td>
                     </tr>
                     @endforelse
@@ -175,7 +175,7 @@
                 <div class="modal-body pt-3">
                     <form wire:submit="guardar" id="form-insumo">
 
-                        <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">IdentificaciÃ³n</h6>
+                        <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">Identificación</h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-8">
                                 <label class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
@@ -186,10 +186,10 @@
                                 @error('nombre') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold">CÃ³digo</label>
+                                <label class="form-label fw-semibold">Código</label>
                                 <input type="text"
                                        class="form-control font-monospace @error('codigo') is-invalid @enderror"
-                                       wire:model="codigo" placeholder="SKU / cÃ³digo interno">
+                                       wire:model="codigo" placeholder="SKU / código interno">
                                 @error('codigo') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-4">
@@ -218,10 +218,10 @@
                                 @error('marca') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-12">
-                                <label class="form-label fw-semibold">DescripciÃ³n</label>
+                                <label class="form-label fw-semibold">Descripción</label>
                                 <textarea class="form-control @error('descripcion') is-invalid @enderror"
                                           wire:model="descripcion" rows="2"
-                                          placeholder="InformaciÃ³n adicional del productoâ€¦"></textarea>
+                                          placeholder="Información adicional del producto…"></textarea>
                                 @error('descripcion') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                         </div>
@@ -229,11 +229,11 @@
                         <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">Stock y precio</h6>
                         <div class="row g-3">
                             <div class="col-md-5">
-                                <label class="form-label fw-semibold">Stock mÃ­nimo</label>
+                                <label class="form-label fw-semibold">Stock mínimo</label>
                                 <div class="input-group">
                                     <input type="number" step="0.01" min="0"
                                            class="form-control @error('stock_minimo') is-invalid @enderror"
-                                           wire:model="stock_minimo" placeholder="â€”">
+                                           wire:model="stock_minimo" placeholder="—">
                                     <span class="input-group-text">{{ $unidad }}</span>
                                     @error('stock_minimo') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>

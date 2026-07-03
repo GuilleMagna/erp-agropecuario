@@ -10,7 +10,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h5 class="mb-0 fw-bold text-dark">Ventas de Granos</h5>
-            <small class="text-muted">Registro de liquidaciones y operaciones de comercializaciÃ³n de granos</small>
+            <small class="text-muted">Registro de liquidaciones y operaciones de comercialización de granos</small>
         </div>
         @can('ventas.granos.registrar')
         <button class="btn btn-primary" wire:click="abrirModalCrear" wire:loading.attr="disabled">
@@ -24,13 +24,13 @@
         <div class="card-body py-3">
             <div class="row g-3 align-items-end">
                 <div class="col-md-4">
-                    <label class="form-label small fw-semibold text-muted mb-1">BÃºsqueda</label>
+                    <label class="form-label small fw-semibold text-muted mb-1">Búsqueda</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0">
                             <i class="bi bi-search text-muted"></i>
                         </span>
                         <input type="text" class="form-control border-start-0 ps-0"
-                               placeholder="Comprador, corredor, NÂ° comprobanteâ€¦"
+                               placeholder="Comprador, corredor, N° comprobante…"
                                wire:model.live.debounce.300ms="busqueda">
                     </div>
                 </div>
@@ -105,12 +105,12 @@
                             <span class="badge rounded-pill {{ $badgeCereal }}">{{ $venta->cereal_label }}</span>
                         </td>
                         <td>
-                            <div>{{ $venta->comprador ?? 'â€”' }}</div>
+                            <div>{{ $venta->comprador ?? '—' }}</div>
                             @if ($venta->corredor)
                                 <small class="text-muted"><i class="bi bi-person me-1"></i>{{ $venta->corredor }}</small>
                             @endif
                         </td>
-                        <td><small class="text-muted">{{ $venta->establecimiento?->nombre ?? 'â€”' }}</small></td>
+                        <td><small class="text-muted">{{ $venta->establecimiento?->nombre ?? '—' }}</small></td>
                         <td><small>{{ $venta->tipo_venta_label }}</small></td>
                         <td class="text-end font-monospace">{{ number_format((float)$venta->cantidad_tn, 3, ',', '.') }}</td>
                         <td class="text-end">
@@ -163,7 +163,7 @@
                 @if ($ventas->count())
                 <tfoot class="table-light">
                     <tr>
-                        <td colspan="5" class="ps-4 text-muted small">Total de la pÃ¡gina</td>
+                        <td colspan="5" class="ps-4 text-muted small">Total de la página</td>
                         <td class="text-end font-monospace fw-semibold">
                             {{ number_format($ventas->sum(fn($v) => (float)$v->cantidad_tn), 3, ',', '.') }} tn
                         </td>
@@ -199,12 +199,12 @@
                 <div class="modal-body pt-3">
                     <form wire:submit="guardar" id="form-venta-granos">
 
-                        <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">OperaciÃ³n</h6>
+                        <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">Operación</h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-3">
                                 <label class="form-label fw-semibold">Cereal <span class="text-danger">*</span></label>
                                 <select class="form-select @error('cereal') is-invalid @enderror" wire:model="cereal">
-                                    <option value="">Seleccionarâ€¦</option>
+                                    <option value="">Seleccionar…</option>
                                     @foreach ($cereales as $val => $etq)
                                         <option value="{{ $val }}">{{ $etq }}</option>
                                     @endforeach
@@ -244,10 +244,10 @@
                                 @error('id_establecimiento') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">CampaÃ±a</label>
+                                <label class="form-label fw-semibold">Campaña</label>
                                 <select class="form-select @error('id_campana') is-invalid @enderror"
                                         wire:model="id_campana">
-                                    <option value="">Sin campaÃ±a</option>
+                                    <option value="">Sin campaña</option>
                                     @foreach ($campanas as $c)
                                         <option value="{{ $c->id }}">{{ $c->nombre }}</option>
                                     @endforeach
@@ -256,12 +256,12 @@
                             </div>
                         </div>
 
-                        <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">Comprador y liquidaciÃ³n</h6>
+                        <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">Comprador y liquidación</h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Comprador</label>
                                 <input type="text" class="form-control @error('comprador') is-invalid @enderror"
-                                       wire:model="comprador" placeholder="Nombre o razÃ³n social">
+                                       wire:model="comprador" placeholder="Nombre o razón social">
                                 @error('comprador') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-3">
@@ -271,9 +271,9 @@
                                 @error('cuit_comprador') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label fw-semibold">NÂ° comprobante</label>
+                                <label class="form-label fw-semibold">N° comprobante</label>
                                 <input type="text" class="form-control font-monospace @error('numero_comprobante') is-invalid @enderror"
-                                       wire:model="numero_comprobante" placeholder="LiquidaciÃ³n / CPAâ€¦">
+                                       wire:model="numero_comprobante" placeholder="Liquidación / CPA…">
                                 @error('numero_comprobante') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-6">
@@ -327,7 +327,7 @@
                                            wire:model="importe_total" placeholder="0.00">
                                     @error('importe_total') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
-                                <div class="form-text">Calculado automÃ¡ticamente. Ajustable manualmente.</div>
+                                <div class="form-text">Calculado automáticamente. Ajustable manualmente.</div>
                             </div>
                         </div>
 

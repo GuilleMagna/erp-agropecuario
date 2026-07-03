@@ -23,13 +23,13 @@
         <div class="card-body py-3">
             <div class="row g-3 align-items-end">
                 <div class="col-md-3">
-                    <label class="form-label small fw-semibold text-muted mb-1">BÃºsqueda</label>
+                    <label class="form-label small fw-semibold text-muted mb-1">Búsqueda</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0">
                             <i class="bi bi-search text-muted"></i>
                         </span>
                         <input type="text" class="form-control border-start-0 ps-0"
-                               placeholder="Procedencia / destinoâ€¦"
+                               placeholder="Procedencia / destino…"
                                wire:model.live.debounce.300ms="busqueda">
                     </div>
                 </div>
@@ -52,7 +52,7 @@
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small fw-semibold text-muted mb-1">CategorÃ­a</label>
+                    <label class="form-label small fw-semibold text-muted mb-1">Categoría</label>
                     <select class="form-select" wire:model.live="filtroCategoria">
                         <option value="">Todas</option>
                         @foreach ($categorias as $val => $etq)
@@ -75,7 +75,7 @@
                         <th class="ps-4">Tipo</th>
                         <th>Establecimiento</th>
                         <th>Fecha</th>
-                        <th>CategorÃ­a</th>
+                        <th>Categoría</th>
                         <th class="text-end">Cabezas</th>
                         <th class="text-end">Peso total</th>
                         <th class="text-end">Importe</th>
@@ -99,7 +99,7 @@
                                 <br><small class="text-muted">{{ $mov->procedencia_destino }}</small>
                             @endif
                         </td>
-                        <td>{{ $mov->establecimiento->nombre ?? 'â€”' }}</td>
+                        <td>{{ $mov->establecimiento->nombre ?? '—' }}</td>
                         <td>{{ $mov->fecha->format('d/m/Y') }}</td>
                         <td>{{ \App\Models\Animal::CATEGORIAS[$mov->categoria] ?? $mov->categoria }}</td>
                         <td class="text-end fw-semibold">
@@ -109,14 +109,14 @@
                             @if ($mov->peso_total_kg !== null)
                                 {{ number_format($mov->peso_total_kg, 0) }} kg
                             @else
-                                <span class="text-muted">â€”</span>
+                                <span class="text-muted">—</span>
                             @endif
                         </td>
                         <td class="text-end">
                             @if ($mov->importe_total !== null)
                                 ${{ number_format($mov->importe_total, 0) }}
                             @else
-                                <span class="text-muted">â€”</span>
+                                <span class="text-muted">—</span>
                             @endif
                         </td>
                         <td class="pe-4 text-end">
@@ -167,7 +167,7 @@
                                 <label class="form-label fw-semibold">Establecimiento <span class="text-danger">*</span></label>
                                 <select class="form-select @error('id_establecimiento') is-invalid @enderror"
                                         wire:model="id_establecimiento">
-                                    <option value="">Seleccionarâ€¦</option>
+                                    <option value="">Seleccionar…</option>
                                     @foreach ($establecimientos as $est)
                                         <option value="{{ $est->id }}">{{ $est->nombre }}</option>
                                     @endforeach
@@ -189,7 +189,7 @@
                                 @error('fecha') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold">CategorÃ­a <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold">Categoría <span class="text-danger">*</span></label>
                                 <select class="form-select @error('categoria') is-invalid @enderror" wire:model="categoria">
                                     @foreach ($categorias as $val => $etq)
                                         <option value="{{ $val }}">{{ $etq }}</option>

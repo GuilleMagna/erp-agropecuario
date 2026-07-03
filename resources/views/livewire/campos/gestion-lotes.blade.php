@@ -32,14 +32,14 @@
         <div class="card-body py-3">
             <div class="row g-3 align-items-end">
                 <div class="col-md-4">
-                    <label class="form-label small fw-semibold text-muted mb-1">BÃºsqueda</label>
+                    <label class="form-label small fw-semibold text-muted mb-1">Búsqueda</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0">
                             <i class="bi bi-search text-muted"></i>
                         </span>
                         <input type="text"
                                class="form-control border-start-0 ps-0"
-                               placeholder="Nombre o cÃ³digoâ€¦"
+                               placeholder="Nombre o código…"
                                wire:model.live.debounce.300ms="busqueda">
                     </div>
                 </div>
@@ -103,7 +103,7 @@
                             @if ($lote->establecimiento)
                                 {{ $lote->establecimiento->nombre }}
                             @else
-                                <span class="text-muted">â€”</span>
+                                <span class="text-muted">—</span>
                             @endif
                         </td>
                         <td>
@@ -124,7 +124,7 @@
                             @if ($lote->superficie_ha !== null)
                                 <span class="fw-semibold">{{ number_format($lote->superficie_ha, 1) }} ha</span>
                             @else
-                                <span class="text-muted">â€”</span>
+                                <span class="text-muted">—</span>
                             @endif
                         </td>
                         <td>
@@ -145,7 +145,7 @@
                             <button class="btn btn-sm {{ $lote->activo ? 'btn-outline-danger' : 'btn-outline-success' }}"
                                     wire:click="toggleActivo('{{ $lote->id }}')"
                                     wire:loading.attr="disabled"
-                                    wire:confirm="{{ $lote->activo ? 'Â¿Desactivar este lote?' : 'Â¿Activar este lote?' }}"
+                                    wire:confirm="{{ $lote->activo ? '¿Desactivar este lote?' : '¿Activar este lote?' }}"
                                     title="{{ $lote->activo ? 'Desactivar' : 'Activar' }}">
                                 <i class="bi bi-{{ $lote->activo ? 'toggle-on' : 'toggle-off' }}"></i>
                             </button>
@@ -186,9 +186,9 @@
                 <div class="modal-body pt-3">
                     <form wire:submit="guardar" id="form-lote">
 
-                        {{-- IdentificaciÃ³n --}}
+                        {{-- Identificación --}}
                         <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">
-                            IdentificaciÃ³n
+                            Identificación
                         </h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-8">
@@ -198,7 +198,7 @@
                                 @error('nombre') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold">CÃ³digo</label>
+                                <label class="form-label fw-semibold">Código</label>
                                 <input type="text" class="form-control font-monospace @error('codigo') is-invalid @enderror"
                                        wire:model="codigo" placeholder="Ej: L01-N">
                                 @error('codigo') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -207,7 +207,7 @@
                                 <label class="form-label fw-semibold">Establecimiento <span class="text-danger">*</span></label>
                                 <select class="form-select @error('id_establecimiento') is-invalid @enderror"
                                         wire:model="id_establecimiento">
-                                    <option value="">Seleccionar establecimientoâ€¦</option>
+                                    <option value="">Seleccionar establecimiento…</option>
                                     @foreach ($establecimientos as $est)
                                         <option value="{{ $est->id }}">{{ $est->nombre }}</option>
                                     @endforeach
@@ -226,9 +226,9 @@
                             </div>
                         </div>
 
-                        {{-- Superficie y ubicaciÃ³n --}}
+                        {{-- Superficie y ubicación --}}
                         <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">
-                            Superficie y ubicaciÃ³n
+                            Superficie y ubicación
                         </h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-4">
@@ -257,16 +257,16 @@
                             </div>
                         </div>
 
-                        {{-- DescripciÃ³n y estado --}}
+                        {{-- Descripción y estado --}}
                         <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">
                             Notas
                         </h6>
                         <div class="row g-3">
                             <div class="col-12">
-                                <label class="form-label fw-semibold">DescripciÃ³n</label>
+                                <label class="form-label fw-semibold">Descripción</label>
                                 <textarea class="form-control @error('descripcion') is-invalid @enderror"
                                           wire:model="descripcion" rows="3"
-                                          placeholder="Observaciones sobre el lote, historial, caracterÃ­sticasâ€¦"></textarea>
+                                          placeholder="Observaciones sobre el lote, historial, características…"></textarea>
                                 @error('descripcion') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             @if ($modoEdicion)

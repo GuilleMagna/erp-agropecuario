@@ -9,8 +9,8 @@
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h5 class="mb-0 fw-bold text-dark">ReproducciÃ³n</h5>
-            <small class="text-muted">Servicios, diagnÃ³sticos de preÃ±ez, partos y destetes</small>
+            <h5 class="mb-0 fw-bold text-dark">Reproducción</h5>
+            <small class="text-muted">Servicios, diagnósticos de preñez, partos y destetes</small>
         </div>
         @can('ganaderia.reproduccion.registrar')
         <button class="btn btn-primary" wire:click="abrirModalCrear" wire:loading.attr="disabled">
@@ -23,13 +23,13 @@
         <div class="card-body py-3">
             <div class="row g-3 align-items-end">
                 <div class="col-md-3">
-                    <label class="form-label small fw-semibold text-muted mb-1">BÃºsqueda</label>
+                    <label class="form-label small fw-semibold text-muted mb-1">Búsqueda</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0">
                             <i class="bi bi-search text-muted"></i>
                         </span>
                         <input type="text" class="form-control border-start-0 ps-0"
-                               placeholder="Caravana hembra / toroâ€¦"
+                               placeholder="Caravana hembra / toro…"
                                wire:model.live.debounce.300ms="busqueda">
                     </div>
                 </div>
@@ -96,22 +96,22 @@
                         <td class="ps-4">
                             <span class="fw-semibold">{{ $evento->tipo_label }}</span>
                         </td>
-                        <td>{{ $evento->establecimiento->nombre ?? 'â€”' }}</td>
+                        <td>{{ $evento->establecimiento->nombre ?? '—' }}</td>
                         <td>
                             @if ($evento->animal)
-                                <span class="font-monospace">{{ $evento->animal->caravana ?? 'â€”' }}</span>
+                                <span class="font-monospace">{{ $evento->animal->caravana ?? '—' }}</span>
                                 <small class="text-muted d-block">{{ $evento->animal->categoria_label }}</small>
                             @else
-                                <span class="text-muted">â€”</span>
+                                <span class="text-muted">—</span>
                             @endif
                         </td>
-                        <td>{{ $evento->toro_caravana ?? 'â€”' }}</td>
+                        <td>{{ $evento->toro_caravana ?? '—' }}</td>
                         <td>{{ $evento->fecha->format('d/m/Y') }}</td>
                         <td>
                             @if ($evento->resultado && $badgeResultado)
                                 <span class="badge rounded-pill {{ $badgeResultado }}">{{ $evento->resultado_label }}</span>
                             @else
-                                <span class="text-muted">â€”</span>
+                                <span class="text-muted">—</span>
                             @endif
                         </td>
                         <td class="pe-4 text-end">
@@ -162,7 +162,7 @@
                                 <label class="form-label fw-semibold">Establecimiento <span class="text-danger">*</span></label>
                                 <select class="form-select @error('id_establecimiento') is-invalid @enderror"
                                         wire:model.live="id_establecimiento">
-                                    <option value="">Seleccionarâ€¦</option>
+                                    <option value="">Seleccionar…</option>
                                     @foreach ($establecimientos as $est)
                                         <option value="{{ $est->id }}">{{ $est->nombre }}</option>
                                     @endforeach
@@ -176,7 +176,7 @@
                                     @foreach ($hembrasOpciones as $h)
                                         <option value="{{ $h->id }}">
                                             {{ $h->caravana ?? '(sin caravana)' }}
-                                            â€” {{ \App\Models\Animal::CATEGORIAS[$h->categoria] ?? $h->categoria }}
+                                            — {{ \App\Models\Animal::CATEGORIAS[$h->categoria] ?? $h->categoria }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -213,7 +213,7 @@
                             <div class="col-md-2">
                                 <label class="form-label fw-semibold">Toro / Caravana</label>
                                 <input type="text" class="form-control font-monospace @error('toro_caravana') is-invalid @enderror"
-                                       wire:model="toro_caravana" placeholder="NÂ° caravana">
+                                       wire:model="toro_caravana" placeholder="N° caravana">
                                 @error('toro_caravana') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-12">

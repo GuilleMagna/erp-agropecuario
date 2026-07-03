@@ -23,13 +23,13 @@
         <div class="card-body py-3">
             <div class="row g-3 align-items-end">
                 <div class="col-md-4">
-                    <label class="form-label small fw-semibold text-muted mb-1">BÃºsqueda</label>
+                    <label class="form-label small fw-semibold text-muted mb-1">Búsqueda</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0">
                             <i class="bi bi-search text-muted"></i>
                         </span>
                         <input type="text" class="form-control border-start-0 ps-0"
-                               placeholder="Producto, veterinarioâ€¦"
+                               placeholder="Producto, veterinario…"
                                wire:model.live.debounce.300ms="busqueda">
                     </div>
                 </div>
@@ -88,10 +88,10 @@
                         <td class="ps-4">
                             <span class="badge rounded-pill {{ $badgeTipo }}">{{ $evento->tipo_label }}</span>
                         </td>
-                        <td>{{ $evento->establecimiento->nombre ?? 'â€”' }}</td>
+                        <td>{{ $evento->establecimiento->nombre ?? '—' }}</td>
                         <td>
                             @if ($evento->animal)
-                                <span class="font-monospace">{{ $evento->animal->caravana ?? 'â€”' }}</span>
+                                <span class="font-monospace">{{ $evento->animal->caravana ?? '—' }}</span>
                                 <small class="text-muted d-block">{{ $evento->animal->categoria_label }}</small>
                             @elseif ($evento->categoria_afectada)
                                 <span class="text-muted">{{ \App\Models\Animal::CATEGORIAS[$evento->categoria_afectada] ?? $evento->categoria_afectada }}</span>
@@ -107,11 +107,11 @@
                                 <div>{{ $evento->producto }}</div>
                                 @if ($evento->dosis) <small class="text-muted">{{ $evento->dosis }}</small> @endif
                             @else
-                                <span class="text-muted">â€”</span>
+                                <span class="text-muted">—</span>
                             @endif
                         </td>
                         <td>{{ $evento->fecha->format('d/m/Y') }}</td>
-                        <td>{{ $evento->veterinario ?? 'â€”' }}</td>
+                        <td>{{ $evento->veterinario ?? '—' }}</td>
                         <td class="pe-4 text-end">
                             @can('ganaderia.sanidad.registrar')
                             <button class="btn btn-sm btn-outline-secondary"
@@ -160,7 +160,7 @@
                                 <label class="form-label fw-semibold">Establecimiento <span class="text-danger">*</span></label>
                                 <select class="form-select @error('id_establecimiento') is-invalid @enderror"
                                         wire:model.live="id_establecimiento">
-                                    <option value="">Seleccionarâ€¦</option>
+                                    <option value="">Seleccionar…</option>
                                     @foreach ($establecimientos as $est)
                                         <option value="{{ $est->id }}">{{ $est->nombre }}</option>
                                     @endforeach
@@ -175,14 +175,14 @@
                                     @foreach ($animalesOpciones as $a)
                                         <option value="{{ $a->id }}">
                                             {{ $a->caravana ?? '(sin caravana)' }}
-                                            â€” {{ \App\Models\Animal::CATEGORIAS[$a->categoria] ?? $a->categoria }}
+                                            — {{ \App\Models\Animal::CATEGORIAS[$a->categoria] ?? $a->categoria }}
                                         </option>
                                     @endforeach
                                 </select>
                                 @error('id_animal') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label fw-semibold">CategorÃ­a afectada</label>
+                                <label class="form-label fw-semibold">Categoría afectada</label>
                                 <select class="form-select @error('categoria_afectada') is-invalid @enderror"
                                         wire:model="categoria_afectada">
                                     <option value="">Sin especificar</option>
@@ -214,7 +214,7 @@
                                 <label class="form-label fw-semibold">Cabezas</label>
                                 <input type="number" min="1"
                                        class="form-control @error('cantidad_afectada') is-invalid @enderror"
-                                       wire:model="cantidad_afectada" placeholder="â€”">
+                                       wire:model="cantidad_afectada" placeholder="—">
                                 @error('cantidad_afectada') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-3">

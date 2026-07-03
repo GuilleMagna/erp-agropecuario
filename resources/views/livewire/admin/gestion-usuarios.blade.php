@@ -17,7 +17,7 @@
     <div class="d-flex justify-content-between align-items-start mb-4">
         <div>
             <h5 class="mb-0 fw-bold" style="color:#16324F">Usuarios del sistema</h5>
-            <small class="text-muted">AdministrÃ¡ los usuarios y sus roles de acceso.</small>
+            <small class="text-muted">Administrá los usuarios y sus roles de acceso.</small>
         </div>
         @can('admin.usuarios.crear')
         <button class="btn btn-primary btn-sm px-3" wire:click="abrirModalCrear">
@@ -37,7 +37,7 @@
                         </span>
                         <input type="text"
                                class="form-control form-control-sm border-start-0 ps-0"
-                               placeholder="Buscar por nombre, apellido o emailâ€¦"
+                               placeholder="Buscar por nombre, apellido o email…"
                                wire:model.live.debounce.300ms="busqueda">
                     </div>
                 </div>
@@ -73,10 +73,10 @@
                     <tr>
                         <th class="ps-3 fw-semibold small text-uppercase text-muted" style="letter-spacing:.5px">Nombre</th>
                         <th class="fw-semibold small text-uppercase text-muted" style="letter-spacing:.5px">Email</th>
-                        <th class="fw-semibold small text-uppercase text-muted" style="letter-spacing:.5px">TelÃ©fono</th>
+                        <th class="fw-semibold small text-uppercase text-muted" style="letter-spacing:.5px">Teléfono</th>
                         <th class="fw-semibold small text-uppercase text-muted" style="letter-spacing:.5px">Rol</th>
                         <th class="fw-semibold small text-uppercase text-muted" style="letter-spacing:.5px">Estado</th>
-                        <th class="fw-semibold small text-uppercase text-muted" style="letter-spacing:.5px">Ãšltimo acceso</th>
+                        <th class="fw-semibold small text-uppercase text-muted" style="letter-spacing:.5px">Último acceso</th>
                         <th class="pe-3 text-end fw-semibold small text-uppercase text-muted" style="letter-spacing:.5px">Acciones</th>
                     </tr>
                 </thead>
@@ -100,7 +100,7 @@
                             <div class="fw-semibold">{{ $usuario->nombre_completo }}</div>
                         </td>
                         <td class="text-muted small">{{ $usuario->email }}</td>
-                        <td class="text-muted small">{{ $usuario->telefono ?? 'â€”' }}</td>
+                        <td class="text-muted small">{{ $usuario->telefono ?? '—' }}</td>
                         <td>
                             @if($rolNombre)
                                 <span class="badge bg-{{ $colorRol }} bg-opacity-90" style="font-size:.75rem">
@@ -139,7 +139,7 @@
                                 @if($usuario->id !== auth()->id())
                                 <button class="btn btn-sm {{ $usuario->activo ? 'btn-outline-danger' : 'btn-outline-success' }}"
                                         wire:click="toggleActivo('{{ $usuario->id }}')"
-                                        wire:confirm="{{ $usuario->activo ? 'Â¿Inactivar este usuario? Ya no podrÃ¡ ingresar al sistema.' : 'Â¿Activar este usuario?' }}"
+                                        wire:confirm="{{ $usuario->activo ? '¿Inactivar este usuario? Ya no podrá ingresar al sistema.' : '¿Activar este usuario?' }}"
                                         title="{{ $usuario->activo ? 'Inactivar' : 'Activar' }}"
                                         wire:loading.attr="disabled">
                                     <i class="bi bi-person-{{ $usuario->activo ? 'slash' : 'check' }}"></i>
@@ -208,7 +208,7 @@
                                 <input type="text"
                                        class="form-control form-control-sm @error('apellido') is-invalid @enderror"
                                        wire:model="apellido"
-                                       placeholder="GarcÃ­a">
+                                       placeholder="García">
                                 @error('apellido')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -229,9 +229,9 @@
                                 @enderror
                             </div>
 
-                            {{-- TelÃ©fono --}}
+                            {{-- Teléfono --}}
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold small mb-1">TelÃ©fono</label>
+                                <label class="form-label fw-semibold small mb-1">Teléfono</label>
                                 <input type="text"
                                        class="form-control form-control-sm @error('telefono') is-invalid @enderror"
                                        wire:model="telefono"
@@ -248,7 +248,7 @@
                                 </label>
                                 <select class="form-select form-select-sm @error('rol') is-invalid @enderror"
                                         wire:model="rol">
-                                    <option value="">SeleccionÃ¡ un rolâ€¦</option>
+                                    <option value="">Seleccioná un rol…</option>
                                     @foreach($roles as $r)
                                         <option value="{{ $r->name }}">
                                             {{ ucwords(str_replace('_', ' ', $r->name)) }}
@@ -260,14 +260,14 @@
                                 @enderror
                             </div>
 
-                            {{-- ContraseÃ±a --}}
+                            {{-- Contraseña --}}
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold small mb-1">
-                                    ContraseÃ±a {{ $modoEdicion ? '' : '*' }}
+                                    Contraseña {{ $modoEdicion ? '' : '*' }}
                                 </label>
                                 @if($modoEdicion)
                                     <p class="text-muted mb-1" style="font-size:.72rem">
-                                        DejÃ¡ vacÃ­o para no cambiar.
+                                        Dejá vacío para no cambiar.
                                     </p>
                                 @endif
                                 <input type="password"
@@ -279,10 +279,10 @@
                                 @enderror
                             </div>
 
-                            {{-- Confirmar contraseÃ±a --}}
+                            {{-- Confirmar contraseña --}}
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold small mb-1">
-                                    Confirmar contraseÃ±a {{ $modoEdicion ? '' : '*' }}
+                                    Confirmar contraseña {{ $modoEdicion ? '' : '*' }}
                                 </label>
                                 @if($modoEdicion)<p class="mb-1" style="font-size:.72rem">&nbsp;</p>@endif
                                 <input type="password"
@@ -291,7 +291,7 @@
                                        autocomplete="new-password">
                             </div>
 
-                            {{-- Activo (solo en ediciÃ³n) --}}
+                            {{-- Activo (solo en edición) --}}
                             @if($modoEdicion)
                             <div class="col-12 pt-1">
                                 <div class="form-check form-switch">
