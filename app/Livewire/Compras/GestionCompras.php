@@ -22,6 +22,7 @@ class GestionCompras extends Component
 
     // Filtros
     public string $busqueda              = '';
+    #[Url]
     public string $filtroProveedor       = '';
     public string $filtroEstado          = '';
     public string $filtroActividad       = '';

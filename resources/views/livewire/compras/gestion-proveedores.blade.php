@@ -100,7 +100,11 @@
                             @endif
                         </td>
                         <td class="text-center">
-                            <span class="badge bg-primary-subtle text-primary rounded-pill">{{ $prov->compras_count }}</span>
+                            <a href="{{ route('compras.index', ['filtroProveedor' => $prov->id]) }}"
+                               class="badge bg-primary-subtle text-primary rounded-pill text-decoration-none"
+                               title="Ver comprobantes de {{ $prov->nombre }}">
+                                {{ $prov->compras_count }}
+                            </a>
                         </td>
                         <td>
                             @if ($prov->activo)
