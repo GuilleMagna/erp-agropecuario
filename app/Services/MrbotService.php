@@ -74,7 +74,7 @@ class MrbotService
         $resultado = ['importadas' => 0, 'duplicadas' => 0, 'errores' => 0, 'error' => null];
 
         foreach ($comprobantes as $item) {
-            $fila = $this->parsearComprobante($item);
+            $fila = $this->parsearComprobante($item, $idEmpresa);
 
             if ($fila === null) {
                 Log::warning('MrbotService: comprobante descartado (datos insuficientes)', ['item' => $item]);
@@ -221,7 +221,7 @@ class MrbotService
      * Parsea un elemento JSON de comprobante y lo mapea al formato interno.
      * Normaliza los nombres de campos con flexibilidad (ARCA puede usar distintas variantes).
      */
-    private function parsearComprobante(array $item): ?array
+    private function parsearComprobante(array $item, ?string $idEmpresa = null): ?array
     {
         // Normalizar todas las claves: minúsculas, sin tildes, espacios→_
         $n = [];
@@ -298,12 +298,24 @@ class MrbotService
         }
 
         // ── Chequeo de duplicado ──────────────────────────────────────────
+        // Se ignora el global scope de empresa (que depende de la empresa
+        // activa en sesión) y se filtra explícitamente por $idEmpresa, la
+        // empresa que realmente se está sincronizando. Si no se hace así,
+        // al sincronizar desde el navegador con otra empresa seleccionada
+        // en el selector de arriba, este chequeo mira los comprobantes de
+        // la empresa equivocada, nunca encuentra el ya importado y termina
+        // creando un duplicado.
         $estado = 'nuevo';
         $errorMsg = null;
 
         if (!empty($cuit) && $numeroComprobante !== '0000-00000000') {
-            $yaExiste = Compra::where('numero_comprobante', $numeroComprobante)
-                ->whereHas('proveedor', fn($q) => $q->where('cuit', $cuit))
+            $yaExiste = Compra::withoutGlobalScope('empresa')
+                ->where('numero_comprobante', $numeroComprobante)
+                ->when($idEmpresa, fn ($q) => $q->where('id_empresa', $idEmpresa))
+                ->whereHas('proveedor', function ($q) use ($cuit, $idEmpresa) {
+                    $q->withoutGlobalScope('empresa')->where('cuit', $cuit);
+                    if ($idEmpresa) $q->where('id_empresa', $idEmpresa);
+                })
                 ->exists();
             if ($yaExiste) {
                 $estado = 'duplicado';
