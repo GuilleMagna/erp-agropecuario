@@ -206,6 +206,7 @@
                             <th style="width:40px">#</th>
                             <th>Nombre</th>
                             <th>Categoría</th>
+                            <th>Inmueble</th>
                             <th class="text-center">Estado</th>
                             <th></th>
                         </tr>
@@ -219,6 +220,15 @@
                                     <span class="badge bg-light text-secondary border">
                                         {{ \App\Models\GastoNoArca::CATEGORIAS[$gasto->categoria] ?? $gasto->categoria }}
                                     </span>
+                                </td>
+                                <td>
+                                    @if ($gasto->inmueble)
+                                        <span class="badge bg-info-subtle text-info border border-info-subtle">
+                                            <i class="bi bi-building me-1"></i>{{ $gasto->inmueble->nombre }}
+                                        </span>
+                                    @else
+                                        <span class="text-muted small">—</span>
+                                    @endif
                                 </td>
                                 <td class="text-center">
                                     <button wire:click="toggleActivo('{{ $gasto->id }}')"
@@ -237,7 +247,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center text-muted py-5">
+                                <td colspan="6" class="text-center text-muted py-5">
                                     <i class="bi bi-list-ul fs-2 d-block mb-2 opacity-25"></i>
                                     No hay servicios registrados.
                                 </td>
@@ -282,6 +292,16 @@
                                 <label class="form-label small fw-semibold">Orden</label>
                                 <input type="number" class="form-control" wire:model="orden" min="0">
                             </div>
+                        </div>
+                        <div class="mt-3">
+                            <label class="form-label small fw-semibold">Inmueble (opcional)</label>
+                            <select class="form-select" wire:model="id_inmueble">
+                                <option value="">Ninguno / gasto general</option>
+                                @foreach ($inmuebles as $inmueble)
+                                    <option value="{{ $inmueble->id }}">{{ $inmueble->nombre }} ({{ $inmueble->localidad }})</option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">Si lo asignás, este gasto se suma al reporte de ese inmueble.</small>
                         </div>
                         <div class="mt-3">
                             <div class="form-check form-switch">

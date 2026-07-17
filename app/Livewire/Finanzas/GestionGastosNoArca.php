@@ -3,6 +3,7 @@
 namespace App\Livewire\Finanzas;
 
 use App\Models\GastoNoArca;
+use App\Models\Inmueble;
 use App\Models\PagoGastoNoArca;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Gate;
@@ -32,6 +33,7 @@ class GestionGastosNoArca extends Component
     public ?string $editandoId   = null;
     public string  $nombre       = '';
     public string  $categoria    = 'otros';
+    public string  $id_inmueble  = '';
     public bool    $activo       = true;
     public string  $orden        = '0';
 
@@ -146,6 +148,7 @@ class GestionGastosNoArca extends Component
         $this->modoEdicion = true;
         $this->nombre      = $gasto->nombre;
         $this->categoria   = $gasto->categoria;
+        $this->id_inmueble = $gasto->id_inmueble ?? '';
         $this->activo      = $gasto->activo;
         $this->orden       = (string) $gasto->orden;
         $this->modalAbierto = true;
@@ -156,18 +159,20 @@ class GestionGastosNoArca extends Component
         Gate::authorize('finanzas.gastos.gestionar');
 
         $this->validate([
-            'nombre'    => 'required|string|max:200',
-            'categoria' => 'required|in:' . implode(',', array_keys(GastoNoArca::CATEGORIAS)),
-            'orden'     => 'nullable|integer|min:0',
+            'nombre'      => 'required|string|max:200',
+            'categoria'   => 'required|in:' . implode(',', array_keys(GastoNoArca::CATEGORIAS)),
+            'id_inmueble' => 'nullable|exists:inmuebles,id',
+            'orden'       => 'nullable|integer|min:0',
         ], [
             'nombre.required' => 'El nombre es obligatorio.',
         ]);
 
         $datos = [
-            'nombre'    => $this->nombre,
-            'categoria' => $this->categoria,
-            'activo'    => $this->activo,
-            'orden'     => (int) ($this->orden ?: 0),
+            'nombre'      => $this->nombre,
+            'categoria'   => $this->categoria,
+            'id_inmueble' => $this->id_inmueble ?: null,
+            'activo'      => $this->activo,
+            'orden'       => (int) ($this->orden ?: 0),
         ];
 
         if ($this->modoEdicion) {
@@ -201,7 +206,7 @@ class GestionGastosNoArca extends Component
 
     private function limpiarModal(): void
     {
-        $this->reset(['editandoId', 'modoEdicion', 'nombre']);
+        $this->reset(['editandoId', 'modoEdicion', 'nombre', 'id_inmueble']);
         $this->categoria = 'otros';
         $this->activo    = true;
         $this->orden     = '0';
@@ -225,6 +230,7 @@ class GestionGastosNoArca extends Component
 
         // Servicios para el catálogo
         $catalogo = GastoNoArca::query()
+            ->with('inmueble')
             ->when($this->filtroCategoria, fn ($q) => $q->where('categoria', $this->filtroCategoria))
             ->when($this->busqueda, fn ($q) => $q->where('nombre', 'like', "%{$this->busqueda}%"))
             ->orderBy('orden')
@@ -236,6 +242,7 @@ class GestionGastosNoArca extends Component
             'totalMes'      => $totalMes,
             'catalogo'      => $catalogo,
             'categorias'    => GastoNoArca::CATEGORIAS,
+            'inmuebles'     => Inmueble::where('activo', true)->orderBy('nombre')->get(),
             'mesLabel'      => $this->formatearMes($this->mesSeleccionado),
         ]);
     }

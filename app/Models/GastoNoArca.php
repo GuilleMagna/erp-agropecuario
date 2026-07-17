@@ -14,7 +14,7 @@ class GastoNoArca extends Model
     protected $table = 'gastos_no_arca';
 
     protected $fillable = [
-        'id_empresa', 'nombre', 'categoria', 'orden', 'activo',
+        'id_empresa', 'nombre', 'categoria', 'id_inmueble', 'orden', 'activo',
     ];
 
     protected $casts = [
@@ -38,6 +38,11 @@ class GastoNoArca extends Model
     public function empresa(): BelongsTo
     {
         return $this->belongsTo(Empresa::class, 'id_empresa');
+    }
+
+    public function inmueble(): BelongsTo
+    {
+        return $this->belongsTo(Inmueble::class, 'id_inmueble');
     }
 
     public function pagos(): HasMany

@@ -329,6 +329,12 @@
                     <i class="bi bi-cash-stack me-2"></i> Gastos NO ARCA
                 </a>
                 @endcan
+                @can('finanzas.inmuebles.gestionar')
+                <a href="{{ route('finanzas.inmuebles.index') }}"
+                   class="nav-link {{ request()->routeIs('finanzas.inmuebles.*') ? 'active' : '' }}">
+                    <i class="bi bi-building me-2"></i> Inmuebles
+                </a>
+                @endcan
             </div>
         </li>
         @endcanany
@@ -360,7 +366,7 @@
         @endcanany
 
         {{-- ── REPORTES ─────────────────────────────────────── --}}
-        @canany(['reportes.productivos.ver','reportes.economicos.ver','reportes.fiscales.ver','reportes.iva.ver','reportes.ganancias.ver'])
+        @canany(['reportes.productivos.ver','reportes.economicos.ver','reportes.fiscales.ver','reportes.iva.ver','reportes.ganancias.ver','reportes.inmuebles.ver'])
         <li>
             <button class="sec-toggle" type="button"
                     data-bs-toggle="collapse" data-bs-target="#secReportes"
@@ -397,6 +403,12 @@
                 <a href="{{ route('reportes.ganancias') }}"
                    class="nav-link {{ request()->routeIs('reportes.ganancias') ? 'active' : '' }}">
                     <i class="bi bi-graph-up-arrow me-2"></i> Ganancias
+                </a>
+                @endcan
+                @can('reportes.inmuebles.ver')
+                <a href="{{ route('reportes.inmuebles') }}"
+                   class="nav-link {{ request()->routeIs('reportes.inmuebles') ? 'active' : '' }}">
+                    <i class="bi bi-building me-2"></i> Inmuebles
                 </a>
                 @endcan
             </div>

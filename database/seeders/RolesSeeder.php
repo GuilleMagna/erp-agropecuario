@@ -109,6 +109,7 @@ class RolesSeeder extends Seeder
             'finanzas.periodos.gestionar',
             'finanzas.reintegros.gestionar',
             'finanzas.gastos.gestionar',
+            'finanzas.inmuebles.gestionar',
 
             // --- RRHH ---
             'rrhh.personal.ver',
@@ -122,6 +123,7 @@ class RolesSeeder extends Seeder
             'reportes.fiscales.ver',
             'reportes.iva.ver',
             'reportes.ganancias.ver',
+            'reportes.inmuebles.ver',
             'reportes.exportar',
 
             // --- Auditoría ---
@@ -166,7 +168,7 @@ class RolesSeeder extends Seeder
             'finanzas.periodos.gestionar', 'finanzas.reintegros.gestionar',
             'rrhh.personal.ver', 'rrhh.jornales.ver',
             'reportes.productivos.ver', 'reportes.economicos.ver',
-            'reportes.fiscales.ver', 'reportes.iva.ver', 'reportes.ganancias.ver', 'reportes.exportar',
+            'reportes.fiscales.ver', 'reportes.iva.ver', 'reportes.ganancias.ver', 'reportes.inmuebles.ver', 'reportes.exportar',
             'auditoria.ver',
         ]);
 
@@ -209,8 +211,9 @@ class RolesSeeder extends Seeder
             'finanzas.periodos.gestionar', 'finanzas.reintegros.gestionar',
             'rrhh.personal.ver', 'rrhh.personal.gestionar',
             'rrhh.jornales.ver', 'rrhh.jornales.registrar',
+            'finanzas.inmuebles.gestionar',
             'reportes.economicos.ver', 'reportes.fiscales.ver',
-            'reportes.iva.ver', 'reportes.ganancias.ver', 'reportes.exportar',
+            'reportes.iva.ver', 'reportes.ganancias.ver', 'reportes.inmuebles.ver', 'reportes.exportar',
         ]);
 
         /**

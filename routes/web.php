@@ -158,6 +158,10 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('can:reportes.ganancias.ver')
         ->name('reportes.ganancias');
 
+    Route::get('/reportes/inmuebles', fn () => view('reportes.reporte-inmuebles'))
+        ->middleware('can:reportes.inmuebles.ver')
+        ->name('reportes.inmuebles');
+
     // Feedlot
     Route::get('/feedlot/corrales', fn () => view('feedlot.gestion-corrales'))
         ->middleware('can:feedlot.corrales.ver')
@@ -183,6 +187,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/finanzas/gastos-no-arca', fn () => view('finanzas.gestion-gastos-no-arca'))
         ->middleware('can:finanzas.gastos.gestionar')
         ->name('finanzas.gastos.index');
+
+    Route::get('/finanzas/inmuebles', fn () => view('finanzas.gestion-inmuebles'))
+        ->middleware('can:finanzas.inmuebles.gestionar')
+        ->name('finanzas.inmuebles.index');
 
     // Switcher de empresa para administrador_sistema
     Route::post('/empresa/cambiar', function (\Illuminate\Http\Request $request) {
