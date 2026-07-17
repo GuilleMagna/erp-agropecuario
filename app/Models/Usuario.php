@@ -56,6 +56,7 @@ class Usuario extends Authenticatable
         'telefono',
         'password',
         'foto_url',
+        'google_id',
         'mfa_habilitado',
         'activo',
     ];
