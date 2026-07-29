@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Usuario;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -21,7 +20,6 @@ class GoogleController extends Controller
     public function redirect(): RedirectResponse
     {
         $nonce = Str::random(40);
-        Cache::put('google_oauth_state:'.hash('sha256', $nonce), true, now()->addMinutes(10));
 
         $state = Crypt::encryptString(json_encode([
             'expires_at' => now()->addMinutes(10)->timestamp,
@@ -50,7 +48,7 @@ class GoogleController extends Controller
             $validState = is_array($stateData)
                 && ($stateData['expires_at'] ?? 0) >= now()->timestamp
                 && is_string($stateData['nonce'] ?? null)
-                && Cache::pull('google_oauth_state:'.hash('sha256', $stateData['nonce']), false) === true;
+                && strlen($stateData['nonce']) === 40;
         } catch (Throwable) {
             // El token es inválido, fue alterado o ya no puede descifrarse.
         }
