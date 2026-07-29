@@ -31,7 +31,8 @@ class GoogleController extends Controller
     public function callback(): RedirectResponse
     {
         if (! request()->query->has('code')) {
-            parse_str((string) request()->server('QUERY_STRING'), $query);
+            $requestUri = (string) request()->server('REQUEST_URI');
+            parse_str((string) parse_url($requestUri, PHP_URL_QUERY), $query);
 
             if (is_string($query['code'] ?? null)) {
                 request()->query->set('code', $query['code']);
