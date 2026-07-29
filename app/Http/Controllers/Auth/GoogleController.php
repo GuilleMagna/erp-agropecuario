@@ -100,6 +100,6 @@ class GoogleController extends Controller
 
     private function oauthContext(): string
     {
-        return hash('sha256', request()->userAgent().'|'.request()->ip());
+        return hash('sha256', (string) request()->userAgent());
     }
 }
