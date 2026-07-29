@@ -30,6 +30,14 @@ class GoogleController extends Controller
      */
     public function callback(): RedirectResponse
     {
+        if (! request()->query->has('code')) {
+            parse_str((string) request()->server('QUERY_STRING'), $query);
+
+            if (is_string($query['code'] ?? null)) {
+                request()->query->set('code', $query['code']);
+            }
+        }
+
         $googleUser = Socialite::driver('google')->stateless()->user();
 
         $usuario = Usuario::where('email', $googleUser->getEmail())->first();
