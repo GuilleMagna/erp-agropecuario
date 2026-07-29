@@ -17,20 +17,9 @@ class GoogleController extends Controller
      */
     public function redirect(): RedirectResponse
     {
-        $state = Str::random(40);
-
         return Socialite::driver('google')
             ->stateless()
-            ->with(['state' => $state])
-            ->redirect()
-            ->withCookie(cookie(
-                'google_oauth_state',
-                $state,
-                10,
-                secure: true,
-                httpOnly: true,
-                sameSite: 'lax',
-            ));
+            ->redirect();
     }
 
     /**
@@ -41,19 +30,6 @@ class GoogleController extends Controller
      */
     public function callback(): RedirectResponse
     {
-        $state = request()->string('state')->toString();
-        $expectedState = request()->cookie('google_oauth_state');
-        $validState = is_string($expectedState)
-            && strlen($expectedState) === 40
-            && hash_equals($expectedState, $state);
-        cookie()->queue(cookie()->forget('google_oauth_state'));
-
-        if (! $validState) {
-            return redirect()->route('login')->withErrors([
-                'email' => 'La sesión de Google venció o no es válida. Intentá iniciar sesión nuevamente.',
-            ]);
-        }
-
         $googleUser = Socialite::driver('google')->stateless()->user();
 
         $usuario = Usuario::where('email', $googleUser->getEmail())->first();
