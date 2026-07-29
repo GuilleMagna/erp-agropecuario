@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Usuario;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
+use Throwable;
 
 class GoogleController extends Controller
 {
@@ -17,11 +19,11 @@ class GoogleController extends Controller
      */
     public function redirect(): RedirectResponse
     {
-        $state = Str::random(40);
-        $session = request()->session();
-
-        $session->put('google_oauth_state', $state);
-        $session->save();
+        $state = Crypt::encryptString(json_encode([
+            'expires_at' => now()->addMinutes(10)->timestamp,
+            'context' => $this->oauthContext(),
+            'nonce' => Str::random(40),
+        ], JSON_THROW_ON_ERROR));
 
         return Socialite::driver('google')
             ->stateless()
@@ -38,9 +40,19 @@ class GoogleController extends Controller
     public function callback(): RedirectResponse
     {
         $state = request()->string('state')->toString();
-        $expectedState = request()->session()->pull('google_oauth_state');
+        $validState = false;
 
-        if (! is_string($expectedState) || $state === '' || ! hash_equals($expectedState, $state)) {
+        try {
+            $stateData = json_decode(Crypt::decryptString($state), true, flags: JSON_THROW_ON_ERROR);
+            $validState = is_array($stateData)
+                && ($stateData['expires_at'] ?? 0) >= now()->timestamp
+                && is_string($stateData['context'] ?? null)
+                && hash_equals($stateData['context'], $this->oauthContext());
+        } catch (Throwable) {
+            // El token es inválido, fue alterado o ya no puede descifrarse.
+        }
+
+        if (! $validState) {
             return redirect()->route('login')->withErrors([
                 'email' => 'La sesión de Google venció o no es válida. Intentá iniciar sesión nuevamente.',
             ]);
@@ -84,5 +96,10 @@ class GoogleController extends Controller
         $usuario->registrarAcceso();
 
         return redirect()->intended(route('dashboard', absolute: false));
+    }
+
+    private function oauthContext(): string
+    {
+        return hash('sha256', request()->userAgent().'|'.request()->ip());
     }
 }
