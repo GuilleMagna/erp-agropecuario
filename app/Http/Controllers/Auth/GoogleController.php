@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
-use Throwable;
 
 class GoogleController extends Controller
 {
@@ -18,18 +17,20 @@ class GoogleController extends Controller
      */
     public function redirect(): RedirectResponse
     {
-        $nonce = Str::random(40);
-
-        $payload = rtrim(strtr(base64_encode(json_encode([
-            'expires_at' => now()->addMinutes(10)->timestamp,
-            'nonce' => $nonce,
-        ], JSON_THROW_ON_ERROR)), '+/', '-_'), '=');
-        $state = $payload.'.'.hash_hmac('sha256', $payload, config('app.key'));
+        $state = Str::random(40);
 
         return Socialite::driver('google')
             ->stateless()
             ->with(['state' => $state])
-            ->redirect();
+            ->redirect()
+            ->withCookie(cookie(
+                'google_oauth_state',
+                $state,
+                10,
+                secure: true,
+                httpOnly: true,
+                sameSite: 'lax',
+            ));
     }
 
     /**
@@ -41,23 +42,11 @@ class GoogleController extends Controller
     public function callback(): RedirectResponse
     {
         $state = request()->string('state')->toString();
-        $validState = false;
-
-        try {
-            [$payload, $signature] = array_pad(explode('.', $state, 2), 2, '');
-            $padding = str_repeat('=', (4 - strlen($payload) % 4) % 4);
-            $decodedPayload = base64_decode(strtr($payload, '-_', '+/').$padding, true);
-            $expectedSignature = hash_hmac('sha256', $payload, config('app.key'));
-            $stateData = json_decode($decodedPayload ?: '', true, flags: JSON_THROW_ON_ERROR);
-
-            $validState = hash_equals($expectedSignature, $signature)
-                && is_array($stateData)
-                && ($stateData['expires_at'] ?? 0) >= now()->timestamp
-                && is_string($stateData['nonce'] ?? null)
-                && strlen($stateData['nonce']) === 40;
-        } catch (Throwable) {
-            // El token es inválido, fue alterado o ya no puede descifrarse.
-        }
+        $expectedState = request()->cookie('google_oauth_state');
+        $validState = is_string($expectedState)
+            && strlen($expectedState) === 40
+            && hash_equals($expectedState, $state);
+        cookie()->queue(cookie()->forget('google_oauth_state'));
 
         if (! $validState) {
             return redirect()->route('login')->withErrors([
