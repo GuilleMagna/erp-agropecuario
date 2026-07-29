@@ -18,8 +18,10 @@ class GoogleController extends Controller
     public function redirect(): RedirectResponse
     {
         $state = Str::random(40);
+        $session = request()->session();
 
-        request()->session()->put('google_oauth_state', $state);
+        $session->put('google_oauth_state', $state);
+        $session->save();
 
         return Socialite::driver('google')
             ->stateless()
