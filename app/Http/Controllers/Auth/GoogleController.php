@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Usuario;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
@@ -21,10 +20,11 @@ class GoogleController extends Controller
     {
         $nonce = Str::random(40);
 
-        $state = Crypt::encryptString(json_encode([
+        $payload = rtrim(strtr(base64_encode(json_encode([
             'expires_at' => now()->addMinutes(10)->timestamp,
             'nonce' => $nonce,
-        ], JSON_THROW_ON_ERROR));
+        ], JSON_THROW_ON_ERROR)), '+/', '-_'), '=');
+        $state = $payload.'.'.hash_hmac('sha256', $payload, config('app.key'));
 
         return Socialite::driver('google')
             ->stateless()
@@ -44,8 +44,14 @@ class GoogleController extends Controller
         $validState = false;
 
         try {
-            $stateData = json_decode(Crypt::decryptString($state), true, flags: JSON_THROW_ON_ERROR);
-            $validState = is_array($stateData)
+            [$payload, $signature] = array_pad(explode('.', $state, 2), 2, '');
+            $padding = str_repeat('=', (4 - strlen($payload) % 4) % 4);
+            $decodedPayload = base64_decode(strtr($payload, '-_', '+/').$padding, true);
+            $expectedSignature = hash_hmac('sha256', $payload, config('app.key'));
+            $stateData = json_decode($decodedPayload ?: '', true, flags: JSON_THROW_ON_ERROR);
+
+            $validState = hash_equals($expectedSignature, $signature)
+                && is_array($stateData)
                 && ($stateData['expires_at'] ?? 0) >= now()->timestamp
                 && is_string($stateData['nonce'] ?? null)
                 && strlen($stateData['nonce']) === 40;
