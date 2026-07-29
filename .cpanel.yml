@@ -1,0 +1,17 @@
+---
+deployment:
+  tasks:
+    - export APPPATH=/home/hilariomagnano/repositories/erp-agropecuario
+    - export DEPLOYPATH=/home/hilariomagnano/public_html
+    - if [ -f "$APPPATH/server.env" ]; then /bin/mv "$APPPATH/server.env" "$APPPATH/.env"; fi
+    - if [ -f "$APPPATH/vendor.zip" ]; then /usr/bin/unzip -oq "$APPPATH/vendor.zip" -d "$APPPATH" && /bin/rm "$APPPATH/vendor.zip"; fi
+    - /bin/mkdir -p $DEPLOYPATH/build
+    - /bin/mkdir -p $DEPLOYPATH/images
+    - /bin/cp $APPPATH/public/.htaccess $DEPLOYPATH/.htaccess
+    - /bin/cp $APPPATH/public/favicon.ico $DEPLOYPATH/favicon.ico
+    - /bin/cp $APPPATH/public/robots.txt $DEPLOYPATH/robots.txt
+    - /bin/cp $APPPATH/deploy/cpanel/index.php $DEPLOYPATH/index.php
+    - /bin/cp -R $APPPATH/public/build/. $DEPLOYPATH/build
+    - /bin/cp -R $APPPATH/public/images/. $DEPLOYPATH/images
+    - /bin/ln -sfn $APPPATH/storage/app/public $DEPLOYPATH/storage
+    - /bin/chmod -R ug+rwX $APPPATH/storage $APPPATH/bootstrap/cache
