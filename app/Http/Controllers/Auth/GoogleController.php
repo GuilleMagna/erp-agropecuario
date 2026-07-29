@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Usuario;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -19,10 +20,12 @@ class GoogleController extends Controller
      */
     public function redirect(): RedirectResponse
     {
+        $nonce = Str::random(40);
+        Cache::put('google_oauth_state:'.hash('sha256', $nonce), true, now()->addMinutes(10));
+
         $state = Crypt::encryptString(json_encode([
             'expires_at' => now()->addMinutes(10)->timestamp,
-            'context' => $this->oauthContext(),
-            'nonce' => Str::random(40),
+            'nonce' => $nonce,
         ], JSON_THROW_ON_ERROR));
 
         return Socialite::driver('google')
@@ -46,8 +49,8 @@ class GoogleController extends Controller
             $stateData = json_decode(Crypt::decryptString($state), true, flags: JSON_THROW_ON_ERROR);
             $validState = is_array($stateData)
                 && ($stateData['expires_at'] ?? 0) >= now()->timestamp
-                && is_string($stateData['context'] ?? null)
-                && hash_equals($stateData['context'], $this->oauthContext());
+                && is_string($stateData['nonce'] ?? null)
+                && Cache::pull('google_oauth_state:'.hash('sha256', $stateData['nonce']), false) === true;
         } catch (Throwable) {
             // El token es inválido, fue alterado o ya no puede descifrarse.
         }
@@ -96,10 +99,5 @@ class GoogleController extends Controller
         $usuario->registrarAcceso();
 
         return redirect()->intended(route('dashboard', absolute: false));
-    }
-
-    private function oauthContext(): string
-    {
-        return hash('sha256', (string) request()->userAgent());
     }
 }
