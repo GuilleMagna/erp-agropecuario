@@ -2,10 +2,13 @@
 
 namespace App\Console\Commands;
 
+use App\Mail\ReporteComprobantesArca;
 use App\Models\Empresa;
 use App\Services\MrbotService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Symfony\Component\Process\Process;
 
 class SincronizarComprobantesArca extends Command
@@ -28,30 +31,34 @@ class SincronizarComprobantesArca extends Command
 
         if ($empresas->isEmpty()) {
             $this->error('No hay empresas con ARCA activo. Configuralas en Sistema → Empresas.');
+
             return self::FAILURE;
         }
 
         $this->info("Período: {$desde} → {$hasta}");
-        $this->info("Empresas a sincronizar: " . $empresas->count());
+        $this->info('Empresas a sincronizar: '.$empresas->count());
 
         $scriptPath = base_path('scripts/arca_descarga.js');
 
-        if (!file_exists($scriptPath)) {
+        if (! file_exists($scriptPath)) {
             $this->error("Script no encontrado: {$scriptPath}");
+
             return self::FAILURE;
         }
 
         $totalImportadas = 0;
         $totalDuplicadas = 0;
-        $totalErrores    = 0;
-        $exitCode        = self::SUCCESS;
+        $totalErrores = 0;
+        $exitCode = self::SUCCESS;
+        $comprasPorEmpresa = collect();
 
         foreach ($empresas as $empresa) {
             $this->newLine();
             $this->line("── <info>{$empresa->razon_social}</info> ({$empresa->cuit}) ──");
 
-            if (!$empresa->arca_cuit_login || !$empresa->arca_clave_fiscal) {
-                $this->warn("  Sin credenciales ARCA. Saltando.");
+            if (! $empresa->arca_cuit_login || ! $empresa->arca_clave_fiscal) {
+                $this->warn('  Sin credenciales ARCA. Saltando.');
+
                 continue;
             }
 
@@ -67,7 +74,7 @@ class SincronizarComprobantesArca extends Command
                     ? '--cuit-representado' : null,
                 $empresa->arca_cuit_representado && $empresa->arca_cuit_representado !== $empresa->arca_cuit_login
                     ? $empresa->arca_cuit_representado : null,
-                $this->option('debug')       ? '--debug'       : null,
+                $this->option('debug') ? '--debug' : null,
                 $this->option('screenshots') ? '--screenshots' : null,
             ]));
 
@@ -77,40 +84,47 @@ class SincronizarComprobantesArca extends Command
             $proceso->run(function (string $type, string $buffer) {
                 if ($type === Process::ERR) {
                     foreach (explode("\n", trim($buffer)) as $linea) {
-                        if ($linea) $this->line("    {$linea}");
+                        if ($linea) {
+                            $this->line("    {$linea}");
+                        }
                     }
                 }
             });
 
-            if (!$proceso->isSuccessful()) {
+            if (! $proceso->isSuccessful()) {
                 $this->error("  El script terminó con error para {$empresa->razon_social}.");
                 $exitCode = self::FAILURE;
+
                 continue;
             }
 
             $stdout = trim($proceso->getOutput());
 
             if (empty($stdout)) {
-                $this->warn("  El script no devolvió datos.");
+                $this->warn('  El script no devolvió datos.');
+
                 continue;
             }
 
             $data = json_decode($stdout, true);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
-                $this->error("  Respuesta no es JSON válido.");
+                $this->error('  Respuesta no es JSON válido.');
                 $exitCode = self::FAILURE;
+
                 continue;
             }
 
             if (isset($data['__error__'])) {
                 $this->error("  Error ARCA: {$data['__error__']}");
                 $exitCode = self::FAILURE;
+
                 continue;
             }
 
             if (empty($data)) {
-                $this->info("  Sin comprobantes en el período.");
+                $this->info('  Sin comprobantes en el período.');
+
                 continue;
             }
 
@@ -120,11 +134,15 @@ class SincronizarComprobantesArca extends Command
 
             $totalImportadas += $resultado['importadas'];
             $totalDuplicadas += $resultado['duplicadas'];
-            $totalErrores    += $resultado['errores'];
+            $totalErrores += $resultado['errores'];
+
+            if ($resultado['compras']->isNotEmpty()) {
+                $comprasPorEmpresa->put($empresa->razon_social, $resultado['compras']);
+            }
         }
 
         $this->newLine();
-        $this->line("─────────────────────────────────────");
+        $this->line('─────────────────────────────────────');
         $this->info("Total importadas : {$totalImportadas}");
         $this->line("Total duplicadas : {$totalDuplicadas}");
 
@@ -132,7 +150,34 @@ class SincronizarComprobantesArca extends Command
             $this->warn("Total con errores: {$totalErrores}");
         }
 
+        if ($comprasPorEmpresa->isNotEmpty()) {
+            $this->enviarReporte($comprasPorEmpresa, $desde, $hasta);
+        }
+
         return $exitCode;
+    }
+
+    private function enviarReporte($comprasPorEmpresa, string $desde, string $hasta): void
+    {
+        $destinatario = config('arca.reporte_email');
+
+        if (! $destinatario) {
+            $this->warn('ARCA_REPORTE_EMAIL no está configurado en .env: no se envía el informe por email.');
+
+            return;
+        }
+
+        try {
+            Mail::to($destinatario)->send(new ReporteComprobantesArca($comprasPorEmpresa, $desde, $hasta));
+            $this->info("Informe enviado a {$destinatario}.");
+        } catch (\Exception $e) {
+            // Un error de envío de mail no debe hacer fallar la sincronización:
+            // los comprobantes ya se importaron correctamente a esta altura.
+            Log::error('SincronizarComprobantesArca: error al enviar el informe por email', [
+                'error' => $e->getMessage(),
+            ]);
+            $this->error("No se pudo enviar el informe por email: {$e->getMessage()}");
+        }
     }
 
     private function resolverEmpresas()
@@ -144,8 +189,9 @@ class SincronizarComprobantesArca extends Command
                 ->orWhere('cuit', $opcion)
                 ->first();
 
-            if (!$empresa) {
+            if (! $empresa) {
                 $this->error("Empresa no encontrada: {$opcion}");
+
                 return collect();
             }
 
@@ -161,13 +207,18 @@ class SincronizarComprobantesArca extends Command
 
     private function resolverFecha(?string $input, string $default): string
     {
-        if (!$input) return $default;
+        if (! $input) {
+            return $default;
+        }
 
         foreach (['d/m/Y', 'Y-m-d', 'd-m-Y'] as $fmt) {
             try {
                 $d = Carbon::createFromFormat($fmt, $input);
-                if ($d) return $d->format('Y-m-d');
-            } catch (\Exception) {}
+                if ($d) {
+                    return $d->format('Y-m-d');
+                }
+            } catch (\Exception) {
+            }
         }
 
         return $default;
