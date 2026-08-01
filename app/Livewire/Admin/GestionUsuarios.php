@@ -48,6 +48,8 @@ class GestionUsuarios extends Component
 
     public bool $activo = true;
 
+    public bool $recibir_notificaciones = true;
+
     protected function rules(): array
     {
         $emailUnico = $this->modoEdicion
@@ -120,6 +122,7 @@ class GestionUsuarios extends Component
         $this->email = $usuario->email;
         $this->telefono = $usuario->telefono ?? '';
         $this->activo = $usuario->activo;
+        $this->recibir_notificaciones = $usuario->recibir_notificaciones;
         $this->rol = $usuario->roles->first()?->name ?? '';
         $this->id_empresa = $usuario->id_empresa ?? '';
         $this->password = '';
@@ -145,6 +148,7 @@ class GestionUsuarios extends Component
                 'telefono' => $this->telefono ?: null,
                 'activo' => $this->activo,
                 'id_empresa' => $this->id_empresa,
+                'recibir_notificaciones' => $this->recibir_notificaciones,
             ];
             if ($this->password) {
                 $datos['password'] = $this->password;
@@ -165,6 +169,7 @@ class GestionUsuarios extends Component
                 'telefono' => $this->telefono ?: null,
                 'password' => $this->password,
                 'activo' => true,
+                'recibir_notificaciones' => $this->recibir_notificaciones,
             ]);
             $usuario->assignRole($this->rol);
 
@@ -206,6 +211,7 @@ class GestionUsuarios extends Component
             'telefono', 'password', 'password_confirmation', 'rol',
         ]);
         $this->activo = true;
+        $this->recibir_notificaciones = true;
         // Empresa del admin logueado como default: cubre el caso común (un
         // usuario nuevo para la misma empresa) sin obligar a elegir siempre.
         $this->id_empresa = auth()->user()->id_empresa ?? '';

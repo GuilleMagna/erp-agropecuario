@@ -322,6 +322,20 @@
                             </div>
                             @endif
 
+                            {{-- Recibir notificaciones (informe de ARCA, etc.) --}}
+                            <div class="col-12 pt-1">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                           id="check-notificaciones" wire:model="recibir_notificaciones">
+                                    <label class="form-check-label fw-semibold small" for="check-notificaciones">
+                                        Recibir notificaciones por email
+                                    </label>
+                                </div>
+                                <p class="text-muted mb-0" style="font-size:.72rem">
+                                    Ej: informe de comprobantes ARCA nuevos. Solo aplica a administradores.
+                                </p>
+                            </div>
+
                         </div>
                     </form>
                 </div>

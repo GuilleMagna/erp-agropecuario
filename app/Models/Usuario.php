@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\UsaUuid;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -40,11 +41,11 @@ use Spatie\Permission\Traits\HasRoles;
  * @property string|null $foto_url
  * @property bool $mfa_habilitado
  * @property bool $activo
- * @property \Carbon\Carbon|null $ultimo_acceso
+ * @property Carbon|null $ultimo_acceso
  */
 class Usuario extends Authenticatable
 {
-    use HasFactory, UsaUuid, HasRoles, LogsActivity, Notifiable;
+    use HasFactory, HasRoles, LogsActivity, Notifiable, UsaUuid;
 
     protected $table = 'usuarios';
 
@@ -59,6 +60,7 @@ class Usuario extends Authenticatable
         'google_id',
         'mfa_habilitado',
         'activo',
+        'recibir_notificaciones',
     ];
 
     protected $hidden = [
@@ -67,11 +69,12 @@ class Usuario extends Authenticatable
     ];
 
     protected $casts = [
-        'mfa_habilitado'       => 'boolean',
-        'activo'               => 'boolean',
-        'ultimo_acceso'        => 'datetime',
-        'email_verified_at'    => 'datetime',
-        'password'             => 'hashed',
+        'mfa_habilitado' => 'boolean',
+        'activo' => 'boolean',
+        'recibir_notificaciones' => 'boolean',
+        'ultimo_acceso' => 'datetime',
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
     ];
 
     // -------------------------------------------------------------------------

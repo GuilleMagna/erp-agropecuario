@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Mail\ReporteComprobantesArca;
 use App\Models\Empresa;
+use App\Models\Usuario;
 use App\Services\MrbotService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -159,17 +160,20 @@ class SincronizarComprobantesArca extends Command
 
     private function enviarReporte($comprasPorEmpresa, string $desde, string $hasta): void
     {
-        $destinatario = config('arca.reporte_email');
+        $destinatarios = Usuario::role('administrador_sistema')
+            ->where('recibir_notificaciones', true)
+            ->where('activo', true)
+            ->pluck('email');
 
-        if (! $destinatario) {
-            $this->warn('ARCA_REPORTE_EMAIL no está configurado en .env: no se envía el informe por email.');
+        if ($destinatarios->isEmpty()) {
+            $this->warn('Ningún administrador tiene activadas las notificaciones por email: no se envía el informe.');
 
             return;
         }
 
         try {
-            Mail::to($destinatario)->send(new ReporteComprobantesArca($comprasPorEmpresa, $desde, $hasta));
-            $this->info("Informe enviado a {$destinatario}.");
+            Mail::to($destinatarios->all())->send(new ReporteComprobantesArca($comprasPorEmpresa, $desde, $hasta));
+            $this->info('Informe enviado a: '.$destinatarios->implode(', '));
         } catch (\Exception $e) {
             // Un error de envío de mail no debe hacer fallar la sincronización:
             // los comprobantes ya se importaron correctamente a esta altura.
