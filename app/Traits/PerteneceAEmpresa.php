@@ -68,18 +68,22 @@ trait PerteneceAEmpresa
 
     /**
      * Devuelve el UUID de la empresa activa para el request actual.
-     * Para administrador_sistema usa la empresa elegida en sesión si la hay;
-     * para el resto siempre usa la empresa asignada al usuario.
+     * Los roles con permiso "sistema.empresas.cambiar" usan la empresa elegida
+     * en sesión si la hay; el resto siempre usa la empresa asignada al usuario.
      */
     public static function resolverEmpresaActiva(): ?string
     {
-        if (!auth()->check()) return null;
+        if (! auth()->check()) {
+            return null;
+        }
 
         $user = auth()->user();
 
-        if ($user->hasRole('administrador_sistema')) {
+        if ($user->can('sistema.empresas.cambiar')) {
             $enSesion = session('empresa_activa_id');
-            if ($enSesion) return $enSesion;
+            if ($enSesion) {
+                return $enSesion;
+            }
         }
 
         return $user->id_empresa;

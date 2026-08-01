@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Empresa;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -104,6 +106,10 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('can:ventas.hacienda.ver')
         ->name('ventas.hacienda.index');
 
+    Route::get('/ventas/compradores', fn () => view('ventas.gestion-compradores'))
+        ->middleware('can:ventas.compradores.gestionar')
+        ->name('ventas.compradores.index');
+
     // Módulo Compras
     Route::get('/compras/proveedores', fn () => view('compras.gestion-proveedores'))
         ->middleware('can:compras.proveedores.gestionar')
@@ -114,11 +120,11 @@ Route::middleware(['auth'])->group(function () {
         ->name('compras.index');
 
     Route::get('/compras/importar-arca', fn () => view('compras.importar-compras-arca'))
-        ->middleware('can:compras.crear')
+        ->middleware('can:compras.arca.gestionar')
         ->name('compras.importar-arca');
 
     Route::get('/compras/sincronizar-arca', fn () => view('compras.sincronizar-arca'))
-        ->middleware('can:compras.crear')
+        ->middleware('can:compras.arca.gestionar')
         ->name('compras.sincronizar-arca');
 
     // Módulo Sistema / Configuración
@@ -192,11 +198,12 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('can:finanzas.inmuebles.gestionar')
         ->name('finanzas.inmuebles.index');
 
-    // Switcher de empresa para administrador_sistema
-    Route::post('/empresa/cambiar', function (\Illuminate\Http\Request $request) {
-        abort_unless(auth()->user()->hasRole('administrador_sistema'), 403);
-        $empresa = \App\Models\Empresa::findOrFail($request->input('empresa_id'));
+    // Switcher de empresa, disponible para roles con permiso sistema.empresas.cambiar
+    Route::post('/empresa/cambiar', function (Request $request) {
+        abort_unless(auth()->user()->can('sistema.empresas.cambiar'), 403);
+        $empresa = Empresa::findOrFail($request->input('empresa_id'));
         session(['empresa_activa_id' => $empresa->id]);
+
         return redirect()->back();
     })->name('empresa.cambiar');
 

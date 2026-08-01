@@ -8,7 +8,8 @@ use App\Models\Empresa;
  * Permite que un link con ?empresa=<uuid> (por ej. desde un reporte consolidado que
  * cruza las 3 empresas) cambie la empresa activa de la sesión antes de que el
  * componente ejecute sus queries, reusando el mismo mecanismo del selector de
- * empresa para administrador_sistema (ver routes/web.php: POST /empresa/cambiar).
+ * empresa (ver routes/web.php: POST /empresa/cambiar), disponible para los
+ * roles con permiso "sistema.empresas.cambiar".
  */
 trait CambiaEmpresaDesdeQuery
 {
@@ -16,7 +17,7 @@ trait CambiaEmpresaDesdeQuery
     {
         $empresaId = request()->query('empresa');
 
-        if (!$empresaId || !auth()->check() || !auth()->user()->hasRole('administrador_sistema')) {
+        if (! $empresaId || ! auth()->check() || ! auth()->user()->can('sistema.empresas.cambiar')) {
             return;
         }
 

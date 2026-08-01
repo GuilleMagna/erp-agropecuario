@@ -16,9 +16,11 @@ class ImportarComprasArca extends Component
     use WithFileUploads;
 
     public $archivo = null;
+
     public string $paso = 'subir'; // subir | previsualizar | resultado
 
     public array $filasParsadas = [];
+
     public array $resumen = ['importadas' => 0, 'duplicadas' => 0, 'errores' => 0];
 
     // Indices de columnas detectados del encabezado
@@ -41,18 +43,18 @@ class ImportarComprasArca extends Component
         '82' => 'ticket',    '082' => 'ticket',
         '83' => 'ticket',    '083' => 'ticket',
         // Por texto
-        'factura a'          => 'factura_a',
-        'factura b'          => 'factura_b',
-        'factura c'          => 'factura_c',
-        'factura m'          => 'factura_a',
-        'ticket'             => 'ticket',
-        'ticket factura a'   => 'ticket',
-        'ticket factura b'   => 'ticket',
-        'recibo'             => 'recibo',
-        'nota de débito a'   => 'otro',
-        'nota de débito b'   => 'otro',
-        'nota de crédito a'  => 'otro',
-        'nota de crédito b'  => 'otro',
+        'factura a' => 'factura_a',
+        'factura b' => 'factura_b',
+        'factura c' => 'factura_c',
+        'factura m' => 'factura_a',
+        'ticket' => 'ticket',
+        'ticket factura a' => 'ticket',
+        'ticket factura b' => 'ticket',
+        'recibo' => 'recibo',
+        'nota de débito a' => 'otro',
+        'nota de débito b' => 'otro',
+        'nota de crédito a' => 'otro',
+        'nota de crédito b' => 'otro',
     ];
 
     // ─────────────────────────────────────────────────────────────
@@ -61,30 +63,32 @@ class ImportarComprasArca extends Component
 
     public function procesarArchivo(): void
     {
-        Gate::authorize('compras.crear');
+        Gate::authorize('compras.arca.gestionar');
 
         $this->validate([
             'archivo' => 'required|file|mimes:xlsx,xls,csv|max:10240',
         ], [
             'archivo.required' => 'Seleccioná un archivo.',
-            'archivo.mimes'    => 'Solo se aceptan archivos Excel (.xlsx, .xls) o CSV.',
-            'archivo.max'      => 'El archivo no puede superar 10 MB.',
+            'archivo.mimes' => 'Solo se aceptan archivos Excel (.xlsx, .xls) o CSV.',
+            'archivo.max' => 'El archivo no puede superar 10 MB.',
         ]);
 
         $extension = strtolower($this->archivo->getClientOriginalName());
-        $path      = $this->archivo->getRealPath();
+        $path = $this->archivo->getRealPath();
 
         try {
             $rows = str_ends_with($extension, '.csv')
                 ? $this->leerCsv($path)
                 : $this->leerExcel($path);
         } catch (\Exception $e) {
-            $this->addError('archivo', 'No se pudo leer el archivo: ' . $e->getMessage());
+            $this->addError('archivo', 'No se pudo leer el archivo: '.$e->getMessage());
+
             return;
         }
 
         if (empty($rows)) {
             $this->addError('archivo', 'El archivo está vacío o no tiene datos legibles.');
+
             return;
         }
 
@@ -92,6 +96,7 @@ class ImportarComprasArca extends Component
 
         if ($headerIndex === null) {
             $this->addError('archivo', 'No se encontró la fila de encabezados. Verificá que sea el export de ARCA (Mis Comprobantes).');
+
             return;
         }
 
@@ -99,13 +104,16 @@ class ImportarComprasArca extends Component
 
         if ($this->cols['fecha'] === null || $this->cols['cuit'] === null || $this->cols['total'] === null) {
             $this->addError('archivo', 'Faltan columnas requeridas (Fecha, CUIT, Importe Total). El archivo no coincide con el formato esperado de ARCA.');
+
             return;
         }
 
         $this->filasParsadas = [];
         for ($i = $headerIndex + 1; $i < count($rows); $i++) {
             $row = $rows[$i];
-            if (!array_filter($row, fn($v) => $v !== null && $v !== '')) continue;
+            if (! array_filter($row, fn ($v) => $v !== null && $v !== '')) {
+                continue;
+            }
             $fila = $this->parsearFila($row);
             if ($fila !== null) {
                 $this->filasParsadas[] = $fila;
@@ -114,6 +122,7 @@ class ImportarComprasArca extends Component
 
         if (empty($this->filasParsadas)) {
             $this->addError('archivo', 'No se encontraron filas con datos válidos en el archivo.');
+
             return;
         }
 
@@ -126,53 +135,61 @@ class ImportarComprasArca extends Component
 
     public function confirmarImport(): void
     {
-        Gate::authorize('compras.crear');
+        Gate::authorize('compras.arca.gestionar');
 
         $importadas = 0;
         $duplicadas = 0;
-        $errores    = 0;
+        $errores = 0;
 
         foreach ($this->filasParsadas as &$fila) {
-            if ($fila['estado'] === 'duplicado') { $duplicadas++; continue; }
-            if ($fila['estado'] === 'error')     { $errores++;    continue; }
+            if ($fila['estado'] === 'duplicado') {
+                $duplicadas++;
+
+                continue;
+            }
+            if ($fila['estado'] === 'error') {
+                $errores++;
+
+                continue;
+            }
 
             try {
                 // Buscar o crear proveedor por CUIT
                 $proveedor = null;
-                if (!empty($fila['cuit'])) {
+                if (! empty($fila['cuit'])) {
                     $proveedor = Proveedor::where('cuit', $fila['cuit'])->first();
-                    if (!$proveedor) {
+                    if (! $proveedor) {
                         $proveedor = Proveedor::create([
-                            'nombre'       => $fila['nombre'] ?: $fila['cuit'],
+                            'nombre' => $fila['nombre'] ?: $fila['cuit'],
                             'razon_social' => $fila['nombre'] ?: null,
-                            'cuit'         => $fila['cuit'],
-                            'rubro'        => 'otro',
-                            'activo'       => true,
+                            'cuit' => $fila['cuit'],
+                            'rubro' => 'otro',
+                            'activo' => true,
                         ]);
                         $fila['proveedor_creado'] = true;
                     }
                 }
 
                 Compra::create([
-                    'id_proveedor'       => $proveedor?->id,
+                    'id_proveedor' => $proveedor?->id,
                     'id_establecimiento' => null,
-                    'tipo_comprobante'   => $fila['tipo_comprobante'],
+                    'tipo_comprobante' => $fila['tipo_comprobante'],
                     'numero_comprobante' => $fila['numero_comprobante'],
-                    'fecha'              => $fila['fecha'],
-                    'fecha_vencimiento'  => null,
-                    'estado'             => 'recibida',
-                    'subtotal'           => $fila['subtotal'],
-                    'iva_porc'           => $fila['iva_porc'],
-                    'iva_importe'        => $fila['iva_importe'],
-                    'total'              => $fila['total'],
-                    'stock_registrado'   => false,
-                    'observaciones'      => 'Importado desde ARCA',
+                    'fecha' => $fila['fecha'],
+                    'fecha_vencimiento' => null,
+                    'estado' => 'recibida',
+                    'subtotal' => $fila['subtotal'],
+                    'iva_porc' => $fila['iva_porc'],
+                    'iva_importe' => $fila['iva_importe'],
+                    'total' => $fila['total'],
+                    'stock_registrado' => false,
+                    'observaciones' => 'Importado desde ARCA',
                 ]);
 
                 $fila['estado'] = 'importado';
                 $importadas++;
             } catch (\Exception $e) {
-                $fila['estado']    = 'error';
+                $fila['estado'] = 'error';
                 $fila['error_msg'] = $e->getMessage();
                 $errores++;
             }
@@ -180,7 +197,7 @@ class ImportarComprasArca extends Component
         unset($fila);
 
         $this->resumen = compact('importadas', 'duplicadas', 'errores');
-        $this->paso    = 'resultado';
+        $this->paso = 'resultado';
     }
 
     public function reiniciar(): void
@@ -198,21 +215,23 @@ class ImportarComprasArca extends Component
     private function leerExcel(string $path): array
     {
         $spreadsheet = IOFactory::load($path);
+
         return $spreadsheet->getActiveSheet()->toArray(null, true, true, false);
     }
 
     private function leerCsv(string $path): array
     {
-        $content   = file_get_contents($path);
+        $content = file_get_contents($path);
         $separator = substr_count($content, ';') >= substr_count($content, ',') ? ';' : ',';
-        $rows      = [];
+        $rows = [];
 
         if (($handle = fopen($path, 'r')) !== false) {
             while (($row = fgetcsv($handle, 0, $separator)) !== false) {
-                $rows[] = array_map(fn($v) => trim($v, " \t\r\n\""), $row);
+                $rows[] = array_map(fn ($v) => trim($v, " \t\r\n\""), $row);
             }
             fclose($handle);
         }
+
         return $rows;
     }
 
@@ -225,15 +244,21 @@ class ImportarComprasArca extends Component
         $indicadores = ['cuit', 'fecha', 'total', 'tipo', 'importe', 'denominac'];
 
         foreach (array_slice($rows, 0, 10, true) as $i => $row) {
-            $celdas = array_map(fn($v) => strtolower(trim((string)($v ?? ''))), $row);
-            $hits   = 0;
+            $celdas = array_map(fn ($v) => strtolower(trim((string) ($v ?? ''))), $row);
+            $hits = 0;
             foreach ($indicadores as $ind) {
                 foreach ($celdas as $celda) {
-                    if (str_contains($celda, $ind)) { $hits++; break; }
+                    if (str_contains($celda, $ind)) {
+                        $hits++;
+                        break;
+                    }
                 }
             }
-            if ($hits >= 3) return $i;
+            if ($hits >= 3) {
+                return $i;
+            }
         }
+
         return null;
     }
 
@@ -247,54 +272,60 @@ class ImportarComprasArca extends Component
         ], null);
 
         foreach ($headerRow as $i => $header) {
-            $h = strtolower(preg_replace('/\s+/', ' ', trim((string)($header ?? ''))));
+            $h = strtolower(preg_replace('/\s+/', ' ', trim((string) ($header ?? ''))));
 
-            if (str_contains($h, 'fecha'))
+            if (str_contains($h, 'fecha')) {
                 $cols['fecha'] = $i;
-            elseif (in_array($h, ['tipo', 'tipo comprobante', 'tipo de comprobante']))
+            } elseif (in_array($h, ['tipo', 'tipo comprobante', 'tipo de comprobante'])) {
                 $cols['tipo'] = $i;
-            elseif (str_contains($h, 'punto de venta') || str_contains($h, 'pto. venta') || str_contains($h, 'pto venta'))
+            } elseif (str_contains($h, 'punto de venta') || str_contains($h, 'pto. venta') || str_contains($h, 'pto venta')) {
                 $cols['pv'] = $i;
+            }
             // CUIT antes que numero: "Nro. Doc. Emisor" no tiene la palabra "cuit"
             elseif (str_contains($h, 'cuit') ||
-                    (str_contains($h, 'nro') && str_contains($h, 'doc') && str_contains($h, 'emisor')))
+                    (str_contains($h, 'nro') && str_contains($h, 'doc') && str_contains($h, 'emisor'))) {
                 $cols['cuit'] = $i;
+            }
             // Excluir "Nro. Doc. Emisor/Receptor" del campo numero
             elseif ((str_contains($h, 'número desde') || str_contains($h, 'numero desde')
                   || str_contains($h, 'nro.') || in_array($h, ['número', 'numero']))
-                  && !str_contains($h, 'doc'))
+                  && ! str_contains($h, 'doc')) {
                 $cols['numero'] = $i;
-            elseif (str_contains($h, 'moneda'))
+            } elseif (str_contains($h, 'moneda')) {
                 $cols['moneda'] = $i;
-            elseif (str_contains($h, 'cambio'))
+            } elseif (str_contains($h, 'cambio')) {
                 $cols['tc'] = $i;
-            elseif (str_contains($h, 'denominac') || str_contains($h, 'razón social')
-                 || str_contains($h, 'razon social'))
+            } elseif (str_contains($h, 'denominac') || str_contains($h, 'razón social')
+                 || str_contains($h, 'razon social')) {
                 $cols['nombre'] = $i;
+            }
             // "Neto Gravado Total" o "Neto Gravado" clásico; excluir "Neto Grav. IVA X%"
-            elseif (str_contains($h, 'neto gravado') && !str_contains($h, 'no') && !str_contains($h, 'iva'))
+            elseif (str_contains($h, 'neto gravado') && ! str_contains($h, 'no') && ! str_contains($h, 'iva')) {
                 $cols['neto'] = $i;
-            elseif (str_contains($h, 'no gravado') || str_contains($h, 'neto no'))
+            } elseif (str_contains($h, 'no gravado') || str_contains($h, 'neto no')) {
                 $cols['neto_ng'] = $i;
-            elseif (str_contains($h, 'exent'))
+            } elseif (str_contains($h, 'exent')) {
                 $cols['exento'] = $i;
+            }
             // IVA: exigir 'iva' en el header y excluir columnas "Neto Grav. IVA X%"
-            elseif (str_contains($h, 'iva') && str_contains($h, '21') && !str_contains($h, 'neto'))
+            elseif (str_contains($h, 'iva') && str_contains($h, '21') && ! str_contains($h, 'neto')) {
                 $cols['iva_21'] = $i;
-            elseif (str_contains($h, 'iva') && str_contains($h, '10') && !str_contains($h, 'neto'))
+            } elseif (str_contains($h, 'iva') && str_contains($h, '10') && ! str_contains($h, 'neto')) {
                 $cols['iva_105'] = $i;
-            elseif (str_contains($h, 'iva') && str_contains($h, '27') && !str_contains($h, 'neto'))
+            } elseif (str_contains($h, 'iva') && str_contains($h, '27') && ! str_contains($h, 'neto')) {
                 $cols['iva_27'] = $i;
-            elseif ((str_contains($h, '2,5') || str_contains($h, '2.5'))
-                 && str_contains($h, 'iva') && !str_contains($h, 'neto'))
+            } elseif ((str_contains($h, '2,5') || str_contains($h, '2.5'))
+                 && str_contains($h, 'iva') && ! str_contains($h, 'neto')) {
                 $cols['iva_25'] = $i;
-            elseif (preg_match('/\b5%?\b/', $h) && str_contains($h, 'iva') && !str_contains($h, 'neto'))
+            } elseif (preg_match('/\b5%?\b/', $h) && str_contains($h, 'iva') && ! str_contains($h, 'neto')) {
                 $cols['iva_5'] = $i;
-            elseif (str_contains($h, 'otros tribut') || str_contains($h, 'percep'))
+            } elseif (str_contains($h, 'otros tribut') || str_contains($h, 'percep')) {
                 $cols['otros'] = $i;
+            }
             // Excluir "Total IVA"; "Imp. Total" es el que nos interesa
-            elseif (str_contains($h, 'total') && !str_contains($h, 'neto') && !str_contains($h, 'iva'))
+            elseif (str_contains($h, 'total') && ! str_contains($h, 'neto') && ! str_contains($h, 'iva')) {
                 $cols['total'] = $i;
+            }
         }
 
         return $cols;
@@ -308,40 +339,42 @@ class ImportarComprasArca extends Component
     {
         $c = $this->cols;
 
-        $cuitRaw = $c['cuit'] !== null ? trim((string)($row[$c['cuit']] ?? '')) : '';
-        $cuit    = $this->normalizarCuit($cuitRaw);
+        $cuitRaw = $c['cuit'] !== null ? trim((string) ($row[$c['cuit']] ?? '')) : '';
+        $cuit = $this->normalizarCuit($cuitRaw);
 
         $totalRaw = $c['total'] !== null ? ($row[$c['total']] ?? null) : null;
-        $total    = $this->parsearImporte($totalRaw);
+        $total = $this->parsearImporte($totalRaw);
 
         // Fila sin datos relevantes
-        if (empty($cuit) && ($total === null || $total === 0.0)) return null;
+        if (empty($cuit) && ($total === null || $total === 0.0)) {
+            return null;
+        }
 
         // Fecha
         $fechaRaw = $c['fecha'] !== null ? ($row[$c['fecha']] ?? null) : null;
-        $fecha    = $this->parsearFecha($fechaRaw);
+        $fecha = $this->parsearFecha($fechaRaw);
 
         // Tipo de comprobante
-        $tipoRaw         = $c['tipo']   !== null ? trim((string)($row[$c['tipo']]   ?? '')) : '';
+        $tipoRaw = $c['tipo'] !== null ? trim((string) ($row[$c['tipo']] ?? '')) : '';
         $tipoComprobante = $this->mapearTipo($tipoRaw);
 
         // Número de comprobante: XXXX-XXXXXXXX
-        $pvRaw  = $c['pv']     !== null ? (string)($row[$c['pv']]     ?? '0') : '0';
-        $numRaw = $c['numero'] !== null ? (string)($row[$c['numero']] ?? '0') : '0';
-        $pv     = str_pad(preg_replace('/\D/', '', $pvRaw),  4, '0', STR_PAD_LEFT);
-        $num    = str_pad(preg_replace('/\D/', '', $numRaw), 8, '0', STR_PAD_LEFT);
+        $pvRaw = $c['pv'] !== null ? (string) ($row[$c['pv']] ?? '0') : '0';
+        $numRaw = $c['numero'] !== null ? (string) ($row[$c['numero']] ?? '0') : '0';
+        $pv = str_pad(preg_replace('/\D/', '', $pvRaw), 4, '0', STR_PAD_LEFT);
+        $num = str_pad(preg_replace('/\D/', '', $numRaw), 8, '0', STR_PAD_LEFT);
         $numeroComprobante = "{$pv}-{$num}";
 
         // Nombre del proveedor
-        $nombre = $c['nombre'] !== null ? trim((string)($row[$c['nombre']] ?? '')) : '';
+        $nombre = $c['nombre'] !== null ? trim((string) ($row[$c['nombre']] ?? '')) : '';
 
         // Moneda y tipo de cambio: ARCA informa el neto/IVA/total en la moneda
         // original del comprobante (por ej. USD). Si no se convierte a ARS acá,
         // un comprobante en dólares queda guardado con el valor numérico del
         // dólar tratado como si fuera pesos.
-        $monedaRaw  = $c['moneda'] !== null ? strtoupper(trim((string)($row[$c['moneda']] ?? ''))) : '';
-        $tipoCambio = $c['tc']     !== null ? ($this->parsearImporte($row[$c['tc']] ?? null) ?? 1.0) : 1.0;
-        $factorConversion = (!in_array($monedaRaw, ['', 'ARS', '$', 'PESOS', 'PES'], true) && $tipoCambio > 0)
+        $monedaRaw = $c['moneda'] !== null ? strtoupper(trim((string) ($row[$c['moneda']] ?? ''))) : '';
+        $tipoCambio = $c['tc'] !== null ? ($this->parsearImporte($row[$c['tc']] ?? null) ?? 1.0) : 1.0;
+        $factorConversion = (! in_array($monedaRaw, ['', 'ARS', '$', 'PESOS', 'PES'], true) && $tipoCambio > 0)
             ? $tipoCambio
             : 1.0;
         if ($total !== null) {
@@ -349,15 +382,15 @@ class ImportarComprasArca extends Component
         }
 
         // Importes (ya convertidos a ARS)
-        $neto   = (($c['neto']    !== null ? $this->parsearImporte($row[$c['neto']]    ?? null) : null) ?? 0.0) * $factorConversion;
+        $neto = (($c['neto'] !== null ? $this->parsearImporte($row[$c['neto']] ?? null) : null) ?? 0.0) * $factorConversion;
         $netoNg = (($c['neto_ng'] !== null ? $this->parsearImporte($row[$c['neto_ng']] ?? null) : null) ?? 0.0) * $factorConversion;
-        $exento = (($c['exento']  !== null ? $this->parsearImporte($row[$c['exento']]  ?? null) : null) ?? 0.0) * $factorConversion;
+        $exento = (($c['exento'] !== null ? $this->parsearImporte($row[$c['exento']] ?? null) : null) ?? 0.0) * $factorConversion;
 
-        $iva21  = (($c['iva_21']  !== null ? $this->parsearImporte($row[$c['iva_21']]  ?? null) : null) ?? 0.0) * $factorConversion;
+        $iva21 = (($c['iva_21'] !== null ? $this->parsearImporte($row[$c['iva_21']] ?? null) : null) ?? 0.0) * $factorConversion;
         $iva105 = (($c['iva_105'] !== null ? $this->parsearImporte($row[$c['iva_105']] ?? null) : null) ?? 0.0) * $factorConversion;
-        $iva27  = (($c['iva_27']  !== null ? $this->parsearImporte($row[$c['iva_27']]  ?? null) : null) ?? 0.0) * $factorConversion;
-        $iva25  = (($c['iva_25']  !== null ? $this->parsearImporte($row[$c['iva_25']]  ?? null) : null) ?? 0.0) * $factorConversion;
-        $iva5   = (($c['iva_5']   !== null ? $this->parsearImporte($row[$c['iva_5']]   ?? null) : null) ?? 0.0) * $factorConversion;
+        $iva27 = (($c['iva_27'] !== null ? $this->parsearImporte($row[$c['iva_27']] ?? null) : null) ?? 0.0) * $factorConversion;
+        $iva25 = (($c['iva_25'] !== null ? $this->parsearImporte($row[$c['iva_25']] ?? null) : null) ?? 0.0) * $factorConversion;
+        $iva5 = (($c['iva_5'] !== null ? $this->parsearImporte($row[$c['iva_5']] ?? null) : null) ?? 0.0) * $factorConversion;
 
         $ivaTotal = round($iva21 + $iva105 + $iva27 + $iva25 + $iva5, 2);
         $subtotal = round($neto + $netoNg + $exento, 2);
@@ -376,39 +409,39 @@ class ImportarComprasArca extends Component
 
         // Verificar duplicado: mismo número + mismo CUIT
         $yaExiste = false;
-        if (!empty($cuit) && $numeroComprobante !== '0000-00000000') {
+        if (! empty($cuit) && $numeroComprobante !== '0000-00000000') {
             $yaExiste = Compra::where('numero_comprobante', $numeroComprobante)
-                ->whereHas('proveedor', fn($q) => $q->where('cuit', $cuit))
+                ->whereHas('proveedor', fn ($q) => $q->where('cuit', $cuit))
                 ->exists();
         }
 
         // Determinar estado
-        $estado   = 'nuevo';
+        $estado = 'nuevo';
         $errorMsg = null;
 
         if ($yaExiste) {
             $estado = 'duplicado';
-        } elseif (!$fecha) {
-            $estado   = 'error';
-            $errorMsg = 'Fecha inválida (' . $fechaRaw . ')';
+        } elseif (! $fecha) {
+            $estado = 'error';
+            $errorMsg = 'Fecha inválida ('.$fechaRaw.')';
         } elseif ($total === null || $total <= 0) {
-            $estado   = 'error';
+            $estado = 'error';
             $errorMsg = 'Importe total inválido';
         }
 
         return [
-            'fecha'              => $fecha,
-            'tipo_comprobante'   => $tipoComprobante,
+            'fecha' => $fecha,
+            'tipo_comprobante' => $tipoComprobante,
             'numero_comprobante' => $numeroComprobante,
-            'cuit'               => $cuit,
-            'nombre'             => $nombre,
-            'subtotal'           => $subtotal,
-            'iva_porc'           => $ivaPorc,
-            'iva_importe'        => $ivaTotal,
-            'total'              => round($total ?? 0, 2),
-            'estado'             => $estado,
-            'error_msg'          => $errorMsg,
-            'proveedor_creado'   => false,
+            'cuit' => $cuit,
+            'nombre' => $nombre,
+            'subtotal' => $subtotal,
+            'iva_porc' => $ivaPorc,
+            'iva_importe' => $ivaTotal,
+            'total' => round($total ?? 0, 2),
+            'estado' => $estado,
+            'error_msg' => $errorMsg,
+            'proveedor_creado' => false,
         ];
     }
 
@@ -418,37 +451,50 @@ class ImportarComprasArca extends Component
 
     private function parsearFecha(mixed $value): ?string
     {
-        if ($value === null || $value === '') return null;
-
-        // Número de serie de Excel
-        if (is_numeric($value) && (float)$value > 10000) {
-            try {
-                return ExcelDate::excelToDateTimeObject((float)$value)->format('Y-m-d');
-            } catch (\Exception) {}
+        if ($value === null || $value === '') {
+            return null;
         }
 
-        $str = trim((string)$value);
+        // Número de serie de Excel
+        if (is_numeric($value) && (float) $value > 10000) {
+            try {
+                return ExcelDate::excelToDateTimeObject((float) $value)->format('Y-m-d');
+            } catch (\Exception) {
+            }
+        }
+
+        $str = trim((string) $value);
         foreach (['d/m/Y', 'Y-m-d', 'd-m-Y', 'Y/m/d', 'm/d/Y', 'd/m/y'] as $fmt) {
             try {
                 $d = Carbon::createFromFormat($fmt, $str);
-                if ($d && $d->year > 2000) return $d->format('Y-m-d');
-            } catch (\Exception) {}
+                if ($d && $d->year > 2000) {
+                    return $d->format('Y-m-d');
+                }
+            } catch (\Exception) {
+            }
         }
+
         return null;
     }
 
     private function parsearImporte(mixed $value): ?float
     {
-        if ($value === null || $value === '') return null;
-        if (is_float($value) || is_int($value)) return (float)$value;
+        if ($value === null || $value === '') {
+            return null;
+        }
+        if (is_float($value) || is_int($value)) {
+            return (float) $value;
+        }
 
-        $str = trim((string)$value);
-        if ($str === '' || $str === '-') return 0.0;
+        $str = trim((string) $value);
+        if ($str === '' || $str === '-') {
+            return 0.0;
+        }
 
         // Float con punto decimal inglés (ej: "88548.6") — excluir "1.234" que
         // podría ser miles argentinos (exactamente 3 dígitos tras el punto)
-        if (is_numeric($str) && !preg_match('/^\d+\.\d{3}$/', $str)) {
-            return (float)$str;
+        if (is_numeric($str) && ! preg_match('/^\d+\.\d{3}$/', $str)) {
+            return (float) $str;
         }
 
         // Formato argentino: 1.234,56 → punto miles, coma decimal
@@ -457,45 +503,56 @@ class ImportarComprasArca extends Component
             $str = str_replace(',', '.', $str);
         } else {
             $str = str_replace(',', '.', str_replace('.', '', $str));
-            if (!is_numeric($str)) {
-                $str = str_replace(',', '.', (string)$value);
+            if (! is_numeric($str)) {
+                $str = str_replace(',', '.', (string) $value);
             }
         }
 
-        return is_numeric($str) ? (float)$str : null;
+        return is_numeric($str) ? (float) $str : null;
     }
 
     private function normalizarCuit(string $raw): string
     {
         $digits = preg_replace('/\D/', '', $raw);
         if (strlen($digits) === 11) {
-            return substr($digits, 0, 2) . '-' . substr($digits, 2, 8) . '-' . substr($digits, 10);
+            return substr($digits, 0, 2).'-'.substr($digits, 2, 8).'-'.substr($digits, 10);
         }
+
         return $raw; // devolver tal cual si no tiene 11 dígitos
     }
 
     private function mapearTipo(string $tipo): string
     {
-        $tipo    = trim($tipo);
-        $lower   = strtolower($tipo);
+        $tipo = trim($tipo);
+        $lower = strtolower($tipo);
         $sinCero = ltrim($tipo, '0') ?: '0';
 
         // Búsqueda directa
-        if (isset(self::MAPA_TIPOS[$tipo]))    return self::MAPA_TIPOS[$tipo];
-        if (isset(self::MAPA_TIPOS[$sinCero])) return self::MAPA_TIPOS[$sinCero];
-        if (isset(self::MAPA_TIPOS[$lower]))   return self::MAPA_TIPOS[$lower];
+        if (isset(self::MAPA_TIPOS[$tipo])) {
+            return self::MAPA_TIPOS[$tipo];
+        }
+        if (isset(self::MAPA_TIPOS[$sinCero])) {
+            return self::MAPA_TIPOS[$sinCero];
+        }
+        if (isset(self::MAPA_TIPOS[$lower])) {
+            return self::MAPA_TIPOS[$lower];
+        }
 
         // Nuevo formato ARCA: "1 - Factura A", "3 - Nota de Crédito A", etc.
         if (preg_match('/^(\d+)\s*[-–]/', $tipo, $m)) {
-            $code    = $m[1];
+            $code = $m[1];
             $sinCero = ltrim($code, '0') ?: '0';
-            if (isset(self::MAPA_TIPOS[$code]))    return self::MAPA_TIPOS[$code];
-            if (isset(self::MAPA_TIPOS[$sinCero])) return self::MAPA_TIPOS[$sinCero];
+            if (isset(self::MAPA_TIPOS[$code])) {
+                return self::MAPA_TIPOS[$code];
+            }
+            if (isset(self::MAPA_TIPOS[$sinCero])) {
+                return self::MAPA_TIPOS[$sinCero];
+            }
         }
 
         // Coincidencia parcial por texto (ej: "factura a" dentro del string)
         foreach (self::MAPA_TIPOS as $key => $val) {
-            if (!is_numeric(str_replace(['-', '.', ' '], '', $key)) && str_contains($lower, $key)) {
+            if (! is_numeric(str_replace(['-', '.', ' '], '', $key)) && str_contains($lower, $key)) {
                 return $val;
             }
         }

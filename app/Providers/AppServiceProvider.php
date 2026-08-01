@@ -39,12 +39,14 @@ class AppServiceProvider extends ServiceProvider
 
         // Pasa empresa activa y lista de empresas al layout principal
         View::composer('layouts.app', function ($view) {
-            if (!auth()->check()) return;
+            if (! auth()->check()) {
+                return;
+            }
 
             $empresaActivaId = PerteneceAEmpresa::resolverEmpresaActiva();
-            $empresaActiva   = $empresaActivaId ? Empresa::find($empresaActivaId) : null;
+            $empresaActiva = $empresaActivaId ? Empresa::find($empresaActivaId) : null;
 
-            $todasEmpresas = auth()->user()->hasRole('administrador_sistema')
+            $todasEmpresas = auth()->user()->can('sistema.empresas.cambiar')
                 ? Empresa::where('activa', true)->orderBy('razon_social')->get()
                 : collect();
 

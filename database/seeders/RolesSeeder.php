@@ -91,6 +91,10 @@ class RolesSeeder extends Seeder
             'compras.ver',
             'compras.crear',
             'compras.editar',
+            // Separado de compras.crear/editar a propósito: importar/sincronizar
+            // desde ARCA es una acción distinta a cargar una compra a mano, y hay
+            // roles que deben poder hacer una sin la otra (ver rol cargador_datos).
+            'compras.arca.gestionar',
 
             // --- Ventas ---
             'ventas.granos.ver',
@@ -99,6 +103,7 @@ class RolesSeeder extends Seeder
             'ventas.hacienda.ver',
             'ventas.hacienda.registrar',
             'ventas.hacienda.aprobar',
+            'ventas.compradores.gestionar',
 
             // --- Finanzas ---
             'finanzas.cuentas.ver',
@@ -128,6 +133,13 @@ class RolesSeeder extends Seeder
 
             // --- Auditoría ---
             'auditoria.ver',
+
+            // --- Sistema ---
+            // Habilita el selector de empresa (arriba a la derecha) para cambiar
+            // entre ELVIO/WILMAR/SOCIEDAD. Por defecto solo administrador_sistema
+            // lo tiene; otros roles pueden necesitarlo si trabajan con más de una
+            // empresa (ver rol cargador_datos).
+            'sistema.empresas.cambiar',
         ];
 
         foreach ($permisos as $permiso) {
@@ -202,9 +214,10 @@ class RolesSeeder extends Seeder
         $administrativo->givePermissionTo([
             'campos.establecimientos.ver',
             'compras.proveedores.gestionar',
-            'compras.ver', 'compras.crear', 'compras.editar',
+            'compras.ver', 'compras.crear', 'compras.editar', 'compras.arca.gestionar',
             'ventas.granos.ver', 'ventas.granos.registrar',
             'ventas.hacienda.ver', 'ventas.hacienda.registrar',
+            'ventas.compradores.gestionar',
             'insumos.catalogo.ver', 'insumos.movimientos.ver', 'insumos.movimientos.registrar',
             'finanzas.cuentas.ver', 'finanzas.cuentas.gestionar',
             'finanzas.transacciones.ver', 'finanzas.transacciones.crear', 'finanzas.transacciones.editar',
@@ -248,10 +261,26 @@ class RolesSeeder extends Seeder
             'auditoria.ver',
         ]);
 
+        /**
+         * Cargador de datos
+         * Carga y edita ventas (granos y hacienda) y compras cargadas a mano
+         * (no las que llegan por la sincronización automática con ARCA). Puede
+         * cambiar entre las 3 empresas porque carga datos de todas.
+         */
+        $cargadorDatos = Role::firstOrCreate(['name' => 'cargador_datos']);
+        $cargadorDatos->givePermissionTo([
+            'ventas.granos.ver', 'ventas.granos.registrar',
+            'ventas.hacienda.ver', 'ventas.hacienda.registrar',
+            'ventas.compradores.gestionar',
+            'compras.ver', 'compras.crear', 'compras.editar',
+            'compras.proveedores.gestionar',
+            'sistema.empresas.cambiar',
+        ]);
+
         $this->command->info('Roles y permisos cargados correctamente.');
         $this->command->table(
             ['Rol', 'Permisos'],
-            Role::all()->map(fn($r) => [$r->name, $r->permissions->count()])
+            Role::all()->map(fn ($r) => [$r->name, $r->permissions->count()])
         );
     }
 }

@@ -170,97 +170,77 @@ async function login(page) {
 async function navegarMisComprobantes(context, page) {
     log('Buscando servicio Mis Comprobantes en el portal...');
 
-    // El portal carga el contenido con JavaScript/AJAX → esperar hasta 30 segundos
-    log('  Esperando que el portal renderice...');
-    try {
-        await page.waitForFunction(
-            () => {
-                const all = document.querySelectorAll('td, a, span, div, li');
-                return Array.from(all).some(el => el.textContent.trim() === 'Mis Comprobantes');
-            },
-            { timeout: 30000 }
-        );
-        log('  Portal listo.');
-    } catch {
-        log('  ADVERTENCIA: timeout esperando "Mis Comprobantes" — intentando igual...');
-    }
-
+    // El portal carga por AJAX. Esperar el buscador o un acceso directo;
+    // "Mis Comprobantes" no siempre aparece en la lista de Más utilizados.
+    await page.waitForLoadState('domcontentloaded', { timeout: 20000 }).catch(() => {});
+    await page.locator('input[placeholder*="Busc" i], input[type="search"]')
+        .first()
+        .waitFor({ state: 'visible', timeout: 30000 })
+        .catch(() => {});
     await screenshot(page, '05_portal');
 
-    // Buscar el elemento con texto EXACTO "Mis Comprobantes" y obtener su href
-    const mcInfo = await page.evaluate(() => {
-        // Recorrer todos los elementos buscando texto exacto
-        const all = document.querySelectorAll('td, th, a, button, span, div, li');
-        for (const el of all) {
-            if (el.textContent.trim() === 'Mis Comprobantes') {
-                const link = el.closest('a') || el.querySelector('a');
-                return {
-                    tag:  el.tagName,
-                    href: link ? link.href : null,
-                    text: el.textContent.trim(),
-                };
-            }
+    const localizarServicio = () => page.locator([
+        '[role="option"][aria-label="Mis Comprobantes"]',
+        'a:has-text("Mis Comprobantes")',
+        'button:has-text("Mis Comprobantes")',
+        'h3:has-text("Mis Comprobantes")',
+    ].join(', ')).first();
+
+    let servicio = localizarServicio();
+
+    if (await servicio.count() === 0) {
+        log('  No está en accesos frecuentes; usando el buscador del portal...');
+        const buscador = page.locator([
+            'input[placeholder*="Busc" i]',
+            'input[placeholder*="trámite" i]',
+            'input[placeholder*="servicio" i]',
+            'input[type="search"]',
+        ].join(', ')).first();
+
+        if (await buscador.count() === 0) {
+            const html = await page.content().catch(() => '');
+            fs.mkdirSync(SS_DIR, { recursive: true });
+            fs.writeFileSync(path.join(SS_DIR, 'portal_sin_buscador.html'), html);
+            throw new Error('No se encontró el buscador de trámites y servicios del portal ARCA.');
         }
-        return null;
-    });
 
-    log(`  mcInfo: ${JSON.stringify(mcInfo)}`);
+        await buscador.fill('Mis Comprobantes');
+        await buscador.press('Enter').catch(() => {});
+        await page.waitForTimeout(2500);
+        await screenshot(page, '05b_busqueda_mc');
 
-    // Si encontramos un href directo, navegar a él
-    if (mcInfo && mcInfo.href) {
-        log(`  Navegando directo a: ${mcInfo.href}`);
-        const [newPage] = await Promise.all([
-            context.waitForEvent('page', { timeout: 10000 }).catch(() => null),
-            page.goto(mcInfo.href, { waitUntil: 'domcontentloaded', timeout: 20000 }).catch(() => {}),
-        ]);
-        const target = newPage || page;
-        await target.waitForLoadState('domcontentloaded', { timeout: 20000 });
-        await target.waitForTimeout(3000);
-        await screenshot(target, '06_mis_comprobantes');
-        log(`  URL Mis Comprobantes: ${target.url()}`);
-        return target;
+        servicio = localizarServicio();
+        await servicio.waitFor({ state: 'visible', timeout: 20000 }).catch(() => {});
     }
 
-    // Sin href — hacer click con texto exacto y esperar nueva pestaña
-    if (mcInfo) {
-        log(`  Haciendo click en elemento ${mcInfo.tag} con texto exacto...`);
-        const el = page.getByText('Mis Comprobantes', { exact: true }).first();
-        const [newPage] = await Promise.all([
-            context.waitForEvent('page', { timeout: 12000 }).catch(() => null),
-            el.click(),
-        ]);
-
-        if (newPage) {
-            await newPage.waitForLoadState('domcontentloaded', { timeout: 20000 });
-            await newPage.waitForTimeout(3000);
-            await screenshot(newPage, '06_mis_comprobantes');
-            log(`  Nueva pestaña: ${newPage.url()}`);
-            return newPage;
-        }
-
-        // El click puede haber abierto una ventana nueva del OS (window.open)
-        await page.waitForTimeout(3000);
-        const pages = context.pages();
-        if (pages.length > 1) {
-            const newP = pages[pages.length - 1];
-            await newP.waitForLoadState('domcontentloaded', { timeout: 15000 });
-            await screenshot(newP, '06_mis_comprobantes');
-            log(`  Ventana nueva detectada: ${newP.url()}`);
-            return newP;
-        }
-
-        await page.waitForLoadState('domcontentloaded', { timeout: 10000 });
-        await page.waitForTimeout(2000);
-        await screenshot(page, '06_mis_comprobantes');
-        log(`  Misma pestaña: ${page.url()}`);
-        return page;
+    if (await servicio.count() === 0 || !await servicio.isVisible().catch(() => false)) {
+        const html = await page.content().catch(() => '');
+        fs.mkdirSync(SS_DIR, { recursive: true });
+        fs.writeFileSync(path.join(SS_DIR, 'portal_busqueda_sin_resultado.html'), html);
+        await screenshot(page, '05_error_no_encontro_mc');
+        throw new Error('El buscador de ARCA no devolvió el servicio "Mis Comprobantes".');
     }
 
-    await screenshot(page, '05_error_no_encontro_mc');
-    throw new Error(
-        'No se encontró el elemento "Mis Comprobantes" en el portal. ' +
-        'Revisá los screenshots en: ' + SS_DIR
-    );
+    log('  Abriendo Mis Comprobantes...');
+    const paginasAntes = new Set(context.pages());
+    const popupPromise = context.waitForEvent('page', { timeout: 15000 }).catch(() => null);
+    await servicio.click();
+    const popup = await popupPromise;
+    await page.waitForTimeout(2500).catch(() => {});
+
+    const paginaNueva = popup ||
+        context.pages().find(p => !paginasAntes.has(p) && !p.isClosed());
+    const target = paginaNueva || (!page.isClosed() ? page : null);
+
+    if (!target) {
+        throw new Error('ARCA cerró el portal sin abrir la página de Mis Comprobantes.');
+    }
+
+    await target.waitForLoadState('domcontentloaded', { timeout: 20000 }).catch(() => {});
+    await target.waitForTimeout(2500);
+    await screenshot(target, '06_mis_comprobantes');
+    log(`  URL Mis Comprobantes: ${target.url()}`);
+    return target;
 }
 
 // ── PASO 2b: Seleccionar persona/CUIT si aparece el selector ─────────────────

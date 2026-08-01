@@ -250,7 +250,7 @@
                     <i class="bi bi-receipt me-2"></i> Comprobantes
                 </a>
                 @endcan
-                @can('compras.crear')
+                @can('compras.arca.gestionar')
                 <a href="{{ route('compras.importar-arca') }}"
                    class="nav-link {{ request()->routeIs('compras.importar-arca') ? 'active' : '' }}">
                     <i class="bi bi-cloud-upload me-2"></i> Importar ARCA
@@ -264,7 +264,7 @@
         </li>
 
         {{-- ── VENTAS ───────────────────────────────────────── --}}
-        @canany(['ventas.granos.ver','ventas.hacienda.ver'])
+        @canany(['ventas.granos.ver','ventas.hacienda.ver','ventas.compradores.gestionar'])
         <li>
             <button class="sec-toggle" type="button"
                     data-bs-toggle="collapse" data-bs-target="#secVentas"
@@ -283,6 +283,12 @@
                 <a href="{{ route('ventas.hacienda.index') }}"
                    class="nav-link {{ request()->routeIs('ventas.hacienda.*') ? 'active' : '' }}">
                     <i class="bi bi-cursor me-2"></i> Hacienda
+                </a>
+                @endcan
+                @can('ventas.compradores.gestionar')
+                <a href="{{ route('ventas.compradores.index') }}"
+                   class="nav-link {{ request()->routeIs('ventas.compradores.*') ? 'active' : '' }}">
+                    <i class="bi bi-people me-2"></i> Compradores
                 </a>
                 @endcan
             </div>

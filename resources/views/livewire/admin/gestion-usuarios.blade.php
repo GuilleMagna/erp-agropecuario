@@ -1,4 +1,4 @@
-﻿<div>
+<div>
     {{-- Mensajes flash --}}
     @if (session('success'))
         <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
@@ -91,6 +91,7 @@
                             'administrativo'        => 'info',
                             'asesor_tecnico'        => 'warning',
                             'auditor'               => 'secondary',
+                            'cargador_datos'        => 'dark',
                         ];
                         $colorRol  = $colores[$rolNombre] ?? 'light';
                         $etiquetaRol = ucwords(str_replace('_', ' ', $rolNombre));
