@@ -261,6 +261,23 @@
                                 @enderror
                             </div>
 
+                            {{-- Empresa --}}
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small mb-1">
+                                    Empresa <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select form-select-sm @error('id_empresa') is-invalid @enderror"
+                                        wire:model="id_empresa">
+                                    <option value="">Seleccioná una empresa…</option>
+                                    @foreach($empresas as $emp)
+                                        <option value="{{ $emp->id }}">{{ $emp->razon_social }}</option>
+                                    @endforeach
+                                </select>
+                                @error('id_empresa')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
                             {{-- Contraseña --}}
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold small mb-1">

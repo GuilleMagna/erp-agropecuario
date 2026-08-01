@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Empresa;
 use App\Models\Usuario;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -47,8 +48,12 @@ class GoogleController extends Controller
             $nombre = $googleUser->user['given_name'] ?? $googleUser->getName();
             $apellido = $googleUser->user['family_name'] ?? '';
 
+            // Usuario::query()->value('id_empresa') como fallback era frágil: si la
+            // tabla usuarios está vacía (primer login de la vida del sistema) o el
+            // primer usuario ya tiene id_empresa null, ese null se arrastra a todas
+            // las altas automáticas siguientes. Se toma la empresa directamente.
             $usuario = Usuario::create([
-                'id_empresa' => Usuario::query()->value('id_empresa'),
+                'id_empresa' => Empresa::query()->value('id'),
                 'nombre' => $nombre,
                 'apellido' => $apellido,
                 'email' => $googleUser->getEmail(),

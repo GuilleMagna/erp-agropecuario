@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Models\Empresa;
 use App\Models\Usuario;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
@@ -15,29 +16,42 @@ class GestionUsuarios extends Component
     protected string $paginationTheme = 'bootstrap';
 
     // Filtros
-    public string $busqueda     = '';
-    public string $filtroRol    = '';
+    public string $busqueda = '';
+
+    public string $filtroRol = '';
+
     public string $filtroActivo = '';
 
     // Estado del modal
-    public bool    $modalAbierto      = false;
-    public bool    $modoEdicion       = false;
+    public bool $modalAbierto = false;
+
+    public bool $modoEdicion = false;
+
     public ?string $usuarioEditandoId = null;
 
     // Campos del formulario
-    public string $nombre                = '';
-    public string $apellido              = '';
-    public string $email                 = '';
-    public string $telefono              = '';
-    public string $password              = '';
+    public string $nombre = '';
+
+    public string $apellido = '';
+
+    public string $email = '';
+
+    public string $telefono = '';
+
+    public string $password = '';
+
     public string $password_confirmation = '';
-    public string $rol                   = '';
-    public bool   $activo                = true;
+
+    public string $rol = '';
+
+    public string $id_empresa = '';
+
+    public bool $activo = true;
 
     protected function rules(): array
     {
         $emailUnico = $this->modoEdicion
-            ? 'required|email|max:150|unique:usuarios,email,' . $this->usuarioEditandoId
+            ? 'required|email|max:150|unique:usuarios,email,'.$this->usuarioEditandoId
             : 'required|email|max:150|unique:usuarios,email';
 
         $passwordReq = $this->modoEdicion
@@ -45,38 +59,52 @@ class GestionUsuarios extends Component
             : 'required|min:8|confirmed';
 
         return [
-            'nombre'               => 'required|string|max:100',
-            'apellido'             => 'required|string|max:100',
-            'email'                => $emailUnico,
-            'telefono'             => 'nullable|string|max:30',
-            'password'             => $passwordReq,
-            'password_confirmation'=> 'nullable',
-            'rol'                  => 'required|exists:roles,name',
+            'nombre' => 'required|string|max:100',
+            'apellido' => 'required|string|max:100',
+            'email' => $emailUnico,
+            'telefono' => 'nullable|string|max:30',
+            'password' => $passwordReq,
+            'password_confirmation' => 'nullable',
+            'rol' => 'required|exists:roles,name',
+            'id_empresa' => 'required|exists:empresas,id',
         ];
     }
 
     protected $messages = [
-        'nombre.required'    => 'El nombre es obligatorio.',
-        'apellido.required'  => 'El apellido es obligatorio.',
-        'email.required'     => 'El email es obligatorio.',
-        'email.email'        => 'Ingresá un email válido.',
-        'email.unique'       => 'Ya existe un usuario con ese email.',
-        'password.required'  => 'La contraseña es obligatoria.',
-        'password.min'       => 'La contraseña debe tener al menos 8 caracteres.',
+        'nombre.required' => 'El nombre es obligatorio.',
+        'apellido.required' => 'El apellido es obligatorio.',
+        'email.required' => 'El email es obligatorio.',
+        'email.email' => 'Ingresá un email válido.',
+        'email.unique' => 'Ya existe un usuario con ese email.',
+        'password.required' => 'La contraseña es obligatoria.',
+        'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
         'password.confirmed' => 'Las contraseñas no coinciden.',
-        'rol.required'       => 'Debés asignar un rol al usuario.',
-        'rol.exists'         => 'El rol seleccionado no es válido.',
+        'rol.required' => 'Debés asignar un rol al usuario.',
+        'rol.exists' => 'El rol seleccionado no es válido.',
+        'id_empresa.required' => 'Debés asignar una empresa al usuario.',
+        'id_empresa.exists' => 'La empresa seleccionada no es válida.',
     ];
 
-    public function updatingBusqueda(): void    { $this->resetPage(); }
-    public function updatingFiltroRol(): void   { $this->resetPage(); }
-    public function updatingFiltroActivo(): void { $this->resetPage(); }
+    public function updatingBusqueda(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFiltroRol(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFiltroActivo(): void
+    {
+        $this->resetPage();
+    }
 
     public function abrirModalCrear(): void
     {
         Gate::authorize('admin.usuarios.crear');
         $this->limpiarFormulario();
-        $this->modoEdicion  = false;
+        $this->modoEdicion = false;
         $this->modalAbierto = true;
     }
 
@@ -86,17 +114,18 @@ class GestionUsuarios extends Component
 
         $usuario = Usuario::findOrFail($id);
 
-        $this->usuarioEditandoId    = $id;
-        $this->nombre               = $usuario->nombre;
-        $this->apellido             = $usuario->apellido;
-        $this->email                = $usuario->email;
-        $this->telefono             = $usuario->telefono ?? '';
-        $this->activo               = $usuario->activo;
-        $this->rol                  = $usuario->roles->first()?->name ?? '';
-        $this->password             = '';
+        $this->usuarioEditandoId = $id;
+        $this->nombre = $usuario->nombre;
+        $this->apellido = $usuario->apellido;
+        $this->email = $usuario->email;
+        $this->telefono = $usuario->telefono ?? '';
+        $this->activo = $usuario->activo;
+        $this->rol = $usuario->roles->first()?->name ?? '';
+        $this->id_empresa = $usuario->id_empresa ?? '';
+        $this->password = '';
         $this->password_confirmation = '';
 
-        $this->modoEdicion  = true;
+        $this->modoEdicion = true;
         $this->modalAbierto = true;
     }
 
@@ -110,11 +139,12 @@ class GestionUsuarios extends Component
             $usuario = Usuario::findOrFail($this->usuarioEditandoId);
 
             $datos = [
-                'nombre'   => $this->nombre,
+                'nombre' => $this->nombre,
                 'apellido' => $this->apellido,
-                'email'    => $this->email,
+                'email' => $this->email,
                 'telefono' => $this->telefono ?: null,
-                'activo'   => $this->activo,
+                'activo' => $this->activo,
+                'id_empresa' => $this->id_empresa,
             ];
             if ($this->password) {
                 $datos['password'] = $this->password;
@@ -128,13 +158,13 @@ class GestionUsuarios extends Component
             Gate::authorize('admin.usuarios.crear');
 
             $usuario = Usuario::create([
-                'id_empresa' => auth()->user()->id_empresa,
-                'nombre'     => $this->nombre,
-                'apellido'   => $this->apellido,
-                'email'      => $this->email,
-                'telefono'   => $this->telefono ?: null,
-                'password'   => $this->password,
-                'activo'     => true,
+                'id_empresa' => $this->id_empresa,
+                'nombre' => $this->nombre,
+                'apellido' => $this->apellido,
+                'email' => $this->email,
+                'telefono' => $this->telefono ?: null,
+                'password' => $this->password,
+                'activo' => true,
             ]);
             $usuario->assignRole($this->rol);
 
@@ -152,6 +182,7 @@ class GestionUsuarios extends Component
 
         if ($usuario->id === auth()->id()) {
             session()->flash('error', 'No podés inactivarte a vos mismo.');
+
             return;
         }
 
@@ -175,6 +206,9 @@ class GestionUsuarios extends Component
             'telefono', 'password', 'password_confirmation', 'rol',
         ]);
         $this->activo = true;
+        // Empresa del admin logueado como default: cubre el caso común (un
+        // usuario nuevo para la misma empresa) sin obligar a elegir siempre.
+        $this->id_empresa = auth()->user()->id_empresa ?? '';
         $this->resetValidation();
     }
 
@@ -183,25 +217,22 @@ class GestionUsuarios extends Component
         $usuarios = Usuario::query()
             ->with('roles')
             ->where('id_empresa', auth()->user()->id_empresa)
-            ->when($this->busqueda, fn ($q) =>
-                $q->where(fn ($q2) =>
-                    $q2->where('nombre', 'like', "%{$this->busqueda}%")
-                       ->orWhere('apellido', 'like', "%{$this->busqueda}%")
-                       ->orWhere('email', 'like', "%{$this->busqueda}%")
-                )
+            ->when($this->busqueda, fn ($q) => $q->where(fn ($q2) => $q2->where('nombre', 'like', "%{$this->busqueda}%")
+                ->orWhere('apellido', 'like', "%{$this->busqueda}%")
+                ->orWhere('email', 'like', "%{$this->busqueda}%")
             )
-            ->when($this->filtroRol, fn ($q) =>
-                $q->whereHas('roles', fn ($q2) => $q2->where('name', $this->filtroRol))
             )
-            ->when($this->filtroActivo !== '', fn ($q) =>
-                $q->where('activo', $this->filtroActivo === '1')
+            ->when($this->filtroRol, fn ($q) => $q->whereHas('roles', fn ($q2) => $q2->where('name', $this->filtroRol))
+            )
+            ->when($this->filtroActivo !== '', fn ($q) => $q->where('activo', $this->filtroActivo === '1')
             )
             ->orderBy('apellido')
             ->orderBy('nombre')
             ->paginate(15);
 
         $roles = Role::orderBy('name')->get();
+        $empresas = Empresa::orderBy('razon_social')->get();
 
-        return view('livewire.admin.gestion-usuarios', compact('usuarios', 'roles'));
+        return view('livewire.admin.gestion-usuarios', compact('usuarios', 'roles', 'empresas'));
     }
 }

@@ -15,3 +15,9 @@ deployment:
     - /bin/cp -R $APPPATH/public/images/. $DEPLOYPATH/images
     - /bin/ln -sfn $APPPATH/storage/app/public $DEPLOYPATH/storage
     - /bin/chmod -R ug+rwX $APPPATH/storage $APPPATH/bootstrap/cache
+    - export PHPBIN=$(command -v php || command -v php82 || command -v ea-php82 || echo /usr/local/bin/ea-php82)
+    - cd $APPPATH && $PHPBIN artisan migrate --force --no-interaction
+    - cd $APPPATH && $PHPBIN artisan db:seed --class=RolesSeeder --force --no-interaction
+    - cd $APPPATH && $PHPBIN artisan db:seed --class=CategoriasVentaSeeder --force --no-interaction
+    - cd $APPPATH && $PHPBIN artisan config:clear
+    - cd $APPPATH && $PHPBIN artisan view:clear
