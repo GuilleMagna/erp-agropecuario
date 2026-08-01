@@ -1,4 +1,4 @@
-﻿<div>
+<div>
 
     @if (session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -104,7 +104,7 @@
                         </td>
                         <td><small class="text-muted">{{ $venta->establecimiento?->nombre ?? '—' }}</small></td>
                         <td><small>{{ $venta->tipo_operacion_label }}</small></td>
-                        <td class="text-center fw-semibold">{{ number_format($venta->cantidad_cabezas, 0, ',', '.') }}</td>
+                        <td class="text-center fw-semibold">{{ $venta->cantidad_cabezas !== null ? number_format($venta->cantidad_cabezas, 0, ',', '.') : '—' }}</td>
                         <td class="text-end font-monospace">
                             {{ $venta->peso_total_kg !== null ? number_format((float)$venta->peso_total_kg, 0, ',', '.') : '—' }}
                         </td>
@@ -156,7 +156,7 @@
                     <tr>
                         <td colspan="5" class="ps-4 text-muted small">Total de la página</td>
                         <td class="text-center fw-semibold">
-                            {{ number_format($ventas->sum(fn($v) => $v->cantidad_cabezas), 0, ',', '.') }} cab.
+                            {{ number_format($ventas->sum(fn($v) => $v->cantidad_cabezas ?? 0), 0, ',', '.') }} cab.
                         </td>
                         <td class="text-end font-monospace fw-semibold">
                             {{ number_format($ventas->sum(fn($v) => (float)$v->peso_total_kg), 0, ',', '.') }} kg
@@ -260,11 +260,12 @@
                                 @error('categoria') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-2">
-                                <label class="form-label fw-semibold">Cabezas <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold">Cabezas</label>
                                 <input type="number" step="1" min="1"
                                        class="form-control @error('cantidad_cabezas') is-invalid @enderror"
                                        wire:model.live="cantidad_cabezas" placeholder="0">
                                 @error('cantidad_cabezas') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                <div class="form-text">Dejar vacío si es venta a frigorífico facturada solo por KG.</div>
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label fw-semibold">Peso promedio (kg)</label>
@@ -287,7 +288,12 @@
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Comprador</label>
                                 <input type="text" class="form-control @error('comprador') is-invalid @enderror"
-                                       wire:model="comprador" placeholder="Nombre o razón social">
+                                       wire:model="comprador" list="compradores-hacienda-list" placeholder="Nombre o razón social">
+                                <datalist id="compradores-hacienda-list">
+                                    @foreach ($compradoresSugeridos as $nombreComprador)
+                                        <option value="{{ $nombreComprador }}"></option>
+                                    @endforeach
+                                </datalist>
                                 @error('comprador') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-6">

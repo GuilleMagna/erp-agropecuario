@@ -1,4 +1,4 @@
-﻿<div>
+<div>
 
     @if (session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -186,11 +186,16 @@
 
     {{-- Modal --}}
     @if ($modalAbierto)
-    <div class="modal fade show d-block" wire:ignore.self tabindex="-1">
+    <div class="modal fade show d-block"
+         wire:key="modal-venta-granos"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="titulo-modal-venta-granos"
+         tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header border-bottom-0 pb-0">
-                    <h5 class="modal-title fw-bold">
+                    <h5 class="modal-title fw-bold" id="titulo-modal-venta-granos">
                         <i class="bi bi-bag me-2 text-success"></i>
                         {{ $modoEdicion ? 'Editar venta de granos' : 'Registrar venta de granos' }}
                     </h5>
@@ -261,7 +266,12 @@
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Comprador</label>
                                 <input type="text" class="form-control @error('comprador') is-invalid @enderror"
-                                       wire:model="comprador" placeholder="Nombre o razón social">
+                                       wire:model="comprador" list="compradores-granos-list" placeholder="Nombre o razón social">
+                                <datalist id="compradores-granos-list">
+                                    @foreach ($compradoresSugeridos as $nombreComprador)
+                                        <option value="{{ $nombreComprador }}"></option>
+                                    @endforeach
+                                </datalist>
                                 @error('comprador') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-3">
@@ -293,21 +303,41 @@
                             </div>
                         </div>
 
-                        <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">Valores</h6>
+                        <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">Valores <small class="text-muted fw-normal text-lowercase">(igual que la hoja VENTAS del Excel)</small></h6>
                         <div class="row g-3 mb-3">
                             <div class="col-md-3">
-                                <label class="form-label fw-semibold">Cantidad (tn) <span class="text-danger">*</span></label>
-                                <input type="number" step="0.001" min="0"
-                                       class="form-control font-monospace @error('cantidad_tn') is-invalid @enderror"
-                                       wire:model.live="cantidad_tn" placeholder="0.000">
-                                @error('cantidad_tn') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                <label class="form-label fw-semibold">Cantidad <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="number" step="0.0001" min="0"
+                                           class="form-control font-monospace @error('cantidadIngresada') is-invalid @enderror"
+                                           wire:model.live="cantidadIngresada" placeholder="0.00">
+                                    <select class="form-select flex-grow-0 w-auto" wire:model.live="unidadCantidad" style="max-width: 6.5rem;">
+                                        <option value="kg">KG</option>
+                                        <option value="quintales">Quintales</option>
+                                    </select>
+                                    @error('cantidadIngresada') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label fw-semibold">Factor (%) <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" min="0"
+                                       class="form-control font-monospace @error('factor') is-invalid @enderror"
+                                       wire:model.live="factor" placeholder="100">
+                                @error('factor') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label fw-semibold">Precio / tn <span class="text-danger">*</span></label>
-                                <input type="number" step="0.01" min="0"
-                                       class="form-control font-monospace @error('precio_tn') is-invalid @enderror"
-                                       wire:model.live="precio_tn" placeholder="0.00">
-                                @error('precio_tn') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                <label class="form-label fw-semibold">Precio / KG <span class="text-danger">*</span></label>
+                                <input type="number" step="0.0001" min="0"
+                                       class="form-control font-monospace @error('precio_kg') is-invalid @enderror"
+                                       wire:model.live="precio_kg" placeholder="0.0000">
+                                @error('precio_kg') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label fw-semibold">Flete / KG</label>
+                                <input type="number" step="0.0001" min="0"
+                                       class="form-control font-monospace @error('flete_kg') is-invalid @enderror"
+                                       wire:model.live="flete_kg">
+                                @error('flete_kg') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label fw-semibold">Moneda</label>
@@ -318,16 +348,74 @@
                                 </select>
                                 @error('moneda') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold">Importe total</label>
-                                <div class="input-group">
-                                    <span class="input-group-text fw-bold text-success">{{ $moneda === 'USD' ? 'U$S' : '$' }}</span>
-                                    <input type="number" step="0.01" min="0"
-                                           class="form-control font-monospace fw-bold @error('importe_total') is-invalid @enderror"
-                                           wire:model="importe_total" placeholder="0.00">
-                                    @error('importe_total') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                <label class="form-label fw-semibold">Deducciones</label>
+                                <input type="number" step="0.01"
+                                       class="form-control font-monospace @error('deducciones') is-invalid @enderror"
+                                       wire:model.live="deducciones">
+                                @error('deducciones') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">IVA deducciones</label>
+                                <input type="number" step="0.01"
+                                       class="form-control font-monospace @error('iva_deducciones') is-invalid @enderror"
+                                       wire:model.live="iva_deducciones">
+                                @error('iva_deducciones') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Bonif.</label>
+                                <input type="number" step="0.01"
+                                       class="form-control font-monospace @error('bonificacion') is-invalid @enderror"
+                                       wire:model.live="bonificacion">
+                                @error('bonificacion') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Ret. Gan.</label>
+                                <input type="number" step="0.01"
+                                       class="form-control font-monospace @error('ret_ganancias') is-invalid @enderror"
+                                       wire:model.live="ret_ganancias">
+                                @error('ret_ganancias') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Ret. IVA</label>
+                                <input type="number" step="0.01"
+                                       class="form-control font-monospace @error('ret_iva') is-invalid @enderror"
+                                       wire:model.live="ret_iva">
+                                @error('ret_iva') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">IVA RG 4310/2018</label>
+                                <input type="number" step="0.01"
+                                       class="form-control font-monospace @error('iva_rg4310') is-invalid @enderror"
+                                       wire:model.live="iva_rg4310">
+                                @error('iva_rg4310') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3 bg-light rounded-3 mx-0 py-3">
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-muted text-uppercase">Subtotal</label>
+                                <div class="font-monospace">{{ number_format($this->subtotalCalculado(), 2, ',', '.') }}</div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-muted text-uppercase">Total reten. AFIP</label>
+                                <div class="font-monospace">{{ number_format($this->totalRetencionesAfipCalculado(), 2, ',', '.') }}</div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-muted text-uppercase">Resultado IVA</label>
+                                <div class="font-monospace">{{ number_format($this->resultadoIvaCalculado(), 2, ',', '.') }}</div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-muted text-uppercase">Total</label>
+                                <div class="font-monospace fw-bold fs-5 text-success">
+                                    {{ $moneda === 'USD' ? 'U$S' : '$' }} {{ number_format($this->totalCalculado(), 2, ',', '.') }}
                                 </div>
-                                <div class="form-text">Calculado automáticamente. Ajustable manualmente.</div>
                             </div>
                         </div>
 

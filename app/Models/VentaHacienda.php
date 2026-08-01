@@ -11,13 +11,13 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class VentaHacienda extends Model
 {
-    use HasFactory, UsaUuid, PerteneceAEmpresa, LogsActivity;
+    use HasFactory, LogsActivity, PerteneceAEmpresa, UsaUuid;
 
     protected $table = 'ventas_hacienda';
 
     protected $fillable = [
         'id_establecimiento',
-        'comprador', 'corredor_feria', 'numero_guia',
+        'comprador', 'id_comprador', 'corredor_feria', 'numero_guia',
         'fecha', 'tipo_operacion', 'categoria',
         'cantidad_cabezas', 'peso_promedio_kg', 'peso_total_kg',
         'precio_kg', 'precio_cabeza',
@@ -25,33 +25,33 @@ class VentaHacienda extends Model
     ];
 
     protected $casts = [
-        'fecha'           => 'date',
-        'cantidad_cabezas'=> 'integer',
-        'peso_promedio_kg'=> 'decimal:2',
-        'peso_total_kg'   => 'decimal:2',
-        'precio_kg'       => 'decimal:4',
-        'precio_cabeza'   => 'decimal:2',
-        'importe_total'   => 'decimal:2',
+        'fecha' => 'date',
+        'cantidad_cabezas' => 'integer',
+        'peso_promedio_kg' => 'decimal:2',
+        'peso_total_kg' => 'decimal:2',
+        'precio_kg' => 'decimal:4',
+        'precio_cabeza' => 'decimal:2',
+        'importe_total' => 'decimal:2',
     ];
 
     const TIPOS_OPERACION = [
-        'invernada'     => 'Invernada',
-        'terminado'     => 'Terminado / Engordado',
+        'invernada' => 'Invernada',
+        'terminado' => 'Terminado / Engordado',
         'faena_directa' => 'Faena directa',
-        'remate_feria'  => 'Remate / Feria',
-        'consignacion'  => 'Consignación',
+        'remate_feria' => 'Remate / Feria',
+        'consignacion' => 'Consignación',
     ];
 
     const CATEGORIAS = [
-        'toro'       => 'Toro',
-        'vaca'       => 'Vaca',
-        'novillo'    => 'Novillo',
-        'novillito'  => 'Novillito',
+        'toro' => 'Toro',
+        'vaca' => 'Vaca',
+        'novillo' => 'Novillo',
+        'novillito' => 'Novillito',
         'vaquillona' => 'Vaquillona',
-        'ternero'    => 'Ternero',
-        'ternera'    => 'Ternera',
-        'capon'      => 'Capón',
-        'otro'       => 'Otro',
+        'ternero' => 'Ternero',
+        'ternera' => 'Ternera',
+        'capon' => 'Capón',
+        'otro' => 'Otro',
     ];
 
     const MONEDAS = [
@@ -61,8 +61,8 @@ class VentaHacienda extends Model
 
     const ESTADOS = [
         'confirmada' => 'Confirmada',
-        'cobrada'    => 'Cobrada',
-        'cancelada'  => 'Cancelada',
+        'cobrada' => 'Cobrada',
+        'cancelada' => 'Cancelada',
     ];
 
     public function getActivitylogOptions(): LogOptions
@@ -91,5 +91,10 @@ class VentaHacienda extends Model
     public function establecimiento()
     {
         return $this->belongsTo(Establecimiento::class, 'id_establecimiento');
+    }
+
+    public function compradorCatalogo()
+    {
+        return $this->belongsTo(Comprador::class, 'id_comprador');
     }
 }

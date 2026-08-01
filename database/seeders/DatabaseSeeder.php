@@ -28,7 +28,12 @@ class DatabaseSeeder extends Seeder
             // 1. Roles y permisos base (independientes de la empresa/usuario)
             RolesSeeder::class,
 
-            // 2. Admin inicial (depende de que la empresa ya exista en la DB.
+            // 2. Categorías de venta base (Vacas, Cereales), independiente de
+            //    empresa/usuario. Define qué campo de cantidad pide cada
+            //    pantalla de ventas (cabezas+kg vs quintales).
+            CategoriasVentaSeeder::class,
+
+            // 3. Admin inicial (depende de que la empresa ya exista en la DB.
             //    En el arranque real, la empresa se crea desde la interfaz antes
             //    de correr este seeder, o se agrega aquí un EmpresaSeeder
             //    temporal solo para el primer deploy.)
