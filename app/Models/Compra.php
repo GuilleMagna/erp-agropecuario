@@ -11,7 +11,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class Compra extends Model
 {
-    use HasFactory, UsaUuid, PerteneceAEmpresa, LogsActivity;
+    use HasFactory, LogsActivity, PerteneceAEmpresa, UsaUuid;
 
     protected $table = 'compras';
 
@@ -22,47 +22,76 @@ class Compra extends Model
         'fecha', 'fecha_vencimiento', 'estado',
         'subtotal', 'iva_porc', 'iva_importe', 'total',
         'stock_registrado', 'observaciones',
-        'actividad', 'id_lote', 'id_campana',
+        'actividad', 'zona', 'rubro', 'id_lote', 'id_campana',
     ];
 
     protected $casts = [
-        'fecha'             => 'date',
+        'fecha' => 'date',
         'fecha_vencimiento' => 'date',
-        'subtotal'          => 'decimal:2',
-        'iva_porc'          => 'decimal:2',
-        'iva_importe'       => 'decimal:2',
-        'total'             => 'decimal:2',
-        'stock_registrado'  => 'boolean',
+        'subtotal' => 'decimal:2',
+        'iva_porc' => 'decimal:2',
+        'iva_importe' => 'decimal:2',
+        'total' => 'decimal:2',
+        'stock_registrado' => 'boolean',
     ];
 
     const TIPOS_COMPROBANTE = [
         'factura_a' => 'Factura A',
         'factura_b' => 'Factura B',
         'factura_c' => 'Factura C',
-        'remito'    => 'Remito',
-        'recibo'    => 'Recibo',
-        'ticket'    => 'Ticket',
-        'otro'      => 'Otro',
+        'remito' => 'Remito',
+        'recibo' => 'Recibo',
+        'ticket' => 'Ticket',
+        'otro' => 'Otro',
     ];
 
     const ESTADOS = [
-        'pendiente'  => 'Pendiente',
-        'recibida'   => 'Recibida',
-        'pagada'     => 'Pagada',
-        'cancelada'  => 'Cancelada',
+        'pendiente' => 'Pendiente',
+        'recibida' => 'Recibida',
+        'pagada' => 'Pagada',
+        'cancelada' => 'Cancelada',
     ];
 
     const ACTIVIDADES = [
         'agricultura' => 'Agricultura',
-        'ganaderia'   => 'Ganadería',
-        'feedlot'     => 'Feedlot',
-        'general'     => 'General',
+        'ganaderia' => 'Ganadería',
+        'feedlot' => 'Feedlot',
+        'general' => 'General',
+        'inversiones' => 'Inversiones',
+    ];
+
+    /** Mismas categorías que Proveedor::RUBROS (tomadas del Excel "Facturas AÑO 2024.xlsx"). */
+    const RUBROS = [
+        'otro' => 'Otro',
+        'insumos' => 'Insumos',
+        'varios' => 'Varios',
+        'comercializacion' => 'Comercialización',
+        'mantenimiento' => 'Mantenimiento',
+        'reparaciones' => 'Reparaciones',
+        'labores_servicios' => 'Labores / Servicios',
+        'sanidad' => 'Sanidad',
+        'transporte' => 'Transporte / Flete',
+        'empleados' => 'Empleados',
+        'alimento' => 'Alimento',
+        'administracion' => 'Administración',
+        'esporadicos' => 'Esporádicos',
+        'asesoramiento' => 'Asesoramiento',
+        'alquileres' => 'Alquileres',
+        'bien_capital' => 'Bien de capital',
+        'combustible' => 'Combustible',
+    ];
+
+    /** Mismas zonas que Proveedor::ZONAS. */
+    const ZONAS = [
+        'general' => 'General',
+        'el_trebol' => 'El Trébol',
+        'corrientes' => 'Corrientes',
     ];
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['tipo_comprobante', 'numero_comprobante', 'fecha', 'estado', 'subtotal', 'iva_importe', 'total', 'id_proveedor', 'actividad'])
+            ->logOnly(['tipo_comprobante', 'numero_comprobante', 'fecha', 'estado', 'subtotal', 'iva_importe', 'total', 'id_proveedor', 'actividad', 'zona', 'rubro'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -80,6 +109,16 @@ class Compra extends Model
     public function getActividadLabelAttribute(): string
     {
         return self::ACTIVIDADES[$this->actividad] ?? ($this->actividad ?? '—');
+    }
+
+    public function getRubroLabelAttribute(): string
+    {
+        return self::RUBROS[$this->rubro] ?? ($this->rubro ?? '—');
+    }
+
+    public function getZonaLabelAttribute(): string
+    {
+        return self::ZONAS[$this->zona] ?? ($this->zona ?? '—');
     }
 
     public function proveedor()

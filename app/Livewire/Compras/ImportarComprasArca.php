@@ -184,6 +184,10 @@ class ImportarComprasArca extends Component
                     'total' => $fila['total'],
                     'stock_registrado' => false,
                     'observaciones' => 'Importado desde ARCA',
+                    // Heredado del proveedor si ya tiene clasificación cargada.
+                    'actividad' => $proveedor?->actividad !== null ? $proveedor->actividad : null,
+                    'zona' => $proveedor?->actividad !== null ? $proveedor->zona : null,
+                    'rubro' => $proveedor?->actividad !== null ? $proveedor->rubro : null,
                 ]);
 
                 $fila['estado'] = 'importado';

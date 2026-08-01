@@ -11,13 +11,13 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class Proveedor extends Model
 {
-    use HasFactory, UsaUuid, PerteneceAEmpresa, LogsActivity;
+    use HasFactory, LogsActivity, PerteneceAEmpresa, UsaUuid;
 
     protected $table = 'proveedores';
 
     protected $fillable = [
         'id_empresa',
-        'nombre', 'razon_social', 'cuit', 'rubro',
+        'nombre', 'razon_social', 'cuit', 'rubro', 'actividad', 'zona',
         'telefono', 'email', 'direccion', 'ciudad', 'provincia',
         'observaciones', 'activo',
     ];
@@ -26,15 +26,41 @@ class Proveedor extends Model
         'activo' => 'boolean',
     ];
 
+    /**
+     * Clasificación de gasto por proveedor, tomada de la hoja RUBROS del Excel
+     * "Facturas AÑO 2024.xlsx" (149 CUITs clasificados a mano por el usuario).
+     */
     const RUBROS = [
-        'insumos_agricolas' => 'Insumos agrícolas',
-        'veterinaria'       => 'Veterinaria',
-        'maquinaria'        => 'Maquinaria y equipos',
-        'combustible'       => 'Combustible',
-        'semillas'          => 'Semillas',
-        'servicios'         => 'Servicios',
-        'transporte'        => 'Transporte / Flete',
-        'otro'              => 'Otro',
+        'otro' => 'Otro',
+        'insumos' => 'Insumos',
+        'varios' => 'Varios',
+        'comercializacion' => 'Comercialización',
+        'mantenimiento' => 'Mantenimiento',
+        'reparaciones' => 'Reparaciones',
+        'labores_servicios' => 'Labores / Servicios',
+        'sanidad' => 'Sanidad',
+        'transporte' => 'Transporte / Flete',
+        'empleados' => 'Empleados',
+        'alimento' => 'Alimento',
+        'administracion' => 'Administración',
+        'esporadicos' => 'Esporádicos',
+        'asesoramiento' => 'Asesoramiento',
+        'alquileres' => 'Alquileres',
+        'bien_capital' => 'Bien de capital',
+        'combustible' => 'Combustible',
+    ];
+
+    const ACTIVIDADES = [
+        'general' => 'General',
+        'agricultura' => 'Agricultura',
+        'ganaderia' => 'Ganadería',
+        'inversiones' => 'Inversiones',
+    ];
+
+    const ZONAS = [
+        'general' => 'General',
+        'el_trebol' => 'El Trébol',
+        'corrientes' => 'Corrientes',
     ];
 
     public function getActivitylogOptions(): LogOptions
@@ -48,6 +74,16 @@ class Proveedor extends Model
     public function getRubroLabelAttribute(): string
     {
         return self::RUBROS[$this->rubro] ?? ($this->rubro ?? '—');
+    }
+
+    public function getActividadLabelAttribute(): string
+    {
+        return self::ACTIVIDADES[$this->actividad] ?? ($this->actividad ?? '—');
+    }
+
+    public function getZonaLabelAttribute(): string
+    {
+        return self::ZONAS[$this->zona] ?? ($this->zona ?? '—');
     }
 
     public function compras()

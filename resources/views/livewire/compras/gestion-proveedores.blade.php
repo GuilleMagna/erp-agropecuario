@@ -192,6 +192,27 @@
                                        wire:model="cuit" placeholder="XX-XXXXXXXX-X">
                                 @error('cuit') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Actividad por defecto</label>
+                                <select class="form-select @error('actividad') is-invalid @enderror" wire:model="actividad">
+                                    <option value="">Sin especificar</option>
+                                    @foreach ($actividades as $val => $etq)
+                                        <option value="{{ $val }}">{{ $etq }}</option>
+                                    @endforeach
+                                </select>
+                                @error('actividad') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                <div class="form-text">Se usa para autocompletar las compras nuevas de este proveedor.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Zona</label>
+                                <select class="form-select @error('zona') is-invalid @enderror" wire:model="zona">
+                                    <option value="">Sin especificar</option>
+                                    @foreach ($zonas as $val => $etq)
+                                        <option value="{{ $val }}">{{ $etq }}</option>
+                                    @endforeach
+                                </select>
+                                @error('zona') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
                         </div>
 
                         <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">Contacto</h6>

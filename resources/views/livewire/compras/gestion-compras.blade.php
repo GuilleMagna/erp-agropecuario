@@ -319,7 +319,7 @@
                             <i class="bi bi-tags me-1"></i> Imputación
                         </div>
                         <div class="row g-2">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label small">Actividad</label>
                                 <select class="form-select form-select-sm" wire:model="actividad">
                                     @foreach ($actividades as $k => $v)
@@ -327,7 +327,25 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
+                                <label class="form-label small">Zona</label>
+                                <select class="form-select form-select-sm" wire:model="zona">
+                                    <option value="">— Sin zona —</option>
+                                    @foreach ($zonas as $k => $v)
+                                        <option value="{{ $k }}">{{ $v }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Rubro</label>
+                                <select class="form-select form-select-sm" wire:model="rubro">
+                                    <option value="">— Sin rubro —</option>
+                                    @foreach ($rubros as $k => $v)
+                                        <option value="{{ $k }}">{{ $v }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-3">
                                 <label class="form-label small">Lote</label>
                                 <select class="form-select form-select-sm" wire:model="id_lote">
                                     <option value="">— Sin lote —</option>
@@ -336,7 +354,7 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label small">Campaña</label>
                                 <select class="form-select form-select-sm" wire:model="id_campana">
                                     <option value="">— Sin campaña —</option>

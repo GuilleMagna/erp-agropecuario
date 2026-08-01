@@ -138,6 +138,13 @@ class MrbotService
                     'total' => $fila['total'],
                     'stock_registrado' => false,
                     'observaciones' => 'Sincronizado desde ARCA',
+                    // Se hereda del proveedor si ya tiene clasificación cargada
+                    // (catálogo importado de "Facturas AÑO 2024.xlsx" o cargada
+                    // a mano, siempre trae actividad); si el proveedor es nuevo
+                    // (recién autocreado acá arriba), queda sin clasificar.
+                    'actividad' => $proveedor?->actividad !== null ? $proveedor->actividad : null,
+                    'zona' => $proveedor?->actividad !== null ? $proveedor->zona : null,
+                    'rubro' => $proveedor?->actividad !== null ? $proveedor->rubro : null,
                 ];
                 if ($idEmpresa) {
                     $compraAttrs['id_empresa'] = $idEmpresa;
