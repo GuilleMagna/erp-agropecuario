@@ -17,7 +17,7 @@ class Proveedor extends Model
 
     protected $fillable = [
         'id_empresa',
-        'nombre', 'razon_social', 'cuit', 'rubro', 'actividad', 'zona',
+        'nombre', 'razon_social', 'cuit', 'rubro', 'actividad',
         'telefono', 'email', 'direccion', 'ciudad', 'provincia',
         'observaciones', 'activo',
     ];
@@ -57,12 +57,6 @@ class Proveedor extends Model
         'inversiones' => 'Inversiones',
     ];
 
-    const ZONAS = [
-        'general' => 'General',
-        'el_trebol' => 'El Trébol',
-        'corrientes' => 'Corrientes',
-    ];
-
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
@@ -79,11 +73,6 @@ class Proveedor extends Model
     public function getActividadLabelAttribute(): string
     {
         return self::ACTIVIDADES[$this->actividad] ?? ($this->actividad ?? '—');
-    }
-
-    public function getZonaLabelAttribute(): string
-    {
-        return self::ZONAS[$this->zona] ?? ($this->zona ?? '—');
     }
 
     public function compras()

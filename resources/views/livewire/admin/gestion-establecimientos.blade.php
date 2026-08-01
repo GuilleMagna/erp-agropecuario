@@ -233,6 +233,17 @@
                                        wire:model="localidad" placeholder="Ej: Médanos">
                                 @error('localidad') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Zona</label>
+                                <select class="form-select @error('zona') is-invalid @enderror" wire:model="zona">
+                                    <option value="">Sin especificar</option>
+                                    @foreach ($zonas as $val => $etq)
+                                        <option value="{{ $val }}">{{ $etq }}</option>
+                                    @endforeach
+                                </select>
+                                @error('zona') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                <div class="form-text">Se usa para clasificar las compras imputadas a este campo.</div>
+                            </div>
                         </div>
 
                         {{-- Ubicación --}}

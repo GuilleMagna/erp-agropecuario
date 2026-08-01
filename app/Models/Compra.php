@@ -81,7 +81,8 @@ class Compra extends Model
         'combustible' => 'Combustible',
     ];
 
-    /** Mismas zonas que Proveedor::ZONAS. */
+    /** Mismas zonas que Establecimiento::ZONAS. Se autocompleta al elegir
+     *  el establecimiento de la compra (ver GestionCompras). */
     const ZONAS = [
         'general' => 'General',
         'el_trebol' => 'El Trébol',

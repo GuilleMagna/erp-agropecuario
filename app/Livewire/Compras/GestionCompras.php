@@ -209,9 +209,9 @@ class GestionCompras extends Component
 
     /**
      * Al elegir un proveedor con clasificación por defecto ya cargada, se
-     * autocompleta la imputación (mismo criterio que el VLOOKUP del Excel de
-     * origen). Solo pisa los campos si todavía están en su valor por defecto,
-     * para no sobrescribir una elección manual ya hecha en el formulario.
+     * autocompletan actividad y rubro (mismo criterio que el VLOOKUP del
+     * Excel de origen). Solo pisa los campos si todavía están en su valor
+     * por defecto, para no sobrescribir una elección manual ya hecha.
      */
     public function updatedIdProveedor(): void
     {
@@ -227,11 +227,24 @@ class GestionCompras extends Component
         if ($this->actividad === 'general') {
             $this->actividad = $proveedor->actividad;
         }
-        if ($this->zona === '') {
-            $this->zona = $proveedor->zona ?? '';
-        }
         if ($this->rubro === '') {
             $this->rubro = $proveedor->rubro ?? '';
+        }
+    }
+
+    /**
+     * La zona es propiedad del campo, no del proveedor: se autocompleta al
+     * elegir el establecimiento de la compra.
+     */
+    public function updatedIdEstablecimiento(): void
+    {
+        if (! $this->id_establecimiento) {
+            return;
+        }
+
+        $establecimiento = Establecimiento::find($this->id_establecimiento);
+        if ($establecimiento?->zona) {
+            $this->zona = $establecimiento->zona;
         }
     }
 

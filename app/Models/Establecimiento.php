@@ -37,9 +37,21 @@ use Spatie\Activitylog\Traits\LogsActivity;
  */
 class Establecimiento extends Model
 {
-    use HasFactory, UsaUuid, PerteneceAEmpresa, LogsActivity;
+    use HasFactory, LogsActivity, PerteneceAEmpresa, UsaUuid;
 
     protected $table = 'establecimientos';
+
+    /**
+     * Región geográfica del campo (distinta de provincia/localidad): usada
+     * para clasificar las compras imputadas a este establecimiento. Mismas
+     * claves que Compra::ZONAS. Gestionable: se puede sumar una zona nueva
+     * simplemente agregándola acá.
+     */
+    const ZONAS = [
+        'general' => 'General',
+        'el_trebol' => 'El Trébol',
+        'corrientes' => 'Corrientes',
+    ];
 
     protected $fillable = [
         'id_empresa',
@@ -47,6 +59,7 @@ class Establecimiento extends Model
         'provincia',
         'partido_departamento',
         'localidad',
+        'zona',
         'latitud',
         'longitud',
         'superficie_total_ha',
@@ -59,12 +72,12 @@ class Establecimiento extends Model
     ];
 
     protected $casts = [
-        'latitud'               => 'float',
-        'longitud'              => 'float',
-        'superficie_total_ha'   => 'float',
-        'superficie_agricola_ha'=> 'float',
-        'superficie_ganadera_ha'=> 'float',
-        'activo'                => 'boolean',
+        'latitud' => 'float',
+        'longitud' => 'float',
+        'superficie_total_ha' => 'float',
+        'superficie_agricola_ha' => 'float',
+        'superficie_ganadera_ha' => 'float',
+        'activo' => 'boolean',
     ];
 
     // -------------------------------------------------------------------------
@@ -77,6 +90,11 @@ class Establecimiento extends Model
             ->logOnly(['nombre', 'provincia', 'partido_departamento', 'localidad', 'superficie_total_ha', 'tipo_tenencia', 'activo'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
+    }
+
+    public function getZonaLabelAttribute(): string
+    {
+        return self::ZONAS[$this->zona] ?? ($this->zona ?? '—');
     }
 
     public function responsable(): BelongsTo

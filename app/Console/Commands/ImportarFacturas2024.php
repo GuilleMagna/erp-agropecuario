@@ -182,7 +182,6 @@ class ImportarFacturas2024 extends Command
                         'cuit' => $cuit,
                         'rubro' => $clasificacion['rubro'] ?? 'otro',
                         'actividad' => $clasificacion['actividad'] ?? null,
-                        'zona' => $clasificacion['zona'] ?? null,
                         'activo' => true,
                     ]);
                     $proveedor->id_empresa = $empresa->id;
@@ -195,7 +194,6 @@ class ImportarFacturas2024 extends Command
                 if (! $dryRun) {
                     $proveedor->update([
                         'actividad' => $clasificacion['actividad'],
-                        'zona' => $clasificacion['zona'],
                         'rubro' => $clasificacion['rubro'] ?? $proveedor->rubro,
                     ]);
                 }
@@ -218,7 +216,11 @@ class ImportarFacturas2024 extends Command
                     'stock_registrado' => false,
                     'observaciones' => "Importado desde Facturas AÑO 2024.xlsx (fila {$filaExcel})",
                     'actividad' => $proveedor?->actividad,
-                    'zona' => $proveedor?->zona,
+                    // La zona es un dato histórico de esta factura puntual (viene
+                    // del catálogo CUIT→Zona de la planilla 2024), no del
+                    // proveedor: la zona "actual" del proveedor ya no existe como
+                    // concepto, ahora vive en Establecimiento.
+                    'zona' => $clasificacion['zona'] ?? null,
                     'rubro' => $proveedor?->rubro !== 'otro' ? $proveedor?->rubro : null,
                 ]);
                 $compra->id_empresa = $empresa->id;

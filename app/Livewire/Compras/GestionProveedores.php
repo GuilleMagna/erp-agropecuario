@@ -33,8 +33,6 @@ class GestionProveedores extends Component
 
     public string $actividad = '';
 
-    public string $zona = '';
-
     public string $telefono = '';
 
     public string $email = '';
@@ -57,7 +55,6 @@ class GestionProveedores extends Component
             'cuit' => 'nullable|string|max:20',
             'rubro' => 'nullable|in:'.implode(',', array_keys(Proveedor::RUBROS)),
             'actividad' => 'nullable|in:'.implode(',', array_keys(Proveedor::ACTIVIDADES)),
-            'zona' => 'nullable|in:'.implode(',', array_keys(Proveedor::ZONAS)),
             'telefono' => 'nullable|string|max:30',
             'email' => 'nullable|email|max:100',
             'direccion' => 'nullable|string|max:200',
@@ -101,7 +98,6 @@ class GestionProveedores extends Component
         $this->cuit = $p->cuit ?? '';
         $this->rubro = $p->rubro ?? '';
         $this->actividad = $p->actividad ?? '';
-        $this->zona = $p->zona ?? '';
         $this->telefono = $p->telefono ?? '';
         $this->email = $p->email ?? '';
         $this->direccion = $p->direccion ?? '';
@@ -130,7 +126,6 @@ class GestionProveedores extends Component
             'cuit' => $this->cuit ?: null,
             'rubro' => $this->rubro ?: null,
             'actividad' => $this->actividad ?: null,
-            'zona' => $this->zona ?: null,
             'telefono' => $this->telefono ?: null,
             'email' => $this->email ?: null,
             'direccion' => $this->direccion ?: null,
@@ -168,7 +163,6 @@ class GestionProveedores extends Component
         $this->cuit = '';
         $this->rubro = '';
         $this->actividad = '';
-        $this->zona = '';
         $this->telefono = '';
         $this->email = '';
         $this->direccion = '';
@@ -197,7 +191,6 @@ class GestionProveedores extends Component
             'proveedores' => $proveedores,
             'rubros' => Proveedor::RUBROS,
             'actividades' => Proveedor::ACTIVIDADES,
-            'zonas' => Proveedor::ZONAS,
         ]);
     }
 }

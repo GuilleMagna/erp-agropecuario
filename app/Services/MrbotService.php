@@ -141,9 +141,10 @@ class MrbotService
                     // Se hereda del proveedor si ya tiene clasificación cargada
                     // (catálogo importado de "Facturas AÑO 2024.xlsx" o cargada
                     // a mano, siempre trae actividad); si el proveedor es nuevo
-                    // (recién autocreado acá arriba), queda sin clasificar.
+                    // (recién autocreado acá arriba), queda sin clasificar. La
+                    // zona no se hereda acá: es del establecimiento, y esta
+                    // sincronización no elige uno (queda para completar a mano).
                     'actividad' => $proveedor?->actividad !== null ? $proveedor->actividad : null,
-                    'zona' => $proveedor?->actividad !== null ? $proveedor->zona : null,
                     'rubro' => $proveedor?->actividad !== null ? $proveedor->rubro : null,
                 ];
                 if ($idEmpresa) {

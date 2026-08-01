@@ -185,8 +185,9 @@ class ImportarComprasArca extends Component
                     'stock_registrado' => false,
                     'observaciones' => 'Importado desde ARCA',
                     // Heredado del proveedor si ya tiene clasificación cargada.
+                    // La zona no se hereda acá: es del establecimiento, y esta
+                    // importación no elige uno (queda para completar a mano).
                     'actividad' => $proveedor?->actividad !== null ? $proveedor->actividad : null,
-                    'zona' => $proveedor?->actividad !== null ? $proveedor->zona : null,
                     'rubro' => $proveedor?->actividad !== null ? $proveedor->rubro : null,
                 ]);
 
