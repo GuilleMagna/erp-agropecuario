@@ -1,4 +1,4 @@
-﻿<div>
+<div>
 
     {{-- Mensajes flash --}}
     @if (session('success'))
@@ -92,7 +92,7 @@
                 </thead>
                 <tbody>
                     @forelse ($lotes as $lote)
-                    <tr>
+                    <tr wire:key="lote-{{ $lote->id }}">
                         <td class="ps-4">
                             <div class="fw-semibold">{{ $lote->nombre }}</div>
                             @if ($lote->codigo)

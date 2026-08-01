@@ -1,4 +1,4 @@
-﻿<div>
+<div>
 
     {{-- Mensajes flash --}}
     @if (session('success'))

@@ -114,7 +114,10 @@ return [
     |
     */
 
-    'inject_assets' => true,
+    // The application layout renders @livewireStyles and @livewireScripts
+    // explicitly. Auto-injecting them as well can initialize Livewire twice
+    // and leave component snapshots detached after a DOM update.
+    'inject_assets' => false,
 
     /*
     |---------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-﻿<div>
+<div>
 
     @if (session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -88,7 +88,7 @@
                 </thead>
                 <tbody>
                     @forelse ($labores as $labor)
-                    <tr>
+                    <tr wire:key="labor-{{ $labor->id }}">
                         <td class="ps-4">
                             <div class="fw-semibold">{{ $labor->tipo_labor_label }}</div>
                             @if ($labor->descripcion)
