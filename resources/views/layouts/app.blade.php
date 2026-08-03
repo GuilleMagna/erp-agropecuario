@@ -105,6 +105,7 @@
         </li>
 
         {{-- ── PRODUCCIÓN ──────────────────────────────────── --}}
+        @canany(['campos.lotes.ver','agricultura.campanas.ver','agricultura.siembra.ver','agricultura.labores.ver','agricultura.cosecha.ver','ganaderia.animales.ver','ganaderia.movimientos.ver','ganaderia.pesajes.ver','ganaderia.sanidad.ver','ganaderia.reproduccion.ver','feedlot.corrales.ver','feedlot.tropas.ver','feedlot.consumos.registrar'])
         <li>
             <button class="sec-toggle" type="button"
                     data-bs-toggle="collapse" data-bs-target="#secProd"
@@ -202,6 +203,7 @@
                 @endcan
             </div>
         </li>
+        @endcanany
 
         {{-- ── INSUMOS ──────────────────────────────────────── --}}
         @canany(['insumos.catalogo.ver','insumos.movimientos.ver'])

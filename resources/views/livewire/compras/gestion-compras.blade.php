@@ -17,13 +17,15 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0">Comprobantes de Compra</h1>
         <div class="d-flex gap-2">
-            @can('compras.crear')
+            @can('compras.arca.gestionar')
                 <a href="{{ route('compras.sincronizar-arca') }}" class="btn btn-outline-primary btn-sm">
                     <i class="bi bi-cloud-arrow-down me-1"></i> Sincronizar ARCA
                 </a>
                 <a href="{{ route('compras.importar-arca') }}" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-upload me-1"></i> Importar ARCA
                 </a>
+            @endcan
+            @can('compras.crear')
                 <button type="button" class="btn btn-primary btn-sm" wire:click="abrirModalCrear">
                     <i class="bi bi-plus-lg me-1"></i> Nueva Compra
                 </button>
