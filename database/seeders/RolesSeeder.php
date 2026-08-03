@@ -263,9 +263,10 @@ class RolesSeeder extends Seeder
 
         /**
          * Cargador de datos
-         * Carga y edita ventas (granos y hacienda) y compras, tanto cargadas a
-         * mano como sincronizadas/importadas desde ARCA. Puede cambiar entre
-         * las 3 empresas porque carga datos de todas.
+         * Gestiona los movimientos diarios: ventas (granos y hacienda), compras
+         * (a mano y sincronizadas/importadas desde ARCA), y carga de gastos NO
+         * ARCA (servicios). Puede cambiar entre las 3 empresas porque carga
+         * datos de todas.
          */
         $cargadorDatos = Role::firstOrCreate(['name' => 'cargador_datos']);
         $cargadorDatos->givePermissionTo([
@@ -275,6 +276,7 @@ class RolesSeeder extends Seeder
             'compras.ver', 'compras.crear', 'compras.editar',
             'compras.arca.gestionar',
             'compras.proveedores.gestionar',
+            'finanzas.gastos.gestionar',
             'sistema.empresas.cambiar',
         ]);
 
