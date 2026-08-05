@@ -49,7 +49,11 @@ class GestionReintegrosIva extends Component
             'id_periodo_fiscal'  => 'nullable|exists:periodos_fiscales,id',
             'importe'            => 'required|numeric|min:0.01',
             'fecha_presentacion' => 'nullable|date',
-            'fecha_acreditacion' => 'nullable|date',
+            // La fecha de acreditación es la que determina en qué mes queda
+            // imputado el reintegro, así que no puede faltar una vez acreditado.
+            // Sigue siendo opcional mientras está pendiente o presentado:
+            // en esos estados la plata todavía no entró y la fecha no existe.
+            'fecha_acreditacion' => 'required_if:estado,acreditado|nullable|date',
             'estado'             => 'required|in:' . implode(',', array_keys(ReintegroIva::ESTADOS)),
             'numero_expediente'  => 'nullable|string|max:100',
             'observaciones'      => 'nullable|string',
@@ -61,6 +65,7 @@ class GestionReintegrosIva extends Component
         'periodo.regex'    => 'El período debe tener el formato YYYY-MM.',
         'importe.required' => 'El importe es obligatorio.',
         'importe.min'      => 'El importe debe ser mayor a cero.',
+        'fecha_acreditacion.required_if' => 'La fecha de acreditación es obligatoria cuando el reintegro está acreditado: es la que determina en qué mes queda imputado.',
     ];
 
     public function updatedFiltroEstado(): void  { $this->resetPage(); }

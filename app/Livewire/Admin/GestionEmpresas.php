@@ -37,7 +37,7 @@ class GestionEmpresas extends Component
 
     public function mount(): void
     {
-        Gate::authorize('admin.roles.gestionar');
+        Gate::authorize('admin.empresas.gestionar');
     }
 
     protected function rules(): array
@@ -71,14 +71,14 @@ class GestionEmpresas extends Component
 
     public function abrirModalCrear(): void
     {
-        Gate::authorize('admin.roles.gestionar');
+        Gate::authorize('admin.empresas.gestionar');
         $this->limpiar();
         $this->modalAbierto = true;
     }
 
     public function abrirModalEditar(string $id): void
     {
-        Gate::authorize('admin.roles.gestionar');
+        Gate::authorize('admin.empresas.gestionar');
 
         $empresa = Empresa::findOrFail($id);
 
@@ -101,7 +101,7 @@ class GestionEmpresas extends Component
 
     public function guardar(): void
     {
-        Gate::authorize('admin.roles.gestionar');
+        Gate::authorize('admin.empresas.gestionar');
         $this->validate();
 
         $datos = [
@@ -137,7 +137,7 @@ class GestionEmpresas extends Component
 
     public function toggleActiva(string $id): void
     {
-        Gate::authorize('admin.roles.gestionar');
+        Gate::authorize('admin.empresas.gestionar');
         $empresa = Empresa::findOrFail($id);
         $empresa->update(['activa' => !$empresa->activa]);
         session()->flash('success', "Empresa \"{$empresa->razon_social}\" " . ($empresa->activa ? 'activada' : 'desactivada') . '.');
@@ -145,7 +145,7 @@ class GestionEmpresas extends Component
 
     public function toggleArca(string $id): void
     {
-        Gate::authorize('admin.roles.gestionar');
+        Gate::authorize('admin.empresas.gestionar');
         $empresa = Empresa::findOrFail($id);
         $empresa->update(['arca_activo' => !$empresa->arca_activo]);
     }

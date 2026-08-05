@@ -36,6 +36,20 @@
         .sidebar .nav-link:hover, .sidebar .nav-link.active {
             color: white; background: rgba(255,255,255,.1);
         }
+        /* Panel desplegado de una sección: fondo apenas más claro que el de la
+           barra, para que el submenú se lea como un bloque aparte y no se
+           confunda con el encabezado de sección. Aplica a .collapse (incluye
+           .show y .collapsing); mientras está cerrado no se ve igual. */
+        .sidebar .collapse, .sidebar .collapsing {
+            background: rgba(255,255,255,.05);
+            box-shadow: inset 3px 0 0 rgba(255,255,255,.12);
+        }
+        /* Sobre ese fondo más claro, el hover/activo necesita más contraste
+           que el .1 de arriba, si no queda casi igual que el propio panel. */
+        .sidebar .collapse .nav-link:hover,
+        .sidebar .collapse .nav-link.active {
+            background: rgba(255,255,255,.16);
+        }
         /* Botón de sección colapsable */
         .sidebar .sec-toggle {
             display: flex; align-items: center; justify-content: space-between;
@@ -448,7 +462,7 @@
                     <i class="bi bi-geo-alt me-2"></i> Establecimientos
                 </a>
                 @endcan
-                @can('admin.roles.gestionar')
+                @can('admin.empresas.gestionar')
                 <a href="{{ route('admin.empresas.index') }}"
                    class="nav-link {{ request()->routeIs('admin.empresas.*') ? 'active' : '' }}">
                     <i class="bi bi-buildings me-2"></i> Empresas
@@ -457,6 +471,8 @@
                    class="nav-link {{ request()->routeIs('sistema.empresa') ? 'active' : '' }}">
                     <i class="bi bi-building-gear me-2"></i> Mi empresa
                 </a>
+                @endcan
+                @can('admin.roles.gestionar')
                 <a href="{{ route('sistema.roles') }}"
                    class="nav-link {{ request()->routeIs('sistema.roles') ? 'active' : '' }}">
                     <i class="bi bi-shield-lock me-2"></i> Roles y permisos

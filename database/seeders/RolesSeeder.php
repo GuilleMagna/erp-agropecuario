@@ -39,6 +39,11 @@ class RolesSeeder extends Seeder
             'admin.usuarios.editar',
             'admin.usuarios.inactivar',
             'admin.roles.gestionar',
+            // Alta/edición de empresas y datos fiscales. Separado de
+            // admin.roles.gestionar a propósito: gestionar empresas no debe
+            // implicar poder editar roles y permisos (con eso, cualquiera que
+            // administre empresas podría auto-asignarse permisos).
+            'admin.empresas.gestionar',
             'admin.establecimientos.gestionar',
 
             // --- Campos y Establecimientos ---
@@ -209,9 +214,13 @@ class RolesSeeder extends Seeder
         /**
          * Administrativo / Contable
          * Gestiona compras, ventas, caja, bancos, cuentas corrientes.
+         * Trabaja con las 3 empresas (ELVIO/WILMAR/SOCIEDAD): necesita el
+         * selector de empresa y poder administrarlas. No gestiona roles.
          */
         $administrativo = Role::firstOrCreate(['name' => 'administrativo']);
         $administrativo->givePermissionTo([
+            'sistema.empresas.cambiar',
+            'admin.empresas.gestionar',
             'campos.establecimientos.ver',
             'compras.proveedores.gestionar',
             'compras.ver', 'compras.crear', 'compras.editar', 'compras.arca.gestionar',

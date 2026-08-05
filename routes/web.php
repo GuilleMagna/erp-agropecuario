@@ -24,7 +24,7 @@ Route::middleware(['auth'])->group(function () {
         ->name('admin.establecimientos.index');
 
     Route::get('/admin/empresas', fn () => view('admin.gestion-empresas'))
-        ->middleware('can:admin.roles.gestionar')
+        ->middleware('can:admin.empresas.gestionar')
         ->name('admin.empresas.index');
 
     // Módulo Campos
@@ -132,7 +132,7 @@ Route::middleware(['auth'])->group(function () {
         ->name('sistema.perfil');
 
     Route::get('/sistema/empresa', fn () => view('sistema.empresa'))
-        ->middleware('can:admin.roles.gestionar')
+        ->middleware('can:admin.empresas.gestionar')
         ->name('sistema.empresa');
 
     Route::get('/sistema/roles', fn () => view('sistema.roles'))

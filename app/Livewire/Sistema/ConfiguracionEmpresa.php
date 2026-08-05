@@ -28,7 +28,7 @@ class ConfiguracionEmpresa extends Component
 
     public function mount(): void
     {
-        Gate::authorize('admin.roles.gestionar');
+        Gate::authorize('admin.empresas.gestionar');
 
         $empresa = auth()->user()->empresa;
         $this->razon_social     = $empresa->razon_social ?? '';
@@ -40,7 +40,7 @@ class ConfiguracionEmpresa extends Component
 
     public function guardar(): void
     {
-        Gate::authorize('admin.roles.gestionar');
+        Gate::authorize('admin.empresas.gestionar');
 
         $this->validate([
             'razon_social'     => 'required|string|max:200',

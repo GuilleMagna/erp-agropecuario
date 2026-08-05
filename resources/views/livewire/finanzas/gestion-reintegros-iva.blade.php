@@ -269,7 +269,7 @@
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold">Estado <span class="text-danger">*</span></label>
                                 <select class="form-select @error('estado') is-invalid @enderror"
-                                        wire:model="estado">
+                                        wire:model.live="estado">
                                     @foreach ($estados as $val => $etq)
                                         <option value="{{ $val }}">{{ $etq }}</option>
                                     @endforeach
@@ -284,11 +284,17 @@
                                 @error('fecha_presentacion') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold">Fecha acreditación</label>
+                                <label class="form-label fw-semibold">
+                                    Fecha acreditación
+                                    @if ($estado === 'acreditado') <span class="text-danger">*</span> @endif
+                                </label>
                                 <input type="date"
                                        class="form-control @error('fecha_acreditacion') is-invalid @enderror"
                                        wire:model="fecha_acreditacion">
                                 @error('fecha_acreditacion') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                @if ($estado === 'acreditado')
+                                    <div class="form-text">Determina en qué mes queda imputado el reintegro.</div>
+                                @endif
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">N° Expediente</label>
