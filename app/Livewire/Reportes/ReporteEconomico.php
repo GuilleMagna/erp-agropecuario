@@ -4,6 +4,7 @@ namespace App\Livewire\Reportes;
 
 use App\Models\Compra;
 use App\Models\Cuenta;
+use App\Models\Empresa;
 use App\Models\Establecimiento;
 use App\Models\Jornal;
 use App\Models\Transaccion;
@@ -17,6 +18,7 @@ class ReporteEconomico extends Component
     public string $filtroFechaDesde     = '';
     public string $filtroFechaHasta     = '';
     public string $filtroEstablecimiento = '';
+    public string $agrupacion = 'empresa';
 
     public function mount(): void
     {
@@ -43,7 +45,7 @@ class ReporteEconomico extends Component
 
             fputcsv($handle, ['--- VENTAS DE GRANOS ---'], ';');
             fputcsv($handle, ['Cereal', 'Operaciones', 'Cantidad (tn)', 'Importe'], ';');
-            $granos = VentaGrano::whereBetween('fecha', [$desde, $hasta])
+            $granos = VentaGrano::sinFiltroDeEmpresa()->whereBetween('fecha', [$desde, $hasta])
                 ->when($estId, fn($q) => $q->where('id_establecimiento', $estId))
                 ->whereNotIn('estado', ['cancelada'])
                 ->selectRaw('cereal, count(*) as operaciones, sum(cantidad_tn) as total_tn, sum(importe_total) as total')
@@ -60,7 +62,7 @@ class ReporteEconomico extends Component
             fputcsv($handle, [], ';');
             fputcsv($handle, ['--- VENTAS DE HACIENDA ---'], ';');
             fputcsv($handle, ['Categoría', 'Operaciones', 'Cabezas', 'Importe'], ';');
-            $hacienda = VentaHacienda::whereBetween('fecha', [$desde, $hasta])
+            $hacienda = VentaHacienda::sinFiltroDeEmpresa()->whereBetween('fecha', [$desde, $hasta])
                 ->when($estId, fn($q) => $q->where('id_establecimiento', $estId))
                 ->whereNotIn('estado', ['cancelada'])
                 ->selectRaw('categoria, count(*) as operaciones, sum(cantidad_cabezas) as total_cabezas, sum(importe_total) as total')
@@ -77,7 +79,7 @@ class ReporteEconomico extends Component
             fputcsv($handle, [], ';');
             fputcsv($handle, ['--- COMPRAS ---'], ';');
             fputcsv($handle, ['Estado', 'Compras', 'Total'], ';');
-            $compras = Compra::whereBetween('fecha', [$desde, $hasta])
+            $compras = Compra::sinFiltroDeEmpresa()->whereBetween('fecha', [$desde, $hasta])
                 ->selectRaw('estado, count(*) as cantidad, sum(total) as total_importe')
                 ->groupBy('estado')->get();
             foreach ($compras as $row) {
@@ -91,7 +93,7 @@ class ReporteEconomico extends Component
             fputcsv($handle, [], ';');
             fputcsv($handle, ['--- TRANSACCIONES ---'], ';');
             fputcsv($handle, ['Tipo', 'Categoría', 'Importe'], ';');
-            $transacciones = Transaccion::whereBetween('fecha', [$desde, $hasta])
+            $transacciones = Transaccion::sinFiltroDeEmpresa()->whereBetween('fecha', [$desde, $hasta])
                 ->selectRaw('tipo, categoria, sum(importe) as total')
                 ->groupBy('tipo', 'categoria')
                 ->orderBy('tipo')->orderBy('total', 'desc')->get();
@@ -110,7 +112,7 @@ class ReporteEconomico extends Component
         $estId = $this->filtroEstablecimiento ?: null;
 
         // === VENTAS GRANOS ===
-        $ventasGranosPorCereal = VentaGrano::whereBetween('fecha', [$desde, $hasta])
+        $ventasGranosPorCereal = VentaGrano::sinFiltroDeEmpresa()->whereBetween('fecha', [$desde, $hasta])
             ->when($estId, fn($q) => $q->where('id_establecimiento', $estId))
             ->whereNotIn('estado', ['cancelada'])
             ->selectRaw('cereal, count(*) as operaciones, sum(cantidad_tn) as total_tn, sum(importe_total) as total_importe')
@@ -121,7 +123,7 @@ class ReporteEconomico extends Component
         $totalVentasGranos = $ventasGranosPorCereal->sum('total_importe');
 
         // === VENTAS HACIENDA ===
-        $ventasHaciendaPorCategoria = VentaHacienda::whereBetween('fecha', [$desde, $hasta])
+        $ventasHaciendaPorCategoria = VentaHacienda::sinFiltroDeEmpresa()->whereBetween('fecha', [$desde, $hasta])
             ->when($estId, fn($q) => $q->where('id_establecimiento', $estId))
             ->whereNotIn('estado', ['cancelada'])
             ->selectRaw('categoria, count(*) as operaciones, sum(cantidad_cabezas) as total_cabezas, sum(importe_total) as total_importe')
@@ -132,7 +134,7 @@ class ReporteEconomico extends Component
         $totalVentasHacienda = $ventasHaciendaPorCategoria->sum('total_importe');
 
         // === COMPRAS ===
-        $comprasPorEstado = Compra::whereBetween('fecha', [$desde, $hasta])
+        $comprasPorEstado = Compra::sinFiltroDeEmpresa()->whereBetween('fecha', [$desde, $hasta])
             ->when($estId, fn($q) => $q->where('id_establecimiento', $estId))
             ->selectRaw('estado, count(*) as cantidad, sum(total) as total_importe, sum(iva_importe) as total_iva')
             ->groupBy('estado')
@@ -141,15 +143,15 @@ class ReporteEconomico extends Component
         $totalCompras = $comprasPorEstado->whereNotIn('estado', ['cancelada'])->sum('total_importe');
 
         // === TRANSACCIONES ===
-        $totalIngresos = Transaccion::whereBetween('fecha', [$desde, $hasta])
+        $totalIngresos = Transaccion::sinFiltroDeEmpresa()->whereBetween('fecha', [$desde, $hasta])
             ->when($estId, fn($q) => $q->where('id_establecimiento', $estId))
             ->where('tipo', 'ingreso')->sum('importe');
 
-        $totalEgresos = Transaccion::whereBetween('fecha', [$desde, $hasta])
+        $totalEgresos = Transaccion::sinFiltroDeEmpresa()->whereBetween('fecha', [$desde, $hasta])
             ->when($estId, fn($q) => $q->where('id_establecimiento', $estId))
             ->where('tipo', 'egreso')->sum('importe');
 
-        $ingresosPorCategoria = Transaccion::whereBetween('fecha', [$desde, $hasta])
+        $ingresosPorCategoria = Transaccion::sinFiltroDeEmpresa()->whereBetween('fecha', [$desde, $hasta])
             ->when($estId, fn($q) => $q->where('id_establecimiento', $estId))
             ->where('tipo', 'ingreso')
             ->selectRaw('categoria, sum(importe) as total')
@@ -157,7 +159,7 @@ class ReporteEconomico extends Component
             ->orderBy('total', 'desc')
             ->get();
 
-        $egresosPorCategoria = Transaccion::whereBetween('fecha', [$desde, $hasta])
+        $egresosPorCategoria = Transaccion::sinFiltroDeEmpresa()->whereBetween('fecha', [$desde, $hasta])
             ->when($estId, fn($q) => $q->where('id_establecimiento', $estId))
             ->where('tipo', 'egreso')
             ->selectRaw('categoria, sum(importe) as total')
@@ -166,7 +168,7 @@ class ReporteEconomico extends Component
             ->get();
 
         // === CUENTAS ===
-        $cuentas = Cuenta::activas()
+        $cuentas = Cuenta::sinFiltroDeEmpresa()->activas()
             ->withSum(['transacciones as total_ingresos' => fn($q) => $q->where('tipo', 'ingreso')], 'importe')
             ->withSum(['transacciones as total_egresos' => fn($q) => $q->where('tipo', 'egreso')], 'importe')
             ->get()
@@ -180,12 +182,42 @@ class ReporteEconomico extends Component
         $saldoCuentas = $cuentas->sum('saldo_actual');
 
         // === JORNALES ===
-        $jornalesPendientes = Jornal::whereBetween('fecha', [$desde, $hasta])
+        $jornalesPendientes = Jornal::sinFiltroDeEmpresa()->whereBetween('fecha', [$desde, $hasta])
             ->where('estado', 'pendiente')->sum('importe');
-        $jornalesLiquidados = Jornal::whereBetween('fecha', [$desde, $hasta])
+        $jornalesLiquidados = Jornal::sinFiltroDeEmpresa()->whereBetween('fecha', [$desde, $hasta])
             ->where('estado', 'liquidado')->sum('importe');
 
-        $establecimientos = Establecimiento::orderBy('nombre')->get();
+        $empresas = Empresa::orderBy('razon_social')->get();
+        $resumenEmpresas = $empresas->map(function (Empresa $empresa) use ($desde, $hasta, $estId) {
+            $aplicarFiltros = fn ($query) => $query
+                ->where('id_empresa', $empresa->id)
+                ->whereBetween('fecha', [$desde, $hasta])
+                ->when($estId, fn ($q) => $q->where('id_establecimiento', $estId));
+
+            $ventasGranos = (float) $aplicarFiltros(VentaGrano::sinFiltroDeEmpresa())
+                ->whereNotIn('estado', ['cancelada'])->sum('importe_total');
+            $ventasHacienda = (float) $aplicarFiltros(VentaHacienda::sinFiltroDeEmpresa())
+                ->whereNotIn('estado', ['cancelada'])->sum('importe_total');
+            $compras = (float) $aplicarFiltros(Compra::sinFiltroDeEmpresa())
+                ->whereNotIn('estado', ['cancelada'])->sum('total');
+            $ingresos = (float) $aplicarFiltros(Transaccion::sinFiltroDeEmpresa())
+                ->where('tipo', 'ingreso')->sum('importe');
+            $egresos = (float) $aplicarFiltros(Transaccion::sinFiltroDeEmpresa())
+                ->where('tipo', 'egreso')->sum('importe');
+
+            return [
+                'empresa' => $empresa,
+                'ventas_granos' => $ventasGranos,
+                'ventas_hacienda' => $ventasHacienda,
+                'compras' => $compras,
+                'resultado_economico' => $ventasGranos + $ventasHacienda - $compras,
+                'ingresos' => $ingresos,
+                'egresos' => $egresos,
+                'flujo_neto' => $ingresos - $egresos,
+            ];
+        });
+
+        $establecimientos = Establecimiento::sinFiltroDeEmpresa()->orderBy('nombre')->get();
 
         return view('livewire.reportes.reporte-economico', compact(
             'ventasGranosPorCereal', 'totalVentasGranos',
@@ -195,7 +227,7 @@ class ReporteEconomico extends Component
             'ingresosPorCategoria', 'egresosPorCategoria',
             'cuentas', 'saldoCuentas',
             'jornalesPendientes', 'jornalesLiquidados',
-            'establecimientos',
+            'establecimientos', 'empresas', 'resumenEmpresas',
             'desde', 'hasta',
         ));
     }
