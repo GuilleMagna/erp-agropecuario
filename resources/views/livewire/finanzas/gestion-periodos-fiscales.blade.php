@@ -55,6 +55,7 @@
                         <th>Estado</th>
                         <th class="text-end">IVA Crédito</th>
                         <th class="text-end">IVA Débito</th>
+                        <th class="text-end">IVA retenido</th>
                         <th class="text-end">Saldo IVA</th>
                         <th class="text-center">Reintegros</th>
                         <th class="pe-4 text-end">Acciones</th>
@@ -69,7 +70,7 @@
                             'presentado' => 'bg-info-subtle text-info-emphasis',
                         ][$pf->estado] ?? 'bg-secondary-subtle text-secondary';
 
-                        $iva     = $ivaData[$pf->id] ?? ['credito' => 0, 'debito' => 0, 'saldo' => 0];
+                        $iva     = $ivaData[$pf->id] ?? ['credito' => 0, 'debito' => 0, 'retenido' => 0, 'saldo' => 0];
                         $saldo   = $iva['saldo'];
                         $saldoClass = $saldo > 0 ? 'text-danger fw-bold' : ($saldo < 0 ? 'text-success fw-bold' : 'text-muted');
                         $saldoLabel = $saldo > 0 ? 'A pagar' : ($saldo < 0 ? 'A favor' : 'Neutro');
@@ -96,6 +97,9 @@
                         </td>
                         <td class="text-end">
                             <span class="text-muted">$</span> {{ number_format($iva['debito'], 2, ',', '.') }}
+                        </td>
+                        <td class="text-end">
+                            <span class="text-muted">$</span> {{ number_format($iva['retenido'], 2, ',', '.') }}
                         </td>
                         <td class="text-end">
                             <span class="{{ $saldoClass }}">

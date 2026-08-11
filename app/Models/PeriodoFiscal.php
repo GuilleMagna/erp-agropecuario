@@ -124,10 +124,25 @@ class PeriodoFiscal extends Model
         return (float) $query->sum('ret_iva');
     }
     /**
-     * Saldo IVA: positivo = a pagar, negativo = a favor del contribuyente.
+     * Suma las devoluciones de IVA acreditadas en el período.
+     */
+    public function ivaDevolucion(?string $idEmpresa = null): float
+    {
+        $query = ReintegroIva::where('periodo', $this->periodo)
+            ->where('estado', 'acreditado');
+
+        if ($idEmpresa) {
+            $query = $query->sinFiltroDeEmpresa()->where('id_empresa', $idEmpresa);
+        }
+
+        return (float) $query->sum('importe');
+    }
+    /**
+     * Saldo IVA luego de retenciones: positivo = a pagar, negativo = a favor.
+     * Las devoluciones acreditadas se suman como importe utilizable del período.
      */
     public function saldoIva(?string $idEmpresa = null): float
     {
-        return $this->ivaDebito($idEmpresa) - $this->ivaCredito($idEmpresa);
+        return $this->ivaDebito($idEmpresa) - $this->ivaCredito($idEmpresa) - $this->ivaRetenido($idEmpresa) + $this->ivaDevolucion($idEmpresa);
     }
 }

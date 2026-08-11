@@ -89,7 +89,7 @@
             'debito'     => ['titulo' => 'IVA Débito fiscal (ventas, estimado 10,5%)', 'icono' => 'bi-bag', 'color' => 'success'],
             'retenido'   => ['titulo' => 'IVA retenido (ventas de granos)', 'icono' => 'bi-shield-check', 'color' => 'secondary'],
             'devolucion' => ['titulo' => 'Devolución de IVA (reintegros acreditados)', 'icono' => 'bi-arrow-return-left', 'color' => 'primary'],
-            'saldo'      => ['titulo' => 'Saldo de IVA (débito − crédito + devolución)', 'icono' => 'bi-calculator', 'color' => 'warning'],
+            'saldo'      => ['titulo' => 'Saldo de IVA (débito − crédito − retenciones + devolución)', 'icono' => 'bi-calculator', 'color' => 'warning'],
         ];
     @endphp
 
@@ -226,7 +226,7 @@
 
     <div class="text-muted small">
         <i class="bi bi-info-circle me-1"></i>
-        El IVA débito es una estimación (10,5% sobre el neto de venta de granos y hacienda del período); no descuenta el IVA de comisiones/deducciones del corredor.
+        El saldo se calcula como IVA débito − IVA crédito − IVA retenido + devolución acreditada. El débito es una estimación (10,5% sobre ventas).
     </div>
 
 </div>

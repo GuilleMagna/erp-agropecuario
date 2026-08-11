@@ -184,8 +184,9 @@ class GestionPeriodosFiscales extends Component
         foreach ($periodos as $pf) {
             $credito = $pf->ivaCredito();
             $debito  = $pf->ivaDebito();
+            $retenido = $pf->ivaRetenido();
             $saldo   = $pf->saldoIva();
-            $ivaData[$pf->id] = compact('credito', 'debito', 'saldo');
+            $ivaData[$pf->id] = compact('credito', 'debito', 'retenido', 'saldo');
         }
 
         return view('livewire.finanzas.gestion-periodos-fiscales', [
