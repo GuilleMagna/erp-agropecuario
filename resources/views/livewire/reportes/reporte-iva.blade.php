@@ -26,6 +26,19 @@
                         @endforeach
                     </select>
                 </div>
+                <div class="col-md-auto ms-md-auto">
+                    <label class="form-label small fw-semibold text-muted mb-1 d-block">Agrupar tablas por</label>
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Agrupación del reporte">
+                        <button type="button" wire:click="$set('agrupacion', 'empresa')"
+                                class="btn {{ $agrupacion === 'empresa' ? 'btn-primary' : 'btn-outline-primary' }}">
+                            <i class="bi bi-building me-1"></i>Empresa
+                        </button>
+                        <button type="button" wire:click="$set('agrupacion', 'tipo_iva')"
+                                class="btn {{ $agrupacion === 'tipo_iva' ? 'btn-primary' : 'btn-outline-primary' }}">
+                            <i class="bi bi-percent me-1"></i>Tipo de IVA
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -74,11 +87,70 @@
         $bloques = [
             'credito'    => ['titulo' => 'IVA Crédito fiscal (compras)', 'icono' => 'bi-receipt', 'color' => 'danger'],
             'debito'     => ['titulo' => 'IVA Débito fiscal (ventas, estimado 10,5%)', 'icono' => 'bi-bag', 'color' => 'success'],
+            'retenido'   => ['titulo' => 'IVA retenido (ventas de granos)', 'icono' => 'bi-shield-check', 'color' => 'secondary'],
             'devolucion' => ['titulo' => 'Devolución de IVA (reintegros acreditados)', 'icono' => 'bi-arrow-return-left', 'color' => 'primary'],
             'saldo'      => ['titulo' => 'Saldo de IVA (débito − crédito + devolución)', 'icono' => 'bi-calculator', 'color' => 'warning'],
         ];
     @endphp
 
+    @if ($agrupacion === 'empresa')
+        @foreach ($empresas as $empresa)
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom fw-semibold">
+                <i class="bi bi-building me-2 text-primary"></i>{{ $empresa->razon_social }}
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">Mes</th>
+                            <th class="text-end">IVA Crédito</th>
+                            <th class="text-end">IVA Débito</th>
+                            <th class="text-end">IVA retenido</th>
+                            <th class="text-end">Devolución</th>
+                            <th class="text-end pe-3">Saldo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($meses as $datosMes)
+                            @php $valores = $datosMes['empresas'][$empresa->id]; @endphp
+                            <tr>
+                                <td class="ps-3">{{ $datosMes['nombre'] }}</td>
+                                <td class="text-end font-monospace small">
+                                    ${{ number_format($valores['credito'], 2, ',', '.') }}
+                                    <a href="{{ route('compras.index', ['filtroFechaDesde' => $datosMes['desde'], 'filtroFechaHasta' => $datosMes['hasta'], 'empresa' => $empresa->id]) }}" target="_blank" class="text-muted ms-1" title="Ver comprobantes de compra del período"><i class="bi bi-box-arrow-up-right"></i></a>
+                                </td>
+                                <td class="text-end font-monospace small">
+                                    ${{ number_format($valores['debito'], 2, ',', '.') }}
+                                    <a href="{{ route('ventas.granos.index', ['filtroFechaDesde' => $datosMes['desde'], 'filtroFechaHasta' => $datosMes['hasta'], 'empresa' => $empresa->id]) }}" target="_blank" class="text-muted ms-1" title="Ver ventas de granos del período"><i class="bi bi-basket"></i></a>
+                                    <a href="{{ route('ventas.hacienda.index', ['filtroFechaDesde' => $datosMes['desde'], 'filtroFechaHasta' => $datosMes['hasta'], 'empresa' => $empresa->id]) }}" target="_blank" class="text-muted ms-1" title="Ver ventas de hacienda del período"><i class="bi bi-cursor"></i></a>
+                                </td>
+                                <td class="text-end font-monospace small">
+                                    ${{ number_format($valores['retenido'], 2, ',', '.') }}
+                                    <a href="{{ route('ventas.granos.index', ['filtroFechaDesde' => $datosMes['desde'], 'filtroFechaHasta' => $datosMes['hasta'], 'empresa' => $empresa->id]) }}" target="_blank" class="text-muted ms-1" title="Ver retenciones en ventas de granos del período"><i class="bi bi-box-arrow-up-right"></i></a>
+                                </td>
+                                <td class="text-end font-monospace small">
+                                    ${{ number_format($valores['devolucion'], 2, ',', '.') }}
+                                    <a href="{{ route('finanzas.reintegros.index', ['filtroPeriodo' => $datosMes['periodo'], 'empresa' => $empresa->id]) }}" target="_blank" class="text-muted ms-1" title="Ver reintegros de IVA del período"><i class="bi bi-box-arrow-up-right"></i></a>
+                                </td>
+                                <td class="text-end pe-3 font-monospace fw-semibold small {{ $valores['saldo'] < 0 ? 'text-info' : '' }}">${{ number_format($valores['saldo'], 2, ',', '.') }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot class="table-light fw-bold">
+                        <tr>
+                            <td class="ps-3">Total {{ $anio }}</td>
+                            @foreach (['credito', 'debito', 'retenido', 'devolucion', 'saldo'] as $clave)
+                                @php $totalEmpresa = collect($meses)->sum(fn ($m) => $m['empresas'][$empresa->id][$clave]); @endphp
+                                <td class="text-end {{ $clave === 'saldo' ? 'pe-3' : '' }} font-monospace {{ $clave === 'saldo' && $totalEmpresa < 0 ? 'text-info' : '' }}">${{ number_format($totalEmpresa, 2, ',', '.') }}</td>
+                            @endforeach
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+        @endforeach
+    @else
     @foreach ($bloques as $clave => $info)
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-header bg-white border-bottom fw-semibold">
@@ -117,6 +189,11 @@
                                        target="_blank" class="text-muted ms-1" title="Ver ventas de hacienda del período">
                                         <i class="bi bi-cursor"></i>
                                     </a>
+                                @elseif ($clave === 'retenido')
+                                    <a href="{{ route('ventas.granos.index', ['filtroFechaDesde' => $datosMes['desde'], 'filtroFechaHasta' => $datosMes['hasta'], 'empresa' => $empresa->id]) }}"
+                                       target="_blank" class="text-muted ms-1" title="Ver retenciones en ventas de granos del período">
+                                        <i class="bi bi-box-arrow-up-right"></i>
+                                    </a>
                                 @elseif ($clave === 'devolucion')
                                     <a href="{{ route('finanzas.reintegros.index', ['filtroPeriodo' => $datosMes['periodo'], 'empresa' => $empresa->id]) }}"
                                        target="_blank" class="text-muted ms-1" title="Ver reintegros de IVA del período">
@@ -145,6 +222,7 @@
         </div>
     </div>
     @endforeach
+    @endif
 
     <div class="text-muted small">
         <i class="bi bi-info-circle me-1"></i>

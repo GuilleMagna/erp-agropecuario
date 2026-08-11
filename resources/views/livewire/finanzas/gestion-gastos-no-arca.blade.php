@@ -1,4 +1,12 @@
 <div>
+    <style>
+        .fila-importe-pendiente > * {
+            --bs-table-bg: #fff1f2;
+            --bs-table-hover-bg: #ffe8ea;
+            background-color: var(--bs-table-bg);
+            transition: background-color .2s ease;
+        }
+    </style>
     @if (session('success'))
         <div class="alert alert-success alert-dismissible fade show mb-3 py-2">
             <i class="bi bi-check-circle me-1"></i>{{ session('success') }}
@@ -118,7 +126,7 @@
                             @endif
                             @php $totalCategoria += $pagoImporte; @endphp
 
-                            <tr>
+                            <tr @class(['fila-importe-pendiente' => trim((string) $imp) === ''])>
                                 <td class="ps-4">{{ $gasto->nombre }}</td>
                                 <td></td>
                                 <td>

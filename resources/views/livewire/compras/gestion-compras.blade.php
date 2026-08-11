@@ -52,6 +52,7 @@
                 <div class="col-md-2">
                     <select class="form-select form-select-sm" wire:model.live="filtroActividad">
                         <option value="">Todas las actividades</option>
+                        <option value="sin_imputar">Sin imputar</option>
                         @foreach ($actividades as $k => $v)
                             <option value="{{ $k }}">{{ $v }}</option>
                         @endforeach
