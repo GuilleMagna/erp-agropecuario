@@ -85,6 +85,7 @@ class ImportarVentasExcel extends Command
         $aliasEmpresa = [];
 
         $creadasGranos = 0;
+        $actualizadasGranos = 0;
         $creadasHacienda = 0;
         $omitidas = 0;
         $yaExistentes = 0;
@@ -118,6 +119,18 @@ class ImportarVentasExcel extends Command
             $comprador = trim((string) ($row[2] ?? '')) ?: null;
             $cantidadKg = (float) ($row[4] ?? 0);
             $precioKg = (float) ($row[6] ?? 0);
+            $datosLiquidacion = [
+                'cantidad_kg' => $cantidadKg,
+                'factor' => (float) ($row[5] ?? 100),
+                'precio_kg' => $precioKg,
+                'flete_kg' => (float) ($row[7] ?? 0),
+                'deducciones' => (float) ($row[8] ?? 0),
+                'iva_deducciones' => (float) ($row[9] ?? 0),
+                'bonificacion' => (float) ($row[10] ?? 0),
+                'ret_ganancias' => (float) ($row[11] ?? 0),
+                'ret_iva' => (float) ($row[12] ?? 0),
+                'iva_rg4310' => (float) ($row[13] ?? 0),
+            ];
 
             // Columna P (Subtotal, neto sin IVA/retenciones) suele ser una fórmula con
             // referencias estructuradas de tabla que PhpSpreadsheet no puede recalcular: se
@@ -143,14 +156,21 @@ class ImportarVentasExcel extends Command
                 // combinación empresa+fecha+cereal+cantidad, y el importe se compara con
                 // tolerancia porque el valor cacheado de la fórmula de Excel puede variar unos
                 // pesos entre una exportación y otra para la misma operación real.
-                $yaExiste = VentaGrano::where('id_empresa', $empresa->id)
+                $ventaExistente = VentaGrano::where('id_empresa', $empresa->id)
                     ->where('fecha', $fecha)
                     ->where('cereal', self::GRANOS[$producto])
                     ->where('cantidad_tn', round($cantidadKg / 1000, 3))
                     ->get()
-                    ->contains(fn ($v) => abs($v->importe_total - round($subtotal, 2)) < 100);
+                    ->first(fn ($v) => abs($v->importe_total - round($subtotal, 2)) < 100);
 
-                if ($yaExiste) {
+                if ($ventaExistente) {
+                    $ventaExistente->fill($datosLiquidacion);
+                    if ($ventaExistente->isDirty()) {
+                        if (! $dryRun) {
+                            $ventaExistente->save();
+                        }
+                        $actualizadasGranos++;
+                    }
                     $yaExistentes++;
 
                     continue;
@@ -160,7 +180,7 @@ class ImportarVentasExcel extends Command
                     // id_empresa no es mass-assignable (lo completa el trait solo cuando hay
                     // un usuario autenticado, algo que no aplica en un comando de consola),
                     // así que se asigna directo sobre la instancia antes de guardar.
-                    $venta = new VentaGrano([
+                    $venta = new VentaGrano(array_merge([
                         'comprador' => $comprador,
                         'cereal' => self::GRANOS[$producto],
                         'tipo_venta' => 'disponible',
@@ -171,7 +191,7 @@ class ImportarVentasExcel extends Command
                         'importe_total' => round($subtotal, 2),
                         'estado' => 'confirmada',
                         'observaciones' => 'Importado desde CONTROL MENSUAL 2026.xlsx (hoja VENTAS, fila '.($i + 1).')',
-                    ]);
+                    ], $datosLiquidacion));
                     $venta->id_empresa = $empresa->id;
                     $venta->save();
                 }
@@ -224,6 +244,7 @@ class ImportarVentasExcel extends Command
         }
 
         $this->info(($dryRun ? '[DRY RUN] ' : '')."Ventas de granos creadas: {$creadasGranos}");
+        $this->info(($dryRun ? '[DRY RUN] ' : '')."Ventas de granos actualizadas: {$actualizadasGranos}");
         $this->info(($dryRun ? '[DRY RUN] ' : '')."Ventas de hacienda creadas: {$creadasHacienda}");
         $this->info("Filas ya existentes (omitidas por duplicado): {$yaExistentes}");
         $this->info("Filas omitidas: {$omitidas}");
