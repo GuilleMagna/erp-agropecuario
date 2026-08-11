@@ -41,4 +41,8 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
 
+    'arca_sync' => [
+        'token' => env('ARCA_SYNC_TOKEN', ''),
+    ],
+
 ];

@@ -1,0 +1,56 @@
+name: Sincronizar comprobantes ARCA
+
+on:
+  schedule:
+    - cron: "0 10 * * *"
+  workflow_dispatch:
+    inputs:
+      desde:
+        description: Fecha inicial (YYYY-MM-DD); vacío usa inicio del mes
+        required: false
+        type: string
+      hasta:
+        description: Fecha final (YYYY-MM-DD); vacío usa hoy
+        required: false
+        type: string
+
+concurrency:
+  group: arca-sync-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sincronizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    env:
+      ARCA_EMPRESAS_JSON: ${{ secrets.ARCA_EMPRESAS_JSON }}
+      ERP_ARCA_SYNC_URL: ${{ secrets.ERP_ARCA_SYNC_URL }}
+      ERP_ARCA_SYNC_TOKEN: ${{ secrets.ERP_ARCA_SYNC_TOKEN }}
+      ARCA_DESDE: ${{ inputs.desde }}
+      ARCA_HASTA: ${{ inputs.hasta }}
+
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: scripts/package-lock.json
+
+      - name: Instalar dependencias
+        working-directory: scripts
+        run: npm ci
+
+      - name: Instalar Chromium
+        working-directory: scripts
+        run: npx playwright install --with-deps chromium
+
+      - name: Sincronizar con el ERP
+        run: node scripts/arca_sync_github.js
