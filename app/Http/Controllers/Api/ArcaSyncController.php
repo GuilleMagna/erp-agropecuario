@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ArcaSyncRun;
 use App\Models\Empresa;
 use App\Services\MrbotService;
 use Illuminate\Http\JsonResponse;
@@ -22,6 +23,7 @@ class ArcaSyncController extends Controller
 
         $datos = $request->validate([
             'empresa_cuit' => ['required', 'string', 'max:20'],
+            'run_id' => ['nullable', 'string', 'max:100'],
             'desde' => ['nullable', 'date_format:Y-m-d'],
             'hasta' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:desde'],
             'comprobantes' => ['present', 'array', 'max:10000'],
@@ -40,6 +42,14 @@ class ArcaSyncController extends Controller
 
         $resultado = $importador->importarComprobantesJson($datos['comprobantes'], $empresa->id);
 
+        if (! empty($datos['run_id'])) {
+            ArcaSyncRun::registrarResultado(
+                $datos['run_id'],
+                $datos['empresa_cuit'],
+                count($datos['comprobantes']),
+                $resultado,
+            );
+        }
         Log::info('Sincronización ARCA externa recibida', [
             'empresa_id' => $empresa->id,
             'desde' => $datos['desde'] ?? null,
