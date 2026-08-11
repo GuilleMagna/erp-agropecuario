@@ -110,6 +110,20 @@ class PeriodoFiscal extends Model
     }
 
     /**
+     * Suma el IVA retenido en ventas de granos confirmadas/cobradas del período.
+     */
+    public function ivaRetenido(?string $idEmpresa = null): float
+    {
+        $query = VentaGrano::where('fecha', 'like', $this->periodo . '%')
+            ->whereNotIn('estado', ['cancelada', 'borrador']);
+
+        if ($idEmpresa) {
+            $query = $query->sinFiltroDeEmpresa()->where('id_empresa', $idEmpresa);
+        }
+
+        return (float) $query->sum('ret_iva');
+    }
+    /**
      * Saldo IVA: positivo = a pagar, negativo = a favor del contribuyente.
      */
     public function saldoIva(?string $idEmpresa = null): float

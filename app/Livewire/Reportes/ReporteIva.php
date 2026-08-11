@@ -12,6 +12,7 @@ use Livewire\Component;
 class ReporteIva extends Component
 {
     public int $filtroAnio;
+    public string $agrupacion = 'empresa';
 
     public function mount(): void
     {
@@ -27,18 +28,19 @@ class ReporteIva extends Component
         $empresas = Empresa::orderBy('razon_social')->get();
 
         $meses = [];
-        $totalesAnio = ['credito' => 0.0, 'debito' => 0.0, 'devolucion' => 0.0, 'saldo' => 0.0];
+        $totalesAnio = ['credito' => 0.0, 'debito' => 0.0, 'retenido' => 0.0, 'devolucion' => 0.0, 'saldo' => 0.0];
 
         for ($mes = 1; $mes <= 12; $mes++) {
             $periodo = sprintf('%04d-%02d', $anio, $mes);
             $periodoFiscal = new PeriodoFiscal(['periodo' => $periodo]);
 
             $filaEmpresas = [];
-            $totalMes = ['credito' => 0.0, 'debito' => 0.0, 'devolucion' => 0.0, 'saldo' => 0.0];
+            $totalMes = ['credito' => 0.0, 'debito' => 0.0, 'retenido' => 0.0, 'devolucion' => 0.0, 'saldo' => 0.0];
 
             foreach ($empresas as $empresa) {
                 $credito = $periodoFiscal->ivaCredito($empresa->id);
                 $debito = $periodoFiscal->ivaDebito($empresa->id);
+                $retenido = $periodoFiscal->ivaRetenido($empresa->id);
                 $devolucion = (float) ReintegroIva::sinFiltroDeEmpresa()
                     ->where('id_empresa', $empresa->id)
                     ->where('periodo', $periodo)
@@ -46,10 +48,11 @@ class ReporteIva extends Component
                     ->sum('importe');
                 $saldo = $debito - $credito + $devolucion;
 
-                $filaEmpresas[$empresa->id] = compact('credito', 'debito', 'devolucion', 'saldo');
+                $filaEmpresas[$empresa->id] = compact('credito', 'debito', 'retenido', 'devolucion', 'saldo');
 
                 $totalMes['credito'] += $credito;
                 $totalMes['debito'] += $debito;
+                $totalMes['retenido'] += $retenido;
                 $totalMes['devolucion'] += $devolucion;
                 $totalMes['saldo'] += $saldo;
             }
@@ -63,7 +66,7 @@ class ReporteIva extends Component
                 'total' => $totalMes,
             ];
 
-            foreach (['credito', 'debito', 'devolucion', 'saldo'] as $clave) {
+            foreach (['credito', 'debito', 'retenido', 'devolucion', 'saldo'] as $clave) {
                 $totalesAnio[$clave] += $totalMes[$clave];
             }
         }
@@ -82,6 +85,7 @@ class ReporteIva extends Component
         $secciones = [
             'credito'    => 'IVA CRÉDITO (compras, real)',
             'debito'     => 'IVA DÉBITO (ventas, estimado al 10,5%)',
+            'retenido'   => 'IVA RETENIDO (ventas de granos)',
             'devolucion' => 'DEVOLUCIÓN IVA (reintegros acreditados)',
             'saldo'      => 'SALDO IVA (débito - crédito + devolución)',
         ];

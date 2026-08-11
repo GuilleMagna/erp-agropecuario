@@ -27,8 +27,10 @@ class GestionCompras extends Component
 
     public string $filtroEstado = '';
 
+    #[Url]
     public string $filtroActividad = '';
 
+    #[Url]
     public string $filtroEstablecimiento = '';
 
     #[Url]
@@ -598,7 +600,8 @@ class GestionCompras extends Component
             ))
             ->when($this->filtroProveedor, fn ($q) => $q->where('id_proveedor', $this->filtroProveedor))
             ->when($this->filtroEstado, fn ($q) => $q->where('estado', $this->filtroEstado))
-            ->when($this->filtroActividad, fn ($q) => $q->where('actividad', $this->filtroActividad))
+            ->when($this->filtroActividad === 'sin_imputar', fn ($q) => $q->whereNull('actividad'))
+            ->when($this->filtroActividad && $this->filtroActividad !== 'sin_imputar', fn ($q) => $q->where('actividad', $this->filtroActividad))
             ->when($this->filtroEstablecimiento, fn ($q) => $q->where('id_establecimiento', $this->filtroEstablecimiento))
             ->when($this->filtroFechaDesde, fn ($q) => $q->where('fecha', '>=', $this->filtroFechaDesde))
             ->when($this->filtroFechaHasta, fn ($q) => $q->where('fecha', '<=', $this->filtroFechaHasta))

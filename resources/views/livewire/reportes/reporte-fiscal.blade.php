@@ -315,6 +315,15 @@
         <div class="alert alert-warning d-flex align-items-center gap-2 py-2 mb-4">
             <i class="bi bi-exclamation-triangle-fill"></i>
             <span>Hay <strong>${{ number_format((float)$totalSinImputar, 2, ',', '.') }}</strong> en compras sin imputar a ninguna actividad.</span>
+            <a href="{{ route('compras.index', [
+                    'filtroActividad' => 'sin_imputar',
+                    'filtroFechaDesde' => $desde,
+                    'filtroFechaHasta' => $hasta,
+                    'filtroEstablecimiento' => $filtroEstablecimiento ?: null,
+                ]) }}"
+               target="_blank" class="btn btn-warning btn-sm ms-auto text-nowrap">
+                <i class="bi bi-box-arrow-up-right me-1"></i>Ver e imputar
+            </a>
         </div>
         @endif
 
@@ -357,7 +366,21 @@
                                     <td class="ps-3">
                                         <span class="badge rounded-pill {{ $badgeCls }}">{{ $actLabel }}</span>
                                     </td>
-                                    <td class="text-center">{{ $act->cantidad }}</td>
+                                    <td class="text-center">
+                                        @if ($actKey === 'sin_imputar')
+                                            <a href="{{ route('compras.index', [
+                                                    'filtroActividad' => 'sin_imputar',
+                                                    'filtroFechaDesde' => $desde,
+                                                    'filtroFechaHasta' => $hasta,
+                                                    'filtroEstablecimiento' => $filtroEstablecimiento ?: null,
+                                                ]) }}"
+                                               target="_blank" class="fw-semibold" title="Ver comprobantes sin imputar">
+                                                {{ $act->cantidad }} <i class="bi bi-box-arrow-up-right small"></i>
+                                            </a>
+                                        @else
+                                            {{ $act->cantidad }}
+                                        @endif
+                                    </td>
                                     <td class="text-end font-monospace text-muted">${{ number_format((float)$act->sum_subtotal, 2, ',', '.') }}</td>
                                     <td class="text-end font-monospace text-danger">${{ number_format((float)$act->sum_iva, 2, ',', '.') }}</td>
                                     <td class="text-end pe-3 fw-semibold">${{ number_format((float)$act->sum_total, 2, ',', '.') }}</td>
