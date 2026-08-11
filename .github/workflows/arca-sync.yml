@@ -54,3 +54,21 @@ jobs:
 
       - name: Sincronizar con el ERP
         run: node scripts/arca_sync_github.js
+
+      - name: Informar estado final al ERP
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          STATUS_URL=$(echo "$ERP_ARCA_SYNC_URL" | sed 's#/comprobantes$#/estado#')
+          PAYLOAD=$(jq -n \
+            --arg run_id "$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" \
+            --arg estado "$JOB_STATUS" \
+            --arg mensaje "GitHub Actions finalizó con estado: $JOB_STATUS" \
+            --arg run_url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            '{run_id:$run_id, estado:$estado, mensaje:$mensaje, run_url:$run_url}')
+          curl --fail-with-body --silent --show-error \
+            -X POST "$STATUS_URL" \
+            -H "Authorization: Bearer $ERP_ARCA_SYNC_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data "$PAYLOAD"

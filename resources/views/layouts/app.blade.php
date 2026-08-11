@@ -94,12 +94,12 @@
 @php
     $secProd     = request()->routeIs('campos.*','agricultura.*','ganaderia.*','feedlot.*');
     $secInsumos  = request()->routeIs('insumos.*');
-    $secCompras  = request()->routeIs('compras.*');
+    $secCompras  = request()->routeIs('compras.*') && ! request()->routeIs('compras.sincronizar-arca', 'compras.importar-arca');
     $secVentas   = request()->routeIs('ventas.*');
     $secFinanzas = request()->routeIs('finanzas.*');
     $secRrhh     = request()->routeIs('rrhh.*');
     $secReportes = request()->routeIs('reportes.*');
-    $secSistema  = request()->routeIs('admin.*','sistema.*');
+    $secSistema  = request()->routeIs('admin.*','sistema.*','compras.sincronizar-arca','compras.importar-arca');
 @endphp
 <nav class="sidebar">
 
@@ -264,16 +264,6 @@
                 <a href="{{ route('compras.index') }}"
                    class="nav-link {{ request()->routeIs('compras.index') ? 'active' : '' }}">
                     <i class="bi bi-receipt me-2"></i> Comprobantes
-                </a>
-                @endcan
-                @can('compras.arca.gestionar')
-                <a href="{{ route('compras.importar-arca') }}"
-                   class="nav-link {{ request()->routeIs('compras.importar-arca') ? 'active' : '' }}">
-                    <i class="bi bi-cloud-upload me-2"></i> Importar ARCA
-                </a>
-                <a href="{{ route('compras.sincronizar-arca') }}"
-                   class="nav-link {{ request()->routeIs('compras.sincronizar-arca') ? 'active' : '' }}">
-                    <i class="bi bi-cloud-arrow-down me-2"></i> Sincronizar ARCA
                 </a>
                 @endcan
             </div>
@@ -450,6 +440,12 @@
                    class="nav-link {{ request()->routeIs('sistema.perfil') ? 'active' : '' }}">
                     <i class="bi bi-person-circle me-2"></i> Mi perfil
                 </a>
+                @can('compras.arca.gestionar')
+                <a href="{{ route('compras.sincronizar-arca') }}"
+                   class="nav-link {{ request()->routeIs('compras.sincronizar-arca', 'compras.importar-arca') ? 'active' : '' }}">
+                    <i class="bi bi-cloud-arrow-down me-2"></i> Integración ARCA
+                </a>
+                @endcan
                 @can('admin.usuarios.ver')
                 <a href="{{ route('admin.usuarios.index') }}"
                    class="nav-link {{ request()->routeIs('admin.usuarios.*') ? 'active' : '' }}">

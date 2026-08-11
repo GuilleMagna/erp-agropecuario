@@ -4,10 +4,16 @@ const { spawn } = require('child_process');
 const path = require('path');
 
 const endpoint = process.env.ERP_ARCA_SYNC_URL || '';
+const statusEndpoint = endpoint.replace(/\/comprobantes\/?$/, '/estado');
 const token = process.env.ERP_ARCA_SYNC_TOKEN || '';
 const rawConfig = process.env.ARCA_EMPRESAS_JSON || '';
 const desde = process.env.ARCA_DESDE || inicioDelMes();
 const hasta = process.env.ARCA_HASTA || fechaIso(new Date());
+const githubRunId = process.env.GITHUB_RUN_ID || ('manual-' + Date.now());
+const runId = githubRunId + '-' + (process.env.GITHUB_RUN_ATTEMPT || '1');
+const runUrl = process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY
+    ? process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + githubRunId
+    : '';
 
 if (!endpoint || !token || !rawConfig) {
     fail('Faltan ERP_ARCA_SYNC_URL, ERP_ARCA_SYNC_TOKEN o ARCA_EMPRESAS_JSON.');
@@ -25,6 +31,8 @@ if (!Array.isArray(empresas) || empresas.length === 0) {
 }
 
 (async () => {
+    await reportarEstado('running', 'Sincronización iniciada.');
+
     for (const empresa of empresas) {
         validarEmpresa(empresa);
         const etiqueta = empresa.empresa_cuit || empresa.cuit_representado || empresa.cuit_login;
@@ -33,12 +41,14 @@ if (!Array.isArray(empresas) || empresas.length === 0) {
         const comprobantes = await descargar(empresa);
         const response = await fetch(endpoint, {
             method: 'POST',
-            headers: {
-                Authorization: 'Bearer ' + token,
-                'Content-Type': 'application/json',
-                Accept: 'application/json',
-            },
-            body: JSON.stringify({ empresa_cuit: etiqueta, desde, hasta, comprobantes }),
+            headers: cabeceras(),
+            body: JSON.stringify({
+                run_id: runId,
+                empresa_cuit: etiqueta,
+                desde,
+                hasta,
+                comprobantes,
+            }),
         });
 
         const body = await response.text();
@@ -48,7 +58,44 @@ if (!Array.isArray(empresas) || empresas.length === 0) {
 
         process.stderr.write('Resultado ERP: ' + body + '\n');
     }
-})().catch((error) => fail(error.message));
+
+    await reportarEstado('success', 'Sincronización finalizada correctamente.');
+})().catch(async (error) => {
+    try {
+        await reportarEstado('failure', error.message);
+    } catch (reportError) {
+        process.stderr.write('No se pudo informar el fallo al ERP: ' + reportError.message + '\n');
+    }
+    fail(error.message);
+});
+
+async function reportarEstado(estado, mensaje) {
+    const response = await fetch(statusEndpoint, {
+        method: 'POST',
+        headers: cabeceras(),
+        body: JSON.stringify({
+            run_id: runId,
+            estado,
+            mensaje,
+            run_url: runUrl || undefined,
+            desde,
+            hasta,
+            empresas_total: empresas.length,
+        }),
+    });
+
+    if (!response.ok) {
+        throw new Error('No se pudo registrar el estado en el ERP (HTTP ' + response.status + ').');
+    }
+}
+
+function cabeceras() {
+    return {
+        Authorization: 'Bearer ' + token,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+    };
+}
 
 function descargar(empresa) {
     const args = [
