@@ -179,24 +179,22 @@
                                                 <i class="bi bi-box-seam"></i>
                                             </button>
                                         @endif
-                                        <div class="btn-group ms-1">
-                                            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 dropdown-toggle"
-                                                    data-bs-toggle="dropdown" title="Cambiar estado">
-                                                <i class="bi bi-arrow-repeat"></i>
+                                        <select class="form-select form-select-sm d-inline-block ms-1 py-0"
+                                                style="width:auto; min-width:115px"
+                                                wire:change="cambiarEstado('{{ $compra->id }}', $event.target.value)"
+                                                title="Cambiar estado">
+                                            @foreach ($estados as $k => $v)
+                                                <option value="{{ $k }}" @selected($k === $compra->estado)>{{ $v }}</option>
+                                            @endforeach
+                                        </select>
+                                        @if (!$compra->stock_registrado)
+                                            <button class="btn btn-sm btn-outline-danger py-0 px-1 ms-1"
+                                                    wire:click="eliminar('{{ $compra->id }}')"
+                                                    wire:confirm="¿Eliminar definitivamente este comprobante?"
+                                                    title="Eliminar">
+                                                <i class="bi bi-trash"></i>
                                             </button>
-                                            <ul class="dropdown-menu dropdown-menu-end">
-                                                @foreach ($estados as $k => $v)
-                                                    @if ($k !== $compra->estado)
-                                                        <li>
-                                                            <button class="dropdown-item small"
-                                                                    wire:click="cambiarEstado('{{ $compra->id }}', '{{ $k }}')">
-                                                                {{ $v }}
-                                                            </button>
-                                                        </li>
-                                                    @endif
-                                                @endforeach
-                                            </ul>
-                                        </div>
+                                        @endif
                                     @endcan
                                 </td>
                             </tr>
@@ -227,6 +225,11 @@
                     <span class="badge bg-primary fs-6">{{ count($seleccionados) }}</span>
                     <span class="text-body-secondary small">comprobante(s) seleccionado(s)</span>
                     <div class="ms-auto d-flex gap-2">
+                        <button class="btn btn-outline-danger btn-sm"
+                                wire:click="eliminarSeleccionados"
+                                wire:confirm="¿Eliminar definitivamente todos los comprobantes seleccionados?">
+                            <i class="bi bi-trash me-1"></i> Eliminar
+                        </button>
                         <button class="btn btn-primary btn-sm" wire:click="abrirModalMasivo">
                             <i class="bi bi-pencil-square me-1"></i> Editar selección
                         </button>

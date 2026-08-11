@@ -394,8 +394,25 @@ class GestionCompras extends Component
     public function cambiarEstado(string $id, string $estado): void
     {
         Gate::authorize('compras.editar');
+        abort_unless(array_key_exists($estado, Compra::ESTADOS), 422);
         Compra::findOrFail($id)->update(['estado' => $estado]);
         session()->flash('success', 'Estado actualizado.');
+    }
+
+    public function eliminar(string $id): void
+    {
+        Gate::authorize('compras.editar');
+        $compra = Compra::findOrFail($id);
+
+        if ($compra->stock_registrado) {
+            session()->flash('error', 'No se puede eliminar un comprobante que ya fue registrado en stock.');
+
+            return;
+        }
+
+        $compra->delete();
+        $this->seleccionados = array_values(array_diff($this->seleccionados, [$id]));
+        session()->flash('success', 'Comprobante eliminado correctamente.');
     }
 
     public function registrarEnStock(string $id): void
@@ -515,6 +532,29 @@ class GestionCompras extends Component
         $this->seleccionados = [];
         $this->seleccionarTodos = false;
         $this->modalMasivoAbierto = false;
+    }
+
+    public function eliminarSeleccionados(): void
+    {
+        Gate::authorize('compras.editar');
+        if (empty($this->seleccionados)) {
+            return;
+        }
+
+        $compras = Compra::whereIn('id', $this->seleccionados)->get();
+
+        if ($compras->contains(fn (Compra $compra) => $compra->stock_registrado)) {
+            session()->flash('error', 'La selección contiene comprobantes registrados en stock. No se eliminó ninguno.');
+
+            return;
+        }
+
+        $count = $compras->count();
+        $compras->each->delete();
+        $this->seleccionados = [];
+        $this->seleccionarTodos = false;
+        $this->modalMasivoAbierto = false;
+        session()->flash('success', "{$count} comprobante(s) eliminado(s) correctamente.");
     }
 
     public function limpiarSeleccion(): void
