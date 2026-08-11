@@ -20,7 +20,7 @@ class ReporteIva extends Component
     }
 
     /**
-     * Arma la tabla mes a mes (débito, crédito, devolución, saldo) por empresa,
+     * Arma la tabla mes a mes (débito, crédito, retenciones, devolución y saldo) por empresa,
      * replicando la lógica de la hoja "SUMA POR MES" de la planilla de control.
      */
     private function calcularDatos(int $anio): array
@@ -46,7 +46,7 @@ class ReporteIva extends Component
                     ->where('periodo', $periodo)
                     ->where('estado', 'acreditado')
                     ->sum('importe');
-                $saldo = $debito - $credito + $devolucion;
+                $saldo = $debito - $credito - $retenido + $devolucion;
 
                 $filaEmpresas[$empresa->id] = compact('credito', 'debito', 'retenido', 'devolucion', 'saldo');
 
@@ -87,7 +87,7 @@ class ReporteIva extends Component
             'debito'     => 'IVA DÉBITO (ventas, estimado al 10,5%)',
             'retenido'   => 'IVA RETENIDO (ventas de granos)',
             'devolucion' => 'DEVOLUCIÓN IVA (reintegros acreditados)',
-            'saldo'      => 'SALDO IVA (débito - crédito + devolución)',
+            'saldo'      => 'SALDO IVA (débito - crédito - retenciones + devolución)',
         ];
 
         return response()->streamDownload(function () use ($empresas, $meses, $totalesAnio, $anio, $secciones) {
