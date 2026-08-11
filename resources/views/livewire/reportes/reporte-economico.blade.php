@@ -18,7 +18,7 @@
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body py-3">
             <div class="row g-3 align-items-end">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label small fw-semibold text-muted mb-1">Establecimiento</label>
                     <select class="form-select form-select-sm" wire:model.live="filtroEstablecimiento">
                         <option value="">Todos</option>
@@ -27,17 +27,73 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label small fw-semibold text-muted mb-1">Período desde</label>
                     <input type="date" class="form-control form-control-sm" wire:model.live="filtroFechaDesde">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label small fw-semibold text-muted mb-1">Período hasta</label>
                     <input type="date" class="form-control form-control-sm" wire:model.live="filtroFechaHasta">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold text-muted mb-1 d-block">Agrupar reporte por</label>
+                    <div class="btn-group btn-group-sm w-100" role="group">
+                        <button type="button" wire:click="$set('agrupacion', 'empresa')"
+                                class="btn {{ $agrupacion === 'empresa' ? 'btn-primary' : 'btn-outline-primary' }}">Empresa</button>
+                        <button type="button" wire:click="$set('agrupacion', 'consolidado')"
+                                class="btn {{ $agrupacion === 'consolidado' ? 'btn-primary' : 'btn-outline-primary' }}">Consolidado</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    @if ($agrupacion === 'empresa')
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom fw-semibold">
+                <i class="bi bi-building me-2 text-primary"></i>Comparativo por empresa
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">Empresa</th>
+                            <th class="text-end">Ventas granos</th>
+                            <th class="text-end">Ventas hacienda</th>
+                            <th class="text-end">Compras</th>
+                            <th class="text-end">Resultado económico</th>
+                            <th class="text-end">Ingresos</th>
+                            <th class="text-end">Egresos</th>
+                            <th class="text-end pe-3">Flujo neto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($resumenEmpresas as $fila)
+                            <tr>
+                                <td class="ps-3 fw-semibold">{{ $fila['empresa']->razon_social }}</td>
+                                <td class="text-end font-monospace">${{ number_format($fila['ventas_granos'], 2, ',', '.') }}</td>
+                                <td class="text-end font-monospace">${{ number_format($fila['ventas_hacienda'], 2, ',', '.') }}</td>
+                                <td class="text-end font-monospace text-danger">${{ number_format($fila['compras'], 2, ',', '.') }}</td>
+                                <td class="text-end font-monospace fw-semibold {{ $fila['resultado_economico'] >= 0 ? 'text-success' : 'text-danger' }}">${{ number_format($fila['resultado_economico'], 2, ',', '.') }}</td>
+                                <td class="text-end font-monospace text-success">${{ number_format($fila['ingresos'], 2, ',', '.') }}</td>
+                                <td class="text-end font-monospace text-danger">${{ number_format($fila['egresos'], 2, ',', '.') }}</td>
+                                <td class="text-end pe-3 font-monospace fw-bold {{ $fila['flujo_neto'] >= 0 ? 'text-success' : 'text-danger' }}">${{ number_format($fila['flujo_neto'], 2, ',', '.') }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot class="table-light fw-bold">
+                        <tr>
+                            <td class="ps-3">TOTAL</td>
+                            @foreach (['ventas_granos', 'ventas_hacienda', 'compras', 'resultado_economico', 'ingresos', 'egresos', 'flujo_neto'] as $clave)
+                                @php $total = $resumenEmpresas->sum($clave); @endphp
+                                <td class="text-end {{ $clave === 'flujo_neto' ? 'pe-3' : '' }} font-monospace {{ in_array($clave, ['resultado_economico', 'flujo_neto']) ? ($total >= 0 ? 'text-success' : 'text-danger') : '' }}">${{ number_format($total, 2, ',', '.') }}</td>
+                            @endforeach
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    @else
 
     {{-- Cards --}}
     <div class="row g-3 mb-4">
@@ -373,5 +429,6 @@
         </div>
 
     </div>{{-- end tab-content --}}
+    @endif
 
 </div>
