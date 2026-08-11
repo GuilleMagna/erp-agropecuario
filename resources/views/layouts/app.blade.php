@@ -254,16 +254,16 @@
                 <i class="bi bi-chevron-down chevron"></i>
             </button>
             <div class="collapse {{ $secCompras ? 'show' : '' }}" id="secCompras">
-                @can('compras.proveedores.gestionar')
-                <a href="{{ route('compras.proveedores.index') }}"
-                   class="nav-link {{ request()->routeIs('compras.proveedores.*') ? 'active' : '' }}">
-                    <i class="bi bi-building me-2"></i> Proveedores
-                </a>
-                @endcan
                 @can('compras.ver')
                 <a href="{{ route('compras.index') }}"
                    class="nav-link {{ request()->routeIs('compras.index') ? 'active' : '' }}">
                     <i class="bi bi-receipt me-2"></i> Comprobantes
+                </a>
+                @endcan
+                @can('compras.proveedores.gestionar')
+                <a href="{{ route('compras.proveedores.index') }}"
+                   class="nav-link {{ request()->routeIs('compras.proveedores.*') ? 'active' : '' }}">
+                    <i class="bi bi-building me-2"></i> Proveedores
                 </a>
                 @endcan
             </div>
