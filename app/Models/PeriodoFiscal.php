@@ -137,12 +137,22 @@ class PeriodoFiscal extends Model
 
         return (float) $query->sum('importe');
     }
+    public function saldoTecnicoIva(?string $idEmpresa = null): float
+    {
+        return $this->ivaDebito($idEmpresa) - $this->ivaCredito($idEmpresa);
+    }
     /**
      * Saldo IVA luego de retenciones: positivo = a pagar, negativo = a favor.
      * Las devoluciones acreditadas se suman como importe utilizable del período.
      */
     public function saldoIva(?string $idEmpresa = null): float
     {
-        return $this->ivaDebito($idEmpresa) - $this->ivaCredito($idEmpresa) - $this->ivaRetenido($idEmpresa) + $this->ivaDevolucion($idEmpresa);
+        $saldoTecnico = $this->saldoTecnicoIva($idEmpresa);
+        $retenido = $this->ivaRetenido($idEmpresa);
+        $devolucion = $this->ivaDevolucion($idEmpresa);
+
+        return $saldoTecnico >= 0
+            ? $saldoTecnico - $retenido + $devolucion
+            : $saldoTecnico + $retenido - $devolucion;
     }
 }
