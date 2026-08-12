@@ -43,6 +43,7 @@ class Compra extends Model
         'factura_c' => 'Factura C',
         'nota_credito' => 'Nota de crédito',
         'nota_debito' => 'Nota de débito',
+        'liquidacion' => 'Liquidación',
         'remito' => 'Remito',
         'recibo' => 'Recibo',
         'ticket' => 'Ticket',
