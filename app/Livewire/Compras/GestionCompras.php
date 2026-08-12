@@ -46,6 +46,15 @@ class GestionCompras extends Component
     #[Url]
     public string $filtroPresentacion = '';
 
+    /**
+     * Deja sólo los comprobantes que suman al crédito fiscal. Es lo que usan
+     * los links del reporte de IVA: sin esto, al abrir el crédito de un mes
+     * aparecían también las facturas B, C y tickets, que no aportan nada al
+     * número que se estaba mirando.
+     */
+    #[Url]
+    public bool $filtroConIva = false;
+
     public function mount(): void
     {
         $this->switchEmpresaDesdeQuery();
@@ -194,6 +203,36 @@ class GestionCompras extends Component
     {
         $this->resetPage();
         $this->seleccionados = [];
+    }
+
+    public function updatedFiltroConIva(): void
+    {
+        $this->resetPage();
+        $this->seleccionados = [];
+    }
+
+    /** Vuelve al listado completo. Los links del reporte de IVA llegan con
+     *  varios filtros puestos a la vez y conviene poder sacarlos de una. */
+    public function limpiarFiltros(): void
+    {
+        $this->reset([
+            'busqueda', 'filtroProveedor', 'filtroEstado', 'filtroActividad',
+            'filtroEstablecimiento', 'filtroFechaDesde', 'filtroFechaHasta',
+            'filtroTipo', 'filtroPresentacion', 'filtroConIva',
+        ]);
+        $this->resetPage();
+        $this->seleccionados = [];
+    }
+
+    /** Para mostrar el botón de limpiar sólo cuando hay algo que limpiar.
+     *  Es un método y no una propiedad computada a propósito: Livewire cachea
+     *  las computadas y el botón quedaría visible después de limpiar. */
+    public function hayFiltros(): bool
+    {
+        return $this->busqueda !== '' || $this->filtroProveedor !== '' || $this->filtroEstado !== ''
+            || $this->filtroActividad !== '' || $this->filtroEstablecimiento !== ''
+            || $this->filtroFechaDesde !== '' || $this->filtroFechaHasta !== ''
+            || $this->filtroTipo !== '' || $this->filtroPresentacion !== '' || $this->filtroConIva;
     }
 
     /**
@@ -666,7 +705,8 @@ class GestionCompras extends Component
             ->when($this->filtroFechaHasta, fn ($q) => $q->where('fecha', '<=', $this->filtroFechaHasta))
             ->when($this->filtroTipo, fn ($q) => $q->where('tipo_comprobante', $this->filtroTipo))
             ->when($this->filtroPresentacion === 'presentados', fn ($q) => $q->where('presentado_arca', true))
-            ->when($this->filtroPresentacion === 'no_presentados', fn ($q) => $q->where('presentado_arca', false));
+            ->when($this->filtroPresentacion === 'no_presentados', fn ($q) => $q->where('presentado_arca', false))
+            ->when($this->filtroConIva, fn ($q) => $q->where('iva_importe', '!=', 0));
 
         // Totales sobre TODO lo filtrado, no sobre la página actual, para poder
         // cuadrar contra el libro IVA del contador.

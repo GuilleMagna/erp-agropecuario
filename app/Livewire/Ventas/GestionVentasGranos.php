@@ -29,9 +29,34 @@ class GestionVentasGranos extends Component
     #[Url]
     public string $filtroFechaHasta = '';
 
+    /**
+     * Deja sólo las liquidaciones que sufrieron retención de IVA. Lo usa el
+     * link de "Retenciones" del reporte de IVA: sin esto abría el listado
+     * completo del mes, con ventas que no aportan nada a ese número.
+     */
+    #[Url]
+    public bool $filtroConRetencion = false;
+
     public function mount(): void
     {
         $this->switchEmpresaDesdeQuery();
+    }
+
+    /** Vuelve al listado completo: los links del reporte de IVA llegan con
+     *  varios filtros puestos a la vez. */
+    public function limpiarFiltros(): void
+    {
+        $this->reset([
+            'busqueda', 'filtroCereal', 'filtroEstado',
+            'filtroFechaDesde', 'filtroFechaHasta', 'filtroConRetencion',
+        ]);
+        $this->resetPage();
+    }
+
+    public function hayFiltros(): bool
+    {
+        return $this->busqueda !== '' || $this->filtroCereal !== '' || $this->filtroEstado !== ''
+            || $this->filtroFechaDesde !== '' || $this->filtroFechaHasta !== '' || $this->filtroConRetencion;
     }
 
     public bool $modalAbierto = false;
@@ -387,6 +412,7 @@ class GestionVentasGranos extends Component
             ->when($this->filtroEstado, fn ($q) => $q->where('estado', $this->filtroEstado))
             ->when($this->filtroFechaDesde, fn ($q) => $q->where('fecha', '>=', $this->filtroFechaDesde))
             ->when($this->filtroFechaHasta, fn ($q) => $q->where('fecha', '<=', $this->filtroFechaHasta))
+            ->when($this->filtroConRetencion, fn ($q) => $q->where('ret_iva', '!=', 0))
             ->with(['establecimiento', 'campana'])
             ->orderBy('fecha', 'desc')
             ->orderBy('created_at', 'desc')

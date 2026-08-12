@@ -60,6 +60,22 @@
                     <label class="form-label small fw-semibold text-muted mb-1">Hasta</label>
                     <input type="date" class="form-control" wire:model.live="filtroFechaHasta" value="{{ $filtroFechaHasta }}">
                 </div>
+                <div class="col-md-auto d-flex align-items-end gap-2 pb-1">
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" id="chkConRetencion"
+                               wire:model.live="filtroConRetencion">
+                        <label class="form-check-label small text-nowrap" for="chkConRetencion"
+                               title="Deja sólo las liquidaciones que sufrieron retención de IVA">
+                            Sólo con retención
+                        </label>
+                    </div>
+                    @if ($this->hayFiltros())
+                        <button class="btn btn-outline-secondary btn-sm text-nowrap"
+                                wire:click="limpiarFiltros" title="Quitar todos los filtros y ver el listado completo">
+                            <i class="bi bi-x-circle me-1"></i>Ver todo
+                        </button>
+                    @endif
+                </div>
             </div>
         </div>
     </div>

@@ -204,7 +204,16 @@ Route::middleware(['auth'])->group(function () {
         $empresa = Empresa::findOrFail($request->input('empresa_id'));
         session(['empresa_activa_id' => $empresa->id]);
 
-        return redirect()->back();
+        // Se vuelve a la página anterior, pero sin el ?empresa=... de la URL.
+        // Los links de los reportes lo traen puesto y el trait
+        // CambiaEmpresaDesdeQuery lo aplica en cada carga: si no se saca, al
+        // elegir otra empresa en el selector la query string la vuelve a pisar
+        // y parece que el selector no funciona.
+        [$ruta, $queryString] = array_pad(explode('?', url()->previous(), 2), 2, '');
+        parse_str($queryString, $query);
+        unset($query['empresa']);
+
+        return redirect()->to($ruta.($query ? '?'.http_build_query($query) : ''));
     })->name('empresa.cambiar');
 
 });
