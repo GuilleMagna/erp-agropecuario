@@ -3,7 +3,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h5 class="mb-0 fw-bold text-dark">Reporte Fiscal / IVA</h5>
-            <small class="text-muted">Crédito fiscal (compras) y débito fiscal estimado (ventas) — {{ \Carbon\Carbon::parse($desde)->format('d/m/Y') }} al {{ \Carbon\Carbon::parse($hasta)->format('d/m/Y') }}</small>
+            <small class="text-muted">Crédito fiscal (compras) y débito fiscal (ventas) — {{ \Carbon\Carbon::parse($desde)->format('d/m/Y') }} al {{ \Carbon\Carbon::parse($hasta)->format('d/m/Y') }}</small>
         </div>
         @can('reportes.exportar')
         <button class="btn btn-outline-success btn-sm" wire:click="exportarCsv" wire:loading.attr="disabled">
@@ -41,7 +41,7 @@
 
     {{-- Cards resumen IVA --}}
     <div class="row g-3 mb-4">
-        <div class="col-md-3">
+        <div class="col-6 col-md-4 col-xl">
             <div class="card border-0 shadow-sm h-100 border-start border-5 border-danger">
                 <div class="card-body">
                     <div class="text-muted small fw-semibold text-uppercase mb-1">IVA Crédito fiscal</div>
@@ -50,7 +50,24 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-6 col-md-4 col-xl">
+            <div class="card border-0 shadow-sm h-100 border-start border-5 border-primary">
+                <div class="card-body">
+                    <div class="text-muted small fw-semibold text-uppercase mb-1">IVA Débito fiscal</div>
+                    <div class="fs-4 fw-bold text-primary">${{ number_format((float)$totalDebitoFiscal, 2, ',', '.') }}</div>
+                    <div class="text-muted small">
+                        Declarado en las liquidaciones de granos
+                        @if ((float)$totalDebitoFiscal > 0)
+                            <br>
+                            <span class="fw-semibold">
+                                Saldo: ${{ number_format((float)$totalDebitoFiscal - (float)$totalIvaCredito, 2, ',', '.') }}
+                            </span>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <div class="text-muted small fw-semibold text-uppercase mb-1">Compras bruto</div>
@@ -59,7 +76,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-6 col-md-4 col-xl">
             <div class="card border-0 shadow-sm h-100 border-start border-5 border-success">
                 <div class="card-body">
                     <div class="text-muted small fw-semibold text-uppercase mb-1">Ventas ARS</div>
@@ -68,7 +85,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-6 col-md-4 col-xl">
             <div class="card border-0 shadow-sm h-100 border-start border-5 border-primary">
                 <div class="card-body">
                     <div class="text-muted small fw-semibold text-uppercase mb-1">Ventas USD</div>
@@ -171,11 +188,11 @@
             </div>
         </div>
 
-        {{-- Ventas granos (IVA débito estimado) --}}
+        {{-- Ventas granos (IVA débito) --}}
         <div class="col-md-6">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-bottom fw-semibold">
-                    <i class="bi bi-bag me-2 text-success"></i>Ventas de granos por cereal y moneda
+                    <i class="bi bi-bag me-2 text-success"></i>IVA Débito — Ventas de granos por cereal y moneda
                 </div>
                 <div class="table-responsive">
                     <table class="table table-sm align-middle mb-0">
@@ -185,7 +202,8 @@
                                 <th>Moneda</th>
                                 <th class="text-center">Ops.</th>
                                 <th class="text-end">Tn</th>
-                                <th class="text-end pe-3">Importe</th>
+                                <th class="text-end">Importe</th>
+                                <th class="text-end pe-3">Déb. fiscal</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -199,10 +217,11 @@
                                 <td><span class="badge rounded-pill bg-primary-subtle text-primary font-monospace">{{ $vg->moneda }}</span></td>
                                 <td class="text-center">{{ $vg->operaciones }}</td>
                                 <td class="text-end font-monospace">{{ number_format((float)$vg->total_tn, 3, ',', '.') }}</td>
-                                <td class="text-end pe-3 fw-semibold">{{ $vg->moneda === 'USD' ? 'U$S' : '$' }} {{ number_format((float)$vg->total_importe, 2, ',', '.') }}</td>
+                                <td class="text-end fw-semibold">{{ $vg->moneda === 'USD' ? 'U$S' : '$' }} {{ number_format((float)$vg->total_importe, 2, ',', '.') }}</td>
+                                <td class="text-end pe-3 font-monospace text-primary">${{ number_format((float)($vg->total_debito ?? 0), 2, ',', '.') }}</td>
                             </tr>
                             @empty
-                            <tr><td colspan="5" class="text-center text-muted py-3">Sin ventas de granos</td></tr>
+                            <tr><td colspan="6" class="text-center text-muted py-3">Sin ventas de granos</td></tr>
                             @endforelse
                         </tbody>
                         @if ($ventasGranosPorCereal->count())
@@ -210,13 +229,15 @@
                             @if ((float)$totalVentasGranosArs > 0)
                             <tr>
                                 <td colspan="4" class="ps-3 text-end">Subtotal ARS</td>
-                                <td class="pe-3 text-end">${{ number_format((float)$totalVentasGranosArs, 2, ',', '.') }}</td>
+                                <td class="text-end">${{ number_format((float)$totalVentasGranosArs, 2, ',', '.') }}</td>
+                                <td class="pe-3 text-end text-primary">${{ number_format((float)$totalDebitoFiscal, 2, ',', '.') }}</td>
                             </tr>
                             @endif
                             @if ((float)$totalVentasGranosUsd > 0)
                             <tr>
                                 <td colspan="4" class="ps-3 text-end">Subtotal USD</td>
-                                <td class="pe-3 text-end">U$S {{ number_format((float)$totalVentasGranosUsd, 2, ',', '.') }}</td>
+                                <td class="text-end">U$S {{ number_format((float)$totalVentasGranosUsd, 2, ',', '.') }}</td>
+                                <td class="pe-3"></td>
                             </tr>
                             @endif
                         </tfoot>

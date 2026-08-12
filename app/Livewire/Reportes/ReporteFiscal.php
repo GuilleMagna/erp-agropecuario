@@ -118,14 +118,18 @@ class ReporteFiscal extends Component
             ->orderBy('fecha', 'desc')
             ->get();
 
-        // === VENTAS — IVA DÉBITO (estimado) ===
+        // === VENTAS — IVA DÉBITO ===
         $ventasGranosPorCereal = VentaGrano::whereBetween('fecha', [$desde, $hasta])
             ->when($estId, fn($q) => $q->where('id_establecimiento', $estId))
             ->whereNotIn('estado', ['cancelada', 'borrador'])
-            ->selectRaw('cereal, moneda, count(*) as operaciones, sum(cantidad_tn) as total_tn, sum(importe_total) as total_importe')
+            ->selectRaw('cereal, moneda, count(*) as operaciones, sum(cantidad_tn) as total_tn, sum(importe_total) as total_importe, sum(debito_fiscal) as total_debito')
             ->groupBy('cereal', 'moneda')
             ->orderBy('total_importe', 'desc')
             ->get();
+
+        // Débito fiscal declarado en las liquidaciones de granos. Es el dato de
+        // la liquidación, no una estimación sobre el importe.
+        $totalDebitoFiscal = (float) $ventasGranosPorCereal->sum('total_debito');
 
         $ventasHaciendaPorCategoria = VentaHacienda::whereBetween('fecha', [$desde, $hasta])
             ->when($estId, fn($q) => $q->where('id_establecimiento', $estId))
@@ -179,7 +183,7 @@ class ReporteFiscal extends Component
             'comprasPorTipo', 'totalIvaCredito', 'totalComprasBruto', 'totalComprasNeto',
             'noPresentados', 'totalComprasPresentado', 'totalIvaCreditoPresentado',
             'detalleCompras',
-            'ventasGranosPorCereal', 'ventasHaciendaPorCategoria',
+            'ventasGranosPorCereal', 'ventasHaciendaPorCategoria', 'totalDebitoFiscal',
             'totalVentasGranosArs', 'totalVentasHaciendaArs',
             'totalVentasGranosUsd', 'totalVentasHaciendaUsd',
             'comprasPorActividad', 'comprasPorLote', 'comprasPorCampana',

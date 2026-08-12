@@ -24,7 +24,7 @@ class VentaGrano extends Model
         'cantidad_tn', 'precio_tn', 'moneda', 'importe_total',
         'cantidad_kg', 'factor', 'precio_kg', 'flete_kg',
         'deducciones', 'iva_deducciones', 'bonificacion',
-        'ret_ganancias', 'ret_iva', 'iva_rg4310',
+        'ret_ganancias', 'ret_iva', 'iva_rg4310', 'debito_fiscal',
         'estado', 'observaciones',
     ];
 
@@ -44,6 +44,7 @@ class VentaGrano extends Model
         'ret_ganancias' => 'decimal:2',
         'ret_iva' => 'decimal:2',
         'iva_rg4310' => 'decimal:2',
+        'debito_fiscal' => 'decimal:2',
     ];
 
     const CEREALES = [
