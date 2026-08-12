@@ -23,6 +23,7 @@ class Compra extends Model
         'subtotal', 'iva_porc', 'iva_importe', 'total',
         'stock_registrado', 'observaciones',
         'actividad', 'zona', 'rubro', 'id_lote', 'id_campana',
+        'presentado_arca',
     ];
 
     protected $casts = [
@@ -33,17 +34,24 @@ class Compra extends Model
         'iva_importe' => 'decimal:2',
         'total' => 'decimal:2',
         'stock_registrado' => 'boolean',
+        'presentado_arca' => 'boolean',
     ];
 
     const TIPOS_COMPROBANTE = [
         'factura_a' => 'Factura A',
         'factura_b' => 'Factura B',
         'factura_c' => 'Factura C',
+        'nota_credito' => 'Nota de crédito',
+        'nota_debito' => 'Nota de débito',
         'remito' => 'Remito',
         'recibo' => 'Recibo',
         'ticket' => 'Ticket',
         'otro' => 'Otro',
     ];
+
+    /** Las notas de crédito se guardan en negativo: restan del total de compras
+     *  y del crédito fiscal, igual que en el libro IVA. */
+    const TIPOS_NEGATIVOS = ['nota_credito'];
 
     const ESTADOS = [
         'pendiente' => 'Pendiente',
@@ -100,6 +108,22 @@ class Compra extends Model
     public function getTipoComprobanteLabelAttribute(): string
     {
         return self::TIPOS_COMPROBANTE[$this->tipo_comprobante] ?? $this->tipo_comprobante;
+    }
+
+    public function esNotaCredito(): bool
+    {
+        return in_array($this->tipo_comprobante, self::TIPOS_NEGATIVOS, true);
+    }
+
+    /** Comprobantes incluidos en lo que el contador presentó ante ARCA. */
+    public function scopePresentados($query)
+    {
+        return $query->where('presentado_arca', true);
+    }
+
+    public function scopeNoPresentados($query)
+    {
+        return $query->where('presentado_arca', false);
     }
 
     public function getEstadoLabelAttribute(): string

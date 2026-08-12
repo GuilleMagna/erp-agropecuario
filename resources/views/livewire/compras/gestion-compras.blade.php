@@ -75,6 +75,43 @@
                     </select>
                 </div>
             </div>
+            <div class="row g-2 mt-0">
+                <div class="col-md-2">
+                    <select class="form-select form-select-sm" wire:model.live="filtroTipo">
+                        <option value="">Todos los comprobantes</option>
+                        @foreach ($tiposComprobante as $k => $v)
+                            <option value="{{ $k }}">{{ $v }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select form-select-sm" wire:model.live="filtroPresentacion">
+                        <option value="">Presentados y no presentados</option>
+                        <option value="presentados">Sólo presentados en ARCA</option>
+                        <option value="no_presentados">Sólo NO presentados</option>
+                    </select>
+                </div>
+
+                {{-- Totales de todo lo filtrado (no sólo de la página), para
+                     poder cuadrar contra el libro IVA del contador. --}}
+                <div class="col-md-8 d-flex align-items-center justify-content-end gap-3 small flex-wrap">
+                    <span class="text-body-secondary">
+                        {{ $totales->cant }} comprobante(s):
+                        <strong class="text-body">${{ number_format($totales->total, 2, ',', '.') }}</strong>
+                        <span class="text-body-secondary">· IVA ${{ number_format($totales->iva, 2, ',', '.') }}</span>
+                    </span>
+                    @if ($totales->cant != $totalesPresentados->cant)
+                        <span class="badge bg-success-subtle text-success border border-success-subtle">
+                            Presentado ARCA: ${{ number_format($totalesPresentados->total, 2, ',', '.') }}
+                            · IVA ${{ number_format($totalesPresentados->iva, 2, ',', '.') }}
+                        </span>
+                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">
+                            No presentado ({{ $totales->cant - $totalesPresentados->cant }}):
+                            ${{ number_format($totales->total - $totalesPresentados->total, 2, ',', '.') }}
+                        </span>
+                    @endif
+                </div>
+            </div>
         </div>
     </div>
 
@@ -115,10 +152,18 @@
                                 </td>
                                 <td class="text-nowrap">{{ $compra->fecha->format('d/m/Y') }}</td>
                                 <td class="text-nowrap">
-                                    <span class="badge bg-secondary">{{ $compra->tipo_comprobante_label }}</span>
+                                    <span class="badge bg-{{ $compra->esNotaCredito() ? 'danger' : 'secondary' }}">
+                                        {{ $compra->tipo_comprobante_label }}
+                                    </span>
                                     @if ($compra->numero_comprobante)
                                         <small class="text-muted ms-1">{{ $compra->numero_comprobante }}</small>
                                     @endif
+                                    @unless ($compra->presentado_arca)
+                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle ms-1"
+                                              title="No incluido en la presentación ante ARCA">
+                                            <i class="bi bi-exclamation-triangle me-1"></i>no presentado
+                                        </span>
+                                    @endunless
                                 </td>
                                 <td>{{ $compra->proveedor?->nombre ?? '—' }}</td>
                                 <td>
@@ -142,7 +187,7 @@
                                     @endif
                                     @if (!$compra->lote && !$compra->campana) — @endif
                                 </td>
-                                <td class="text-end text-nowrap fw-semibold">
+                                <td class="text-end text-nowrap fw-semibold {{ $compra->total < 0 ? 'text-danger' : '' }}">
                                     ${{ number_format($compra->total, 2, ',', '.') }}
                                 </td>
                                 <td>
@@ -172,6 +217,13 @@
                                                 <i class="bi bi-box-seam"></i>
                                             </button>
                                         @endif
+                                        <button class="btn btn-sm py-0 px-1 ms-1 {{ $compra->presentado_arca ? 'btn-outline-success' : 'btn-warning' }}"
+                                                wire:click="togglePresentado('{{ $compra->id }}')"
+                                                title="{{ $compra->presentado_arca
+                                                    ? 'Presentado ante ARCA — marcar como NO presentado'
+                                                    : 'NO presentado ante ARCA — marcar como presentado' }}">
+                                            <i class="bi bi-{{ $compra->presentado_arca ? 'file-earmark-check' : 'file-earmark-excel' }}"></i>
+                                        </button>
                                         <select class="form-select form-select-sm d-inline-block ms-1 py-0"
                                                 style="width:auto; min-width:115px"
                                                 wire:change="cambiarEstado('{{ $compra->id }}', $event.target.value)"
@@ -252,12 +304,17 @@
                         <div class="col-md-3">
                             <label class="form-label small fw-semibold">Tipo Comprobante *</label>
                             <select class="form-select form-select-sm @error('tipo_comprobante') is-invalid @enderror"
-                                    wire:model="tipo_comprobante">
+                                    wire:model.live="tipo_comprobante">
                                 @foreach ($tiposComprobante as $k => $v)
                                     <option value="{{ $k }}">{{ $v }}</option>
                                 @endforeach
                             </select>
                             @error('tipo_comprobante') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            @if ($tipo_comprobante === 'nota_credito')
+                                <small class="text-danger">
+                                    Cargá los ítems en positivo: se guarda en negativo para que reste.
+                                </small>
+                            @endif
                         </div>
                         <div class="col-md-3">
                             <label class="form-label small fw-semibold">Número</label>
@@ -505,6 +562,12 @@
                             <label class="btn btn-sm btn-outline-secondary" for="am-imputacion">
                                 <i class="bi bi-diagram-3 me-1"></i>Imputación completa
                             </label>
+
+                            <input type="radio" class="btn-check" name="accionMasiva" id="am-presentacion"
+                                   wire:model.live="accionMasiva" value="presentacion">
+                            <label class="btn btn-sm btn-outline-secondary" for="am-presentacion">
+                                <i class="bi bi-file-earmark-check me-1"></i>Presentación ARCA
+                            </label>
                         </div>
                     </div>
 
@@ -535,6 +598,22 @@
                                 @endforeach
                             </select>
                             @error('valorMasivoActividad') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+
+                    @elseif ($accionMasiva === 'presentacion')
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">¿Está en la presentación ante ARCA? *</label>
+                            <select class="form-select @error('valorMasivoPresentado') is-invalid @enderror"
+                                    wire:model="valorMasivoPresentado">
+                                <option value="">— Seleccionar —</option>
+                                <option value="1">Sí, presentado</option>
+                                <option value="0">No presentado</option>
+                            </select>
+                            @error('valorMasivoPresentado') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            <small class="text-muted">
+                                Los no presentados se siguen viendo y sumando en el ERP, pero el reporte
+                                fiscal los separa para que el total presentado cuadre con el libro IVA.
+                            </small>
                         </div>
 
                     @elseif ($accionMasiva === 'imputacion')

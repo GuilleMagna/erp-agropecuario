@@ -97,6 +97,19 @@ class ReporteFiscal extends Component
         $totalComprasBruto = $comprasPorTipo->sum('sum_total');
         $totalComprasNeto  = $comprasPorTipo->sum('sum_subtotal');
 
+        // Comprobantes que quedaron fuera de lo que el contador presentó ante
+        // ARCA. Se restan aparte para que el total "presentado" del ERP se
+        // pueda cotejar contra el libro IVA sin sacarlos del sistema.
+        $noPresentados = Compra::whereBetween('fecha', [$desde, $hasta])
+            ->when($estId, fn($q) => $q->where('id_establecimiento', $estId))
+            ->whereNotIn('estado', ['cancelada'])
+            ->where('presentado_arca', false)
+            ->selectRaw('count(*) as cantidad, COALESCE(sum(subtotal),0) as sum_subtotal, COALESCE(sum(iva_importe),0) as sum_iva, COALESCE(sum(total),0) as sum_total')
+            ->first();
+
+        $totalComprasPresentado    = $totalComprasBruto - (float) $noPresentados->sum_total;
+        $totalIvaCreditoPresentado = $totalIvaCredito - (float) $noPresentados->sum_iva;
+
         // Detalle de compras
         $detalleCompras = Compra::whereBetween('fecha', [$desde, $hasta])
             ->when($estId, fn($q) => $q->where('id_establecimiento', $estId))
@@ -164,6 +177,7 @@ class ReporteFiscal extends Component
 
         return view('livewire.reportes.reporte-fiscal', compact(
             'comprasPorTipo', 'totalIvaCredito', 'totalComprasBruto', 'totalComprasNeto',
+            'noPresentados', 'totalComprasPresentado', 'totalIvaCreditoPresentado',
             'detalleCompras',
             'ventasGranosPorCereal', 'ventasHaciendaPorCategoria',
             'totalVentasGranosArs', 'totalVentasHaciendaArs',

@@ -30,18 +30,27 @@ class ImportarComprasArca extends Component
     const MAPA_TIPOS = [
         // Por código numérico (con y sin ceros a la izquierda)
         '1' => 'factura_a', '01' => 'factura_a', '001' => 'factura_a',
-        '2' => 'otro',      '02' => 'otro',       '002' => 'otro',   // ND A
-        '3' => 'otro',      '03' => 'otro',       '003' => 'otro',   // NC A
+        '2' => 'nota_debito',  '02' => 'nota_debito',  '002' => 'nota_debito',   // ND A
+        '3' => 'nota_credito', '03' => 'nota_credito', '003' => 'nota_credito',  // NC A
         '6' => 'factura_b', '06' => 'factura_b',  '006' => 'factura_b',
-        '7' => 'otro',      '07' => 'otro',       '007' => 'otro',   // ND B
-        '8' => 'otro',      '08' => 'otro',       '008' => 'otro',   // NC B
+        '7' => 'nota_debito',  '07' => 'nota_debito',  '007' => 'nota_debito',   // ND B
+        '8' => 'nota_credito', '08' => 'nota_credito', '008' => 'nota_credito',  // NC B
         '11' => 'factura_c', '011' => 'factura_c',
-        '12' => 'otro',      '012' => 'otro',     // ND C
-        '13' => 'otro',      '013' => 'otro',     // NC C
+        '12' => 'nota_debito',  '012' => 'nota_debito',   // ND C
+        '13' => 'nota_credito', '013' => 'nota_credito',  // NC C
         '51' => 'factura_a', '051' => 'factura_a', // M
+        '52' => 'nota_debito',  '052' => 'nota_debito',   // ND M
+        '53' => 'nota_credito', '053' => 'nota_credito',  // NC M
         '81' => 'ticket',    '081' => 'ticket',
         '82' => 'ticket',    '082' => 'ticket',
         '83' => 'ticket',    '083' => 'ticket',
+        '110' => 'nota_credito',                          // Tique nota de crédito
+        '112' => 'nota_credito', '113' => 'nota_credito', '114' => 'nota_credito',
+        '115' => 'nota_debito',  '116' => 'nota_debito',  '117' => 'nota_debito',
+        '118' => 'nota_credito', '119' => 'nota_credito', '120' => 'nota_debito',
+        '201' => 'factura_a', '202' => 'nota_debito', '203' => 'nota_credito',   // FCE MiPyME A
+        '206' => 'factura_b', '207' => 'nota_debito', '208' => 'nota_credito',   // FCE MiPyME B
+        '211' => 'factura_c', '212' => 'nota_debito', '213' => 'nota_credito',   // FCE MiPyME C
         // Por texto
         'factura a' => 'factura_a',
         'factura b' => 'factura_b',
@@ -51,10 +60,12 @@ class ImportarComprasArca extends Component
         'ticket factura a' => 'ticket',
         'ticket factura b' => 'ticket',
         'recibo' => 'recibo',
-        'nota de débito a' => 'otro',
-        'nota de débito b' => 'otro',
-        'nota de crédito a' => 'otro',
-        'nota de crédito b' => 'otro',
+        // La búsqueda por texto es por str_contains: el prefijo cubre A, B, C y M.
+        'nota de débito' => 'nota_debito',
+        'nota de credito' => 'nota_credito',
+        'nota de crédito' => 'nota_credito',
+        'nota credito' => 'nota_credito',
+        'nota debito' => 'nota_debito',
     ];
 
     // ─────────────────────────────────────────────────────────────
@@ -412,6 +423,16 @@ class ImportarComprasArca extends Component
             ? round(($ivaTotal / $subtotal) * 100, 2)
             : 0.0;
 
+        // Notas de crédito: se guardan en negativo para que resten del total
+        // de compras y del crédito fiscal. ARCA las informa en positivo.
+        if (in_array($tipoComprobante, Compra::TIPOS_NEGATIVOS, true)) {
+            $subtotal = -abs($subtotal);
+            $ivaTotal = -abs($ivaTotal);
+            if ($total !== null) {
+                $total = -abs($total);
+            }
+        }
+
         // Verificar duplicado: mismo número + mismo CUIT
         $yaExiste = false;
         if (! empty($cuit) && $numeroComprobante !== '0000-00000000') {
@@ -429,7 +450,7 @@ class ImportarComprasArca extends Component
         } elseif (! $fecha) {
             $estado = 'error';
             $errorMsg = 'Fecha inválida ('.$fechaRaw.')';
-        } elseif ($total === null || $total <= 0) {
+        } elseif ($total === null || abs($total) < 0.005) {
             $estado = 'error';
             $errorMsg = 'Importe total inválido';
         }

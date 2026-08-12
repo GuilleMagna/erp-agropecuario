@@ -144,6 +144,27 @@
                                 <td class="text-end pe-3">${{ number_format((float)$totalComprasBruto, 2, ',', '.') }}</td>
                             </tr>
                             @endif
+
+                            {{-- Conciliación contra el libro IVA: lo que no se
+                                 presentó ante ARCA se resta aparte. --}}
+                            @if ($noPresentados->cantidad > 0)
+                            <tr class="table-warning">
+                                <td class="ps-3">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>No presentado ante ARCA
+                                </td>
+                                <td class="text-center">{{ $noPresentados->cantidad }}</td>
+                                <td class="text-end font-monospace">−${{ number_format((float)$noPresentados->sum_subtotal, 2, ',', '.') }}</td>
+                                <td class="text-end font-monospace">−${{ number_format((float)$noPresentados->sum_iva, 2, ',', '.') }}</td>
+                                <td class="text-end pe-3">−${{ number_format((float)$noPresentados->sum_total, 2, ',', '.') }}</td>
+                            </tr>
+                            <tr class="table-success fw-bold">
+                                <td class="ps-3">Total presentado ante ARCA</td>
+                                <td class="text-center">{{ $comprasPorTipo->sum('cantidad') - $noPresentados->cantidad }}</td>
+                                <td class="text-end font-monospace">${{ number_format((float)$totalComprasNeto - (float)$noPresentados->sum_subtotal, 2, ',', '.') }}</td>
+                                <td class="text-end font-monospace">${{ number_format((float)$totalIvaCreditoPresentado, 2, ',', '.') }}</td>
+                                <td class="text-end pe-3">${{ number_format((float)$totalComprasPresentado, 2, ',', '.') }}</td>
+                            </tr>
+                            @endif
                         </tbody>
                     </table>
                 </div>
