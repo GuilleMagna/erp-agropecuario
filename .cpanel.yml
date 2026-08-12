@@ -19,4 +19,6 @@ deployment:
     - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_11_200000_add_july_period_and_vat_refunds.php
     - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_12_180000_add_presentado_arca_to_compras_table.php
     - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_12_181000_fix_compras_elvio_enero_2026.php
+    - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_12_190000_conciliar_compras_elvio_enero_junio_2026.php
+    - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_12_200000_cargar_compras_faltantes_elvio_enero_junio_2026.php
     - cd $APPPATH && /usr/local/bin/php artisan view:clear
