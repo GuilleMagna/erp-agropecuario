@@ -21,7 +21,7 @@ class ImportarComprasArca extends Component
 
     public array $filasParsadas = [];
 
-    public array $resumen = ['importadas' => 0, 'duplicadas' => 0, 'errores' => 0];
+    public array $resumen = ['importadas' => 0, 'reclasificadas' => 0, 'duplicadas' => 0, 'errores' => 0];
 
     // Indices de columnas detectados del encabezado
     protected array $cols = [];
@@ -151,6 +151,7 @@ class ImportarComprasArca extends Component
         $importadas = 0;
         $duplicadas = 0;
         $errores = 0;
+        $reclasificadas = 0;
 
         foreach ($this->filasParsadas as &$fila) {
             if ($fila['estado'] === 'duplicado') {
@@ -160,6 +161,38 @@ class ImportarComprasArca extends Component
             }
             if ($fila['estado'] === 'error') {
                 $errores++;
+
+                continue;
+            }
+
+            // Comprobante ya cargado con un tipo distinto del que informa ARCA:
+            // se corrige el tipo y los importes (una nota de crédito guardada
+            // como "otro" estaba en positivo y tiene que pasar a negativo).
+            if ($fila['estado'] === 'reclasificar') {
+                $compra = Compra::find($fila['compra_id']);
+                if (! $compra) {
+                    $errores++;
+
+                    continue;
+                }
+
+                // Lo que se corrige es el tipo y el signo. Los importes del
+                // archivo sólo pisan a los ya cargados si vienen con valor: si
+                // el export no trae las columnas de IVA desglosadas por
+                // alícuota, reescribirlos a ciegas borraría el crédito fiscal
+                // de un comprobante que lo tenía bien.
+                $signo = in_array($fila['tipo_comprobante'], Compra::TIPOS_NEGATIVOS, true) ? -1 : 1;
+                $tomar = fn (float $archivo, float $actual) => abs($archivo) > 0 ? abs($archivo) : abs($actual);
+
+                $compra->update([
+                    'tipo_comprobante' => $fila['tipo_comprobante'],
+                    'subtotal' => $signo * $tomar((float) $fila['subtotal'], (float) $compra->subtotal),
+                    'iva_importe' => $signo * $tomar((float) $fila['iva_importe'], (float) $compra->iva_importe),
+                    'total' => $signo * $tomar((float) $fila['total'], (float) $compra->total),
+                    'observaciones' => trim(($compra->observaciones ? $compra->observaciones.' | ' : '')
+                        .'Reclasificado desde ARCA: era "'.$fila['tipo_actual'].'".'),
+                ]);
+                $reclasificadas++;
 
                 continue;
             }
@@ -212,7 +245,7 @@ class ImportarComprasArca extends Component
         }
         unset($fila);
 
-        $this->resumen = compact('importadas', 'duplicadas', 'errores');
+        $this->resumen = compact('importadas', 'reclasificadas', 'duplicadas', 'errores');
         $this->paso = 'resultado';
     }
 
@@ -435,17 +468,31 @@ class ImportarComprasArca extends Component
 
         // Verificar duplicado: mismo número + mismo CUIT
         $yaExiste = false;
+        $existente = null;
         if (! empty($cuit) && $numeroComprobante !== '0000-00000000') {
-            $yaExiste = Compra::where('numero_comprobante', $numeroComprobante)
+            $existente = Compra::where('numero_comprobante', $numeroComprobante)
                 ->whereHas('proveedor', fn ($q) => $q->where('cuit', $cuit))
-                ->exists();
+                ->first();
+            $yaExiste = $existente !== null;
+        }
+
+        // ¿El comprobante ya cargado quedó con un tipo distinto del que informa
+        // ARCA? Pasa con todo lo que se importó antes de que el mapeo separara
+        // notas de crédito y débito: quedaron como "otro" y en positivo, así que
+        // las de crédito suman en vez de restar. En ese caso no se saltea como
+        // duplicado, se ofrece reclasificarlo.
+        $reclasificar = false;
+        if ($existente && $existente->tipo_comprobante !== $tipoComprobante) {
+            $reclasificar = true;
         }
 
         // Determinar estado
         $estado = 'nuevo';
         $errorMsg = null;
 
-        if ($yaExiste) {
+        if ($reclasificar) {
+            $estado = 'reclasificar';
+        } elseif ($yaExiste) {
             $estado = 'duplicado';
         } elseif (! $fecha) {
             $estado = 'error';
@@ -468,6 +515,9 @@ class ImportarComprasArca extends Component
             'estado' => $estado,
             'error_msg' => $errorMsg,
             'proveedor_creado' => false,
+            'compra_id' => $existente?->id,
+            'tipo_actual' => $existente?->tipo_comprobante,
+            'total_actual' => $existente ? (float) $existente->total : null,
         ];
     }
 
