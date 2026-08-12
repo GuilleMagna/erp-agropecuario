@@ -14,6 +14,13 @@
         </div>
     @endif
 
+    @if (session('error'))
+        <div class="alert alert-warning alert-dismissible fade show mb-3 py-2">
+            <i class="bi bi-exclamation-triangle me-1"></i>{{ session('error') }}
+            <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
     {{-- Tabs ──────────────────────────────────────────────────────────────── --}}
     <ul class="nav nav-tabs mb-4">
         <li class="nav-item">
@@ -26,7 +33,7 @@
             <button class="nav-link {{ $vistaActiva === 'catalogo' ? 'active fw-semibold' : '' }}"
                     wire:click="$set('vistaActiva','catalogo')">
                 <i class="bi bi-list-ul me-1"></i>Catálogo de servicios
-                <span class="badge bg-secondary ms-1">{{ $catalogo->count() }}</span>
+                <span class="badge bg-secondary ms-1">{{ $totalCatalogo }}</span>
             </button>
         </li>
     </ul>
@@ -84,99 +91,114 @@
                 <table class="table table-hover align-middle mb-0" style="font-size:.85rem;">
                     <thead class="table-light">
                         <tr>
-                            <th style="width:35%">Servicio / Gasto</th>
-                            <th class="text-muted small" style="width:10%">Categoría</th>
+                            <th style="width:32%">Servicio / Gasto</th>
+                            <th class="text-muted small" style="width:8%">Categoría</th>
                             <th style="width:18%">Importe</th>
                             <th style="width:15%">Fecha de pago</th>
                             <th>Notas</th>
+                            <th style="width:50px"></th>
                         </tr>
                     </thead>
                     <tbody>
-                        @php
-                            $categoriaActual = null;
-                            $totalCategoria  = 0;
-                        @endphp
-
-                        @forelse ($gastosActivos as $gasto)
+                        @forelse ($gastosGrilla as $categoriaKey => $gastosCategoria)
                             @php
-                                $cat = \App\Models\GastoNoArca::CATEGORIAS[$gasto->categoria] ?? $gasto->categoria;
-                                $imp = \Illuminate\Support\Arr::get($pagos, $gasto->id . '.importe', '');
-                                $pagoImporte = strlen(trim($imp)) > 0 ? (float) str_replace(['.', ','], ['', '.'], $imp) : 0;
+                                $cat = \App\Models\GastoNoArca::CATEGORIAS[$categoriaKey] ?? $categoriaKey;
+                                $totalCategoria = 0;
                             @endphp
 
-                            {{-- Separador de categoría --}}
-                            @if ($categoriaActual !== $gasto->categoria)
-                                @if ($categoriaActual !== null && $totalCategoria > 0)
-                                    <tr class="table-light">
-                                        <td colspan="2" class="text-end text-muted small fw-semibold pe-3">
-                                            Subtotal {{ \App\Models\GastoNoArca::CATEGORIAS[$categoriaActual] ?? $categoriaActual }}
-                                        </td>
-                                        <td class="fw-semibold small">$ {{ number_format($totalCategoria, 2, ',', '.') }}</td>
-                                        <td colspan="2"></td>
-                                    </tr>
-                                @endif
-                                @php $categoriaActual = $gasto->categoria; $totalCategoria = 0; @endphp
-                                <tr>
-                                    <td colspan="5" class="py-1 px-3">
-                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
-                                            <i class="bi bi-tag me-1"></i>{{ $cat }}
-                                        </span>
-                                    </td>
-                                </tr>
-                            @endif
-                            @php $totalCategoria += $pagoImporte; @endphp
-
-                            <tr @class(['fila-importe-pendiente' => trim((string) $imp) === ''])>
-                                <td class="ps-4">{{ $gasto->nombre }}</td>
-                                <td></td>
-                                <td>
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-text">$</span>
-                                        <input type="text"
-                                               class="form-control text-end font-monospace"
-                                               wire:model.live="pagos.{{ $gasto->id }}.importe"
-                                               placeholder="0,00"
-                                               style="min-width:100px">
-                                    </div>
-                                </td>
-                                <td>
-                                    <input type="date"
-                                           class="form-control form-control-sm"
-                                           wire:model.live="pagos.{{ $gasto->id }}.fecha_pago">
-                                </td>
-                                <td>
-                                    <input type="text"
-                                           class="form-control form-control-sm"
-                                           wire:model.live="pagos.{{ $gasto->id }}.notas"
-                                           placeholder="—">
+                            {{-- Encabezado de categoría --}}
+                            <tr>
+                                <td colspan="6" class="py-1 px-3">
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                        <i class="bi bi-tag me-1"></i>{{ $cat }}
+                                    </span>
                                 </td>
                             </tr>
+
+                            @foreach ($gastosCategoria as $gasto)
+                                @php
+                                    $imp = \Illuminate\Support\Arr::get($pagos, $gasto->id . '.importe', '');
+                                    $pagoImporte = strlen(trim($imp)) > 0 ? (float) str_replace(['.', ','], ['', '.'], $imp) : 0;
+                                    $totalCategoria += $pagoImporte;
+                                @endphp
+
+                                <tr @class(['fila-importe-pendiente' => trim((string) $imp) === '' && $gasto->activo])>
+                                    <td class="ps-4">
+                                        {{ $gasto->nombre }}
+                                        @unless ($gasto->activo)
+                                            <span class="badge bg-secondary-subtle text-secondary border ms-1"
+                                                  title="Dado de baja: se muestra sólo porque tiene un pago cargado en este mes">
+                                                dado de baja
+                                            </span>
+                                        @endunless
+                                    </td>
+                                    <td></td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">$</span>
+                                            <input type="text"
+                                                   class="form-control text-end font-monospace"
+                                                   wire:model.live="pagos.{{ $gasto->id }}.importe"
+                                                   placeholder="0,00"
+                                                   style="min-width:100px">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <input type="date"
+                                               class="form-control form-control-sm"
+                                               wire:model.live="pagos.{{ $gasto->id }}.fecha_pago">
+                                    </td>
+                                    <td>
+                                        <input type="text"
+                                               class="form-control form-control-sm"
+                                               wire:model.live="pagos.{{ $gasto->id }}.notas"
+                                               placeholder="—">
+                                    </td>
+                                    <td class="text-end">
+                                        @if ($gasto->activo)
+                                            <button class="btn btn-sm btn-link text-danger p-0 border-0"
+                                                    title="Este servicio no se paga más: darlo de baja"
+                                                    wire:click="darDeBaja('{{ $gasto->id }}')"
+                                                    wire:confirm="¿Dar de baja «{{ $gasto->nombre }}»? Deja de aparecer en la grilla de pagos. Los importes ya cargados se conservan y podés reactivarlo desde el catálogo.">
+                                                <i class="bi bi-x-circle"></i>
+                                            </button>
+                                        @else
+                                            <button class="btn btn-sm btn-link text-success p-0 border-0"
+                                                    title="Reactivar servicio"
+                                                    wire:click="toggleActivo('{{ $gasto->id }}')"
+                                                    wire:confirm="¿Reactivar «{{ $gasto->nombre }}»? Vuelve a aparecer todos los meses.">
+                                                <i class="bi bi-arrow-counterclockwise"></i>
+                                            </button>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+
+                            {{-- Subtotal de categoría --}}
+                            @if ($totalCategoria > 0)
+                                <tr class="table-light">
+                                    <td colspan="2" class="text-end text-muted small fw-semibold pe-3">
+                                        Subtotal {{ $cat }}
+                                    </td>
+                                    <td class="fw-semibold small">$ {{ number_format($totalCategoria, 2, ',', '.') }}</td>
+                                    <td colspan="3"></td>
+                                </tr>
+                            @endif
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center text-muted py-5">
+                                <td colspan="6" class="text-center text-muted py-5">
                                     <i class="bi bi-list-ul fs-2 d-block mb-2 opacity-25"></i>
                                     No hay servicios. Agregalos en "Catálogo de servicios".
                                 </td>
                             </tr>
                         @endforelse
 
-                        {{-- Último subtotal de categoría --}}
-                        @if ($categoriaActual !== null && $totalCategoria > 0)
-                            <tr class="table-light">
-                                <td colspan="2" class="text-end text-muted small fw-semibold pe-3">
-                                    Subtotal {{ \App\Models\GastoNoArca::CATEGORIAS[$categoriaActual] ?? $categoriaActual }}
-                                </td>
-                                <td class="fw-semibold small">$ {{ number_format($totalCategoria, 2, ',', '.') }}</td>
-                                <td colspan="2"></td>
-                            </tr>
-                        @endif
-
                         {{-- Total general --}}
-                        @if ($gastosActivos->count() > 0)
+                        @if ($gastosGrilla->count() > 0)
                             <tr class="table-primary">
                                 <td colspan="2" class="text-end fw-bold pe-3">TOTAL {{ strtoupper($mesLabel) }}</td>
                                 <td class="fw-bold font-monospace">$ {{ number_format($totalMes, 2, ',', '.') }}</td>
-                                <td colspan="2"></td>
+                                <td colspan="3"></td>
                             </tr>
                         @endif
                     </tbody>
@@ -200,6 +222,12 @@
                         <option value="{{ $key }}">{{ $label }}</option>
                     @endforeach
                 </select>
+                <select class="form-select form-select-sm" style="width:150px"
+                        wire:model.live="filtroEstado">
+                    <option value="">Activos e inactivos</option>
+                    <option value="activos">Sólo activos</option>
+                    <option value="inactivos">Sólo dados de baja</option>
+                </select>
             </div>
             <button class="btn btn-primary btn-sm" wire:click="abrirModalCrear">
                 <i class="bi bi-plus-circle me-1"></i>Nuevo servicio
@@ -215,13 +243,14 @@
                             <th>Nombre</th>
                             <th>Categoría</th>
                             <th>Inmueble</th>
+                            <th class="text-center">Pagos</th>
                             <th class="text-center">Estado</th>
                             <th></th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($catalogo as $gasto)
-                            <tr>
+                            <tr @class(['opacity-75' => !$gasto->activo])>
                                 <td class="text-muted small">{{ $gasto->orden }}</td>
                                 <td class="fw-medium">{{ $gasto->nombre }}</td>
                                 <td>
@@ -238,26 +267,46 @@
                                         <span class="text-muted small">—</span>
                                     @endif
                                 </td>
+                                <td class="text-center text-muted small">
+                                    {{ $gasto->pagos_count ?: '—' }}
+                                </td>
                                 <td class="text-center">
                                     <button wire:click="toggleActivo('{{ $gasto->id }}')"
+                                            wire:confirm="{{ $gasto->activo
+                                                ? '¿Dar de baja «' . $gasto->nombre . '»? Deja de aparecer en la grilla de pagos, pero se conserva el historial.'
+                                                : '¿Reactivar «' . $gasto->nombre . '»? Vuelve a aparecer todos los meses.' }}"
                                             class="btn btn-sm btn-link p-0 border-0">
                                         <span class="badge rounded-pill {{ $gasto->activo ? 'bg-success' : 'bg-secondary' }}">
-                                            {{ $gasto->activo ? 'Activo' : 'Inactivo' }}
+                                            {{ $gasto->activo ? 'Activo' : 'Dado de baja' }}
                                         </span>
                                     </button>
                                 </td>
-                                <td class="text-end">
+                                <td class="text-end text-nowrap">
                                     <button class="btn btn-sm btn-outline-secondary"
+                                            title="Editar"
                                             wire:click="abrirModalEditar('{{ $gasto->id }}')">
                                         <i class="bi bi-pencil"></i>
                                     </button>
+                                    @if ($gasto->pagos_count === 0)
+                                        <button class="btn btn-sm btn-outline-danger"
+                                                title="Eliminar definitivamente (no tiene pagos cargados)"
+                                                wire:click="eliminarServicio('{{ $gasto->id }}')"
+                                                wire:confirm="¿Eliminar definitivamente «{{ $gasto->nombre }}»? No tiene pagos cargados, así que no se pierde historial.">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    @else
+                                        <button class="btn btn-sm btn-outline-danger" disabled
+                                                title="No se puede eliminar: tiene {{ $gasto->pagos_count }} pago(s). Usá la baja.">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    @endif
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center text-muted py-5">
+                                <td colspan="7" class="text-center text-muted py-5">
                                     <i class="bi bi-list-ul fs-2 d-block mb-2 opacity-25"></i>
-                                    No hay servicios registrados.
+                                    No hay servicios que coincidan con el filtro.
                                 </td>
                             </tr>
                         @endforelse

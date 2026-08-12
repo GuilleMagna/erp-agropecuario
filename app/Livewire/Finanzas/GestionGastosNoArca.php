@@ -25,6 +25,7 @@ class GestionGastosNoArca extends Component
 
     // ── Filtros catálogo ─────────────────────────────────────────────────────
     public string $filtroCategoria = '';
+    public string $filtroEstado    = '';     // '' | activos | inactivos
     public string $busqueda        = '';
 
     // ── Modal servicio ───────────────────────────────────────────────────────
@@ -68,10 +69,27 @@ class GestionGastosNoArca extends Component
         $this->cargarPagos();
     }
 
+    /**
+     * Servicios que se muestran en la grilla de un mes: los vigentes (activos)
+     * más los dados de baja que igual tengan un pago cargado en ese mes, para
+     * que el historial de meses anteriores no desaparezca al dar de baja.
+     */
+    private function gastosDelMes(string $mesDate): \Illuminate\Support\Collection
+    {
+        $idsConPago = PagoGastoNoArca::where('mes', $mesDate)->pluck('id_gasto');
+
+        return GastoNoArca::where(function ($q) use ($idsConPago) {
+                $q->where('activo', true)->orWhereIn('id', $idsConPago);
+            })
+            ->orderBy('orden')
+            ->orderBy('nombre')
+            ->get();
+    }
+
     private function cargarPagos(): void
     {
         $mesDate = $this->mesSeleccionado . '-01';
-        $gastos  = GastoNoArca::where('activo', true)->orderBy('orden')->orderBy('nombre')->get();
+        $gastos  = $this->gastosDelMes($mesDate);
 
         $pagosDb = PagoGastoNoArca::where('mes', $mesDate)
             ->whereIn('id_gasto', $gastos->pluck('id'))
@@ -196,6 +214,49 @@ class GestionGastosNoArca extends Component
         Gate::authorize('finanzas.gastos.gestionar');
         $gasto = GastoNoArca::findOrFail($id);
         $gasto->update(['activo' => !$gasto->activo]);
+
+        session()->flash('success', $gasto->activo
+            ? "Servicio \"{$gasto->nombre}\" reactivado."
+            : "Servicio \"{$gasto->nombre}\" dado de baja. Los pagos ya cargados se conservan.");
+
+        $this->cargarPagos();
+    }
+
+    /**
+     * Baja desde la grilla de pagos: el servicio deja de aparecer en los meses
+     * en los que no tenga nada cargado, pero el historial queda intacto.
+     */
+    public function darDeBaja(string $id): void
+    {
+        Gate::authorize('finanzas.gastos.gestionar');
+        $gasto = GastoNoArca::findOrFail($id);
+        $gasto->update(['activo' => false]);
+
+        $this->cargarPagos();
+        session()->flash('success', "\"{$gasto->nombre}\" ya no se paga más: se dio de baja. "
+            . 'Los pagos históricos se conservan y podés reactivarlo desde "Catálogo de servicios".');
+    }
+
+    /**
+     * Borrado definitivo. Sólo se permite si nunca se le cargó un pago; si tiene
+     * historial se ofrece la baja, que no destruye datos.
+     */
+    public function eliminarServicio(string $id): void
+    {
+        Gate::authorize('finanzas.gastos.gestionar');
+        $gasto = GastoNoArca::withCount('pagos')->findOrFail($id);
+
+        if ($gasto->pagos_count > 0) {
+            session()->flash('error', "No se puede eliminar \"{$gasto->nombre}\": tiene {$gasto->pagos_count} "
+                . 'pago(s) registrados. Dalo de baja para que deje de aparecer sin perder el historial.');
+            return;
+        }
+
+        $nombre = $gasto->nombre;
+        $gasto->delete();
+
+        $this->cargarPagos();
+        session()->flash('success', "Servicio \"{$nombre}\" eliminado.");
     }
 
     public function cerrarModal(): void
@@ -218,11 +279,11 @@ class GestionGastosNoArca extends Component
     // ─────────────────────────────────────────────────────────────────────────
     public function render(): \Illuminate\View\View
     {
-        // Gastos para la grilla de pagos
-        $gastosActivos = GastoNoArca::where('activo', true)
-            ->orderBy('orden')
-            ->orderBy('nombre')
-            ->get();
+        // Gastos para la grilla de pagos (vigentes + bajas con pago en el mes),
+        // agrupados por categoría para que cada rubro tenga un solo encabezado
+        // y un solo subtotal aunque el "orden" no venga contiguo.
+        $gastosGrilla = $this->gastosDelMes($this->mesSeleccionado . '-01')
+            ->groupBy('categoria');
 
         // Total del mes
         $totalMes = collect($this->pagos)
@@ -231,16 +292,20 @@ class GestionGastosNoArca extends Component
         // Servicios para el catálogo
         $catalogo = GastoNoArca::query()
             ->with('inmueble')
+            ->withCount('pagos')
             ->when($this->filtroCategoria, fn ($q) => $q->where('categoria', $this->filtroCategoria))
+            ->when($this->filtroEstado === 'activos', fn ($q) => $q->where('activo', true))
+            ->when($this->filtroEstado === 'inactivos', fn ($q) => $q->where('activo', false))
             ->when($this->busqueda, fn ($q) => $q->where('nombre', 'like', "%{$this->busqueda}%"))
             ->orderBy('orden')
             ->orderBy('nombre')
             ->get();
 
         return view('livewire.finanzas.gestion-gastos-no-arca', [
-            'gastosActivos' => $gastosActivos,
+            'gastosGrilla'  => $gastosGrilla,
             'totalMes'      => $totalMes,
             'catalogo'      => $catalogo,
+            'totalCatalogo' => GastoNoArca::count(),
             'categorias'    => GastoNoArca::CATEGORIAS,
             'inmuebles'     => Inmueble::where('activo', true)->orderBy('nombre')->get(),
             'mesLabel'      => $this->formatearMes($this->mesSeleccionado),
