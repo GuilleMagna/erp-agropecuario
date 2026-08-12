@@ -39,6 +39,13 @@ class GestionCompras extends Component
     #[Url]
     public string $filtroFechaHasta = '';
 
+    #[Url]
+    public string $filtroTipo = '';
+
+    /** '' | presentados | no_presentados */
+    #[Url]
+    public string $filtroPresentacion = '';
+
     public function mount(): void
     {
         $this->switchEmpresaDesdeQuery();
@@ -98,7 +105,7 @@ class GestionCompras extends Component
 
     public bool $modalMasivoAbierto = false;
 
-    public string $accionMasiva = 'estado';      // 'estado' | 'actividad' | 'imputacion'
+    public string $accionMasiva = 'estado';      // 'estado' | 'actividad' | 'imputacion' | 'presentacion'
 
     public string $valorMasivoEstado = '';
 
@@ -107,6 +114,9 @@ class GestionCompras extends Component
     public string $lotesMasivo = '';
 
     public string $campanaMasivo = '';
+
+    /** '1' presentado ante ARCA | '0' no presentado */
+    public string $valorMasivoPresentado = '';
 
     protected function rules(): array
     {
@@ -172,6 +182,34 @@ class GestionCompras extends Component
     {
         $this->resetPage();
         $this->seleccionados = [];
+    }
+
+    public function updatedFiltroTipo(): void
+    {
+        $this->resetPage();
+        $this->seleccionados = [];
+    }
+
+    public function updatedFiltroPresentacion(): void
+    {
+        $this->resetPage();
+        $this->seleccionados = [];
+    }
+
+    /**
+     * Marca o desmarca un comprobante como incluido en la presentación ante
+     * ARCA. Los que quedan fuera se siguen viendo y sumando en el ERP, pero
+     * el reporte fiscal los separa para poder cuadrar contra el libro IVA.
+     */
+    public function togglePresentado(string $id): void
+    {
+        Gate::authorize('compras.editar');
+        $compra = Compra::findOrFail($id);
+        $compra->update(['presentado_arca' => ! $compra->presentado_arca]);
+
+        session()->flash('success', $compra->presentado_arca
+            ? "Comprobante {$compra->numero_comprobante} marcado como presentado ante ARCA."
+            : "Comprobante {$compra->numero_comprobante} marcado como NO presentado ante ARCA.");
     }
 
     public function updatedItems($value, $key): void
@@ -365,6 +403,17 @@ class GestionCompras extends Component
             'observaciones' => $this->observaciones ?: null,
         ];
 
+        // Las notas de crédito se guardan en negativo, igual que las que entran
+        // por ARCA: los ítems se cargan con importes positivos y acá se invierte
+        // el signo para que resten del total de compras y del crédito fiscal.
+        if (in_array($this->tipo_comprobante, Compra::TIPOS_NEGATIVOS, true)) {
+            $data['subtotal'] = -abs($data['subtotal']);
+            $data['total'] = -abs($data['total']);
+            if ($data['iva_importe'] !== null) {
+                $data['iva_importe'] = -abs($data['iva_importe']);
+            }
+        }
+
         if ($this->modoEdicion) {
             $compra = Compra::findOrFail($this->compraEditandoId);
             $compra->update($data);
@@ -490,6 +539,7 @@ class GestionCompras extends Component
         $this->valorMasivoActividad = '';
         $this->lotesMasivo = '';
         $this->campanaMasivo = '';
+        $this->valorMasivoPresentado = '';
         $this->modalMasivoAbierto = true;
     }
 
@@ -528,6 +578,15 @@ class GestionCompras extends Component
                     'id_campana' => $this->campanaMasivo ?: null,
                 ]);
                 session()->flash('success', "{$count} comprobante(s) con imputación actualizada.");
+                break;
+
+            case 'presentacion':
+                $this->validate(['valorMasivoPresentado' => 'required|in:0,1']);
+                $presentado = $this->valorMasivoPresentado === '1';
+                $query->update(['presentado_arca' => $presentado]);
+                session()->flash('success', $presentado
+                    ? "{$count} comprobante(s) marcados como presentados ante ARCA."
+                    : "{$count} comprobante(s) marcados como NO presentados ante ARCA.");
                 break;
         }
 
@@ -593,7 +652,7 @@ class GestionCompras extends Component
 
     public function render()
     {
-        $compras = Compra::query()
+        $base = Compra::query()
             ->when($this->busqueda, fn ($q) => $q->where(fn ($q) => $q->where('numero_comprobante', 'like', "%{$this->busqueda}%")
                 ->orWhereHas('proveedor', fn ($q) => $q->where('nombre', 'like', "%{$this->busqueda}%")
                 )
@@ -605,6 +664,20 @@ class GestionCompras extends Component
             ->when($this->filtroEstablecimiento, fn ($q) => $q->where('id_establecimiento', $this->filtroEstablecimiento))
             ->when($this->filtroFechaDesde, fn ($q) => $q->where('fecha', '>=', $this->filtroFechaDesde))
             ->when($this->filtroFechaHasta, fn ($q) => $q->where('fecha', '<=', $this->filtroFechaHasta))
+            ->when($this->filtroTipo, fn ($q) => $q->where('tipo_comprobante', $this->filtroTipo))
+            ->when($this->filtroPresentacion === 'presentados', fn ($q) => $q->where('presentado_arca', true))
+            ->when($this->filtroPresentacion === 'no_presentados', fn ($q) => $q->where('presentado_arca', false));
+
+        // Totales sobre TODO lo filtrado, no sobre la página actual, para poder
+        // cuadrar contra el libro IVA del contador.
+        $totales = (clone $base)
+            ->selectRaw('COUNT(*) cant, COALESCE(SUM(total),0) total, COALESCE(SUM(iva_importe),0) iva')
+            ->first();
+        $totalesPresentados = (clone $base)->where('presentado_arca', true)
+            ->selectRaw('COUNT(*) cant, COALESCE(SUM(total),0) total, COALESCE(SUM(iva_importe),0) iva')
+            ->first();
+
+        $compras = $base
             ->with(['proveedor', 'establecimiento', 'lote', 'campana'])
             ->withCount('items')
             ->orderBy('fecha', 'desc')
@@ -613,6 +686,8 @@ class GestionCompras extends Component
 
         return view('livewire.compras.gestion-compras', [
             'compras' => $compras,
+            'totales' => $totales,
+            'totalesPresentados' => $totalesPresentados,
             'proveedoresOpciones' => Proveedor::activos()->orderBy('nombre')->get(),
             'establecimientos' => Establecimiento::orderBy('nombre')->get(),
             'insumosOpciones' => Insumo::activos()->orderBy('nombre')->get(),
