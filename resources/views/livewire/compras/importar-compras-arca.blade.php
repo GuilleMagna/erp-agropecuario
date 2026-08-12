@@ -124,14 +124,15 @@
     {{-- ─── PASO 2: PREVISUALIZAR ─── --}}
     @if ($paso === 'previsualizar')
         @php
-            $nuevas      = collect($filasParsadas)->where('estado', 'nuevo');
-            $duplicadas  = collect($filasParsadas)->where('estado', 'duplicado');
-            $conError    = collect($filasParsadas)->where('estado', 'error');
+            $nuevas         = collect($filasParsadas)->where('estado', 'nuevo');
+            $reclasificar   = collect($filasParsadas)->where('estado', 'reclasificar');
+            $duplicadas     = collect($filasParsadas)->where('estado', 'duplicado');
+            $conError       = collect($filasParsadas)->where('estado', 'error');
         @endphp
 
         {{-- Resumen rápido --}}
         <div class="row g-3 mb-4">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="card border-0 shadow-sm text-center py-3">
                     <div class="fs-2 fw-bold text-success">{{ $nuevas->count() }}</div>
                     <div class="small text-muted">
@@ -139,7 +140,15 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm text-center py-3">
+                    <div class="fs-2 fw-bold text-primary">{{ $reclasificar->count() }}</div>
+                    <div class="small text-muted">
+                        <i class="bi bi-arrow-repeat me-1"></i>Se corregirá el tipo
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
                 <div class="card border-0 shadow-sm text-center py-3">
                     <div class="fs-2 fw-bold text-warning">{{ $duplicadas->count() }}</div>
                     <div class="small text-muted">
@@ -147,7 +156,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="card border-0 shadow-sm text-center py-3">
                     <div class="fs-2 fw-bold text-danger">{{ $conError->count() }}</div>
                     <div class="small text-muted">
@@ -157,10 +166,35 @@
             </div>
         </div>
 
-        @if ($nuevas->isEmpty() && $conError->isEmpty())
+        @if ($reclasificar->isNotEmpty())
+            <div class="alert alert-primary">
+                <i class="bi bi-arrow-repeat me-2"></i>
+                <strong>{{ $reclasificar->count() }} comprobante{{ $reclasificar->count() !== 1 ? 's' : '' }} ya
+                cargado{{ $reclasificar->count() !== 1 ? 's' : '' }} con un tipo distinto al que informa ARCA.</strong>
+                Al confirmar se les corrige el tipo y los importes. Es lo que hace falta para las notas de crédito
+                que se importaron como «Otro» y en positivo: pasan a restar, como corresponde.
+                <div class="small mt-2">
+                    @foreach ($reclasificar->take(12) as $f)
+                        <div class="font-monospace">
+                            {{ $f['numero_comprobante'] }} · {{ \Illuminate\Support\Str::limit($f['nombre'], 28) }} ·
+                            <span class="text-muted">{{ \App\Models\Compra::TIPOS_COMPROBANTE[$f['tipo_actual']] ?? $f['tipo_actual'] }}
+                            ({{ number_format($f['total_actual'] ?? 0, 2, ',', '.') }})</span>
+                            →
+                            <strong>{{ \App\Models\Compra::TIPOS_COMPROBANTE[$f['tipo_comprobante']] ?? $f['tipo_comprobante'] }}
+                            ({{ number_format($f['total'], 2, ',', '.') }})</strong>
+                        </div>
+                    @endforeach
+                    @if ($reclasificar->count() > 12)
+                        <div class="text-muted">…y {{ $reclasificar->count() - 12 }} más.</div>
+                    @endif
+                </div>
+            </div>
+        @endif
+
+        @if ($nuevas->isEmpty() && $conError->isEmpty() && $reclasificar->isEmpty())
             <div class="alert alert-warning">
                 <i class="bi bi-info-circle me-2"></i>
-                Todos los comprobantes del archivo ya existen en el sistema. No hay nada nuevo para importar.
+                Todos los comprobantes del archivo ya existen en el sistema con los mismos datos. No hay nada para importar ni corregir.
             </div>
         @endif
 
@@ -202,10 +236,11 @@
                         @foreach ($filasParsadas as $fila)
                             @php
                                 $rowClass = match($fila['estado']) {
-                                    'nuevo'     => '',
-                                    'duplicado' => 'table-warning',
-                                    'error'     => 'table-danger',
-                                    default     => '',
+                                    'nuevo'        => '',
+                                    'reclasificar' => 'table-primary',
+                                    'duplicado'    => 'table-warning',
+                                    'error'        => 'table-danger',
+                                    default        => '',
                                 };
                             @endphp
                             <tr class="{{ $rowClass }}">
@@ -213,6 +248,11 @@
                                     @if ($fila['estado'] === 'nuevo')
                                         <span class="badge bg-success-subtle text-success border border-success-subtle">
                                             <i class="bi bi-plus-circle me-1"></i>Nuevo
+                                        </span>
+                                    @elseif ($fila['estado'] === 'reclasificar')
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle"
+                                              title="Ya está cargado como «{{ \App\Models\Compra::TIPOS_COMPROBANTE[$fila['tipo_actual']] ?? $fila['tipo_actual'] }}»: se corrige el tipo y los importes">
+                                            <i class="bi bi-arrow-repeat me-1"></i>Corregir
                                         </span>
                                     @elseif ($fila['estado'] === 'duplicado')
                                         <span class="badge bg-warning-subtle text-warning border border-warning-subtle">
@@ -268,16 +308,22 @@
                 <i class="bi bi-arrow-left me-1"></i>Volver a subir otro archivo
             </button>
 
-            @if ($nuevas->isNotEmpty())
+            @if ($nuevas->isNotEmpty() || $reclasificar->isNotEmpty())
+                @php
+                    $acciones = [];
+                    if ($nuevas->isNotEmpty())       $acciones[] = 'importar ' . $nuevas->count();
+                    if ($reclasificar->isNotEmpty()) $acciones[] = 'corregir el tipo de ' . $reclasificar->count();
+                    $textoAccion = implode(' y ', $acciones) . ' comprobante(s)';
+                @endphp
                 <button class="btn btn-success px-4" wire:click="confirmarImport"
                         wire:loading.attr="disabled" wire:target="confirmarImport"
-                        onclick="return confirm('¿Confirmar la importación de {{ $nuevas->count() }} comprobante(s)?')">
+                        onclick="return confirm('¿Confirmar: {{ $textoAccion }}?')">
                     <span wire:loading wire:target="confirmarImport">
-                        <span class="spinner-border spinner-border-sm me-2"></span>Importando…
+                        <span class="spinner-border spinner-border-sm me-2"></span>Procesando…
                     </span>
                     <span wire:loading.remove wire:target="confirmarImport">
                         <i class="bi bi-cloud-check me-1"></i>
-                        Importar {{ $nuevas->count() }} comprobante{{ $nuevas->count() !== 1 ? 's' : '' }}
+                        {{ ucfirst($textoAccion) }}
                     </span>
                 </button>
             @endif
@@ -303,26 +349,42 @@
                     <p class="text-muted mb-4">El proceso de importación terminó con el siguiente resultado:</p>
 
                     <div class="row g-3 mb-4">
-                        <div class="col-4">
+                        <div class="col-3">
                             <div class="card border-success-subtle bg-success-subtle py-3 rounded-3">
                                 <div class="fs-1 fw-bold text-success">{{ $resumen['importadas'] }}</div>
                                 <div class="small fw-semibold text-success">Importadas</div>
                             </div>
                         </div>
-                        <div class="col-4">
+                        <div class="col-3">
+                            <div class="card border-primary-subtle bg-primary-subtle py-3 rounded-3">
+                                <div class="fs-1 fw-bold text-primary">{{ $resumen['reclasificadas'] ?? 0 }}</div>
+                                <div class="small fw-semibold text-primary">Corregidas</div>
+                                <div class="small text-muted" style="font-size:.7rem;">cambió el tipo</div>
+                            </div>
+                        </div>
+                        <div class="col-3">
                             <div class="card border-warning-subtle bg-warning-subtle py-3 rounded-3">
                                 <div class="fs-1 fw-bold text-warning">{{ $resumen['duplicadas'] }}</div>
                                 <div class="small fw-semibold text-warning">Omitidas</div>
                                 <div class="small text-muted" style="font-size:.7rem;">ya existían</div>
                             </div>
                         </div>
-                        <div class="col-4">
+                        <div class="col-3">
                             <div class="card border-danger-subtle bg-danger-subtle py-3 rounded-3">
                                 <div class="fs-1 fw-bold text-danger">{{ $resumen['errores'] }}</div>
                                 <div class="small fw-semibold text-danger">Con errores</div>
                             </div>
                         </div>
                     </div>
+
+                    @if (($resumen['reclasificadas'] ?? 0) > 0)
+                        <div class="alert alert-primary text-start" role="alert">
+                            <i class="bi bi-arrow-repeat me-2"></i>
+                            Se corrigió el tipo y el signo de {{ $resumen['reclasificadas'] }}
+                            comprobante{{ $resumen['reclasificadas'] !== 1 ? 's' : '' }} que ya estaban cargados.
+                            Las notas de crédito ahora restan del total de compras y del crédito fiscal.
+                        </div>
+                    @endif
 
                     @if ($resumen['importadas'] > 0)
                         <div class="alert alert-success text-start" role="alert">
