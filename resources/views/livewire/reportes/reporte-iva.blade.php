@@ -1,4 +1,12 @@
 <div>
+    <style>
+        /* Separan los tres bloques de la liquidación: lo que sale del libro
+           (débito, crédito y su saldo técnico), lo que se pagó a cuenta
+           (retenciones y devoluciones) y el saldo final. */
+        .iva-corte {
+            border-left: 2px solid var(--bs-border-color, #dee2e6) !important;
+        }
+    </style>
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -108,9 +116,9 @@
                             <th class="text-end">IVA Débito</th>
                             <th class="text-end">IVA Crédito</th>
                             <th class="text-end">Saldo técnico</th>
-                            <th class="text-end">Retenciones</th>
+                            <th class="text-end iva-corte">Retenciones</th>
                             <th class="text-end">Devoluciones</th>
-                            <th class="text-end pe-3">Saldo final</th>
+                            <th class="text-end pe-3 iva-corte">Saldo final</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -125,18 +133,18 @@
                                 </td>
                                 <td class="text-end font-monospace small">
                                     ${{ number_format($valores['credito'], 2, ',', '.') }}
-                                    <a href="{{ route('compras.index', ['filtroFechaDesde' => $datosMes['desde'], 'filtroFechaHasta' => $datosMes['hasta'], 'empresa' => $empresa->id]) }}" target="_blank" class="text-muted ms-1" title="Ver comprobantes de compra"><i class="bi bi-box-arrow-up-right"></i></a>
+                                    <a href="{{ route('compras.index', ['filtroFechaDesde' => $datosMes['desde'], 'filtroFechaHasta' => $datosMes['hasta'], 'empresa' => $empresa->id, 'filtroConIva' => 1]) }}" target="_blank" class="text-muted ms-1" title="Ver los comprobantes que suman al crédito fiscal"><i class="bi bi-box-arrow-up-right"></i></a>
                                 </td>
                                 <td class="text-end font-monospace fw-semibold small {{ $valores['saldo_tecnico'] < 0 ? 'text-info' : '' }}">${{ number_format($valores['saldo_tecnico'], 2, ',', '.') }}</td>
-                                <td class="text-end font-monospace small">
+                                <td class="text-end font-monospace small iva-corte">
                                     ${{ number_format($valores['retenido'], 2, ',', '.') }}
-                                    <a href="{{ route('ventas.granos.index', ['filtroFechaDesde' => $datosMes['desde'], 'filtroFechaHasta' => $datosMes['hasta'], 'empresa' => $empresa->id]) }}" target="_blank" class="text-muted ms-1" title="Ver retenciones"><i class="bi bi-box-arrow-up-right"></i></a>
+                                    <a href="{{ route('ventas.granos.index', ['filtroFechaDesde' => $datosMes['desde'], 'filtroFechaHasta' => $datosMes['hasta'], 'empresa' => $empresa->id, 'filtroConRetencion' => 1]) }}" target="_blank" class="text-muted ms-1" title="Ver las liquidaciones con retención de IVA"><i class="bi bi-box-arrow-up-right"></i></a>
                                 </td>
                                 <td class="text-end font-monospace small">
                                     ${{ number_format($valores['devolucion'], 2, ',', '.') }}
                                     <a href="{{ route('finanzas.reintegros.index', ['filtroPeriodo' => $datosMes['periodo'], 'empresa' => $empresa->id]) }}" target="_blank" class="text-muted ms-1" title="Ver devoluciones"><i class="bi bi-box-arrow-up-right"></i></a>
                                 </td>
-                                <td class="text-end pe-3 font-monospace fw-bold small {{ $valores['saldo'] < 0 ? 'text-info' : 'text-warning-emphasis' }}">${{ number_format($valores['saldo'], 2, ',', '.') }}</td>
+                                <td class="text-end pe-3 font-monospace fw-bold small iva-corte {{ $valores['saldo'] < 0 ? 'text-info' : 'text-warning-emphasis' }}">${{ number_format($valores['saldo'], 2, ',', '.') }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -145,7 +153,12 @@
                             <td class="ps-3">Total {{ $anio }}</td>
                             @foreach (['debito', 'credito', 'saldo_tecnico', 'retenido', 'devolucion', 'saldo'] as $clave)
                                 @php $totalEmpresa = collect($meses)->sum(fn ($m) => $m['empresas'][$empresa->id][$clave]); @endphp
-                                <td class="text-end {{ $clave === 'saldo' ? 'pe-3' : '' }} font-monospace {{ in_array($clave, ['saldo_tecnico', 'saldo']) && $totalEmpresa < 0 ? 'text-info' : '' }}">${{ number_format($totalEmpresa, 2, ',', '.') }}</td>
+                                <td @class([
+                                    'text-end', 'font-monospace',
+                                    'pe-3' => $clave === 'saldo',
+                                    'iva-corte' => in_array($clave, ['retenido', 'saldo']),
+                                    'text-info' => in_array($clave, ['saldo_tecnico', 'saldo']) && $totalEmpresa < 0,
+                                ])>${{ number_format($totalEmpresa, 2, ',', '.') }}</td>
                             @endforeach
                         </tr>
                     </tfoot>
@@ -167,7 +180,7 @@
                             @foreach ($empresas as $empresa)
                                 <th class="text-end">{{ $empresa->razon_social }}</th>
                             @endforeach
-                            <th class="text-end pe-3">TOTAL</th>
+                            <th class="text-end pe-3 iva-corte">TOTAL</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -182,15 +195,15 @@
                                         <a href="{{ route('ventas.granos.index', ['filtroFechaDesde' => $datosMes['desde'], 'filtroFechaHasta' => $datosMes['hasta'], 'empresa' => $empresa->id]) }}" target="_blank" class="text-muted ms-1" title="Ver ventas de granos"><i class="bi bi-basket"></i></a>
                                         <a href="{{ route('ventas.hacienda.index', ['filtroFechaDesde' => $datosMes['desde'], 'filtroFechaHasta' => $datosMes['hasta'], 'empresa' => $empresa->id]) }}" target="_blank" class="text-muted ms-1" title="Ver ventas de hacienda"><i class="bi bi-cursor"></i></a>
                                     @elseif ($clave === 'credito')
-                                        <a href="{{ route('compras.index', ['filtroFechaDesde' => $datosMes['desde'], 'filtroFechaHasta' => $datosMes['hasta'], 'empresa' => $empresa->id]) }}" target="_blank" class="text-muted ms-1" title="Ver compras"><i class="bi bi-box-arrow-up-right"></i></a>
+                                        <a href="{{ route('compras.index', ['filtroFechaDesde' => $datosMes['desde'], 'filtroFechaHasta' => $datosMes['hasta'], 'empresa' => $empresa->id, 'filtroConIva' => 1]) }}" target="_blank" class="text-muted ms-1" title="Ver los comprobantes que suman al crédito fiscal"><i class="bi bi-box-arrow-up-right"></i></a>
                                     @elseif ($clave === 'retenido')
-                                        <a href="{{ route('ventas.granos.index', ['filtroFechaDesde' => $datosMes['desde'], 'filtroFechaHasta' => $datosMes['hasta'], 'empresa' => $empresa->id]) }}" target="_blank" class="text-muted ms-1" title="Ver retenciones"><i class="bi bi-box-arrow-up-right"></i></a>
+                                        <a href="{{ route('ventas.granos.index', ['filtroFechaDesde' => $datosMes['desde'], 'filtroFechaHasta' => $datosMes['hasta'], 'empresa' => $empresa->id, 'filtroConRetencion' => 1]) }}" target="_blank" class="text-muted ms-1" title="Ver las liquidaciones con retención de IVA"><i class="bi bi-box-arrow-up-right"></i></a>
                                     @elseif ($clave === 'devolucion')
                                         <a href="{{ route('finanzas.reintegros.index', ['filtroPeriodo' => $datosMes['periodo'], 'empresa' => $empresa->id]) }}" target="_blank" class="text-muted ms-1" title="Ver devoluciones"><i class="bi bi-box-arrow-up-right"></i></a>
                                     @endif
                                 </td>
                             @endforeach
-                            <td class="text-end pe-3 font-monospace fw-semibold small">${{ number_format($datosMes['total'][$clave], 2, ',', '.') }}</td>
+                            <td class="text-end pe-3 font-monospace fw-semibold small iva-corte">${{ number_format($datosMes['total'][$clave], 2, ',', '.') }}</td>
                         </tr>
                         @endforeach
                     </tbody>
@@ -201,7 +214,7 @@
                                 @php $sumaEmpresa = collect($meses)->sum(fn ($m) => $m['empresas'][$empresa->id][$clave]); @endphp
                                 <td class="text-end font-monospace">${{ number_format($sumaEmpresa, 2, ',', '.') }}</td>
                             @endforeach
-                            <td class="text-end pe-3 font-monospace">${{ number_format($totalesAnio[$clave], 2, ',', '.') }}</td>
+                            <td class="text-end pe-3 font-monospace iva-corte">${{ number_format($totalesAnio[$clave], 2, ',', '.') }}</td>
                         </tr>
                     </tfoot>
                 </table>

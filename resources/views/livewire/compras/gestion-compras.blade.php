@@ -91,10 +91,26 @@
                         <option value="no_presentados">Sólo NO presentados</option>
                     </select>
                 </div>
+                <div class="col-md-auto d-flex align-items-center gap-2">
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" id="chkConIva"
+                               wire:model.live="filtroConIva">
+                        <label class="form-check-label small text-nowrap" for="chkConIva"
+                               title="Deja sólo los comprobantes que suman al crédito fiscal">
+                            Sólo con IVA
+                        </label>
+                    </div>
+                    @if ($this->hayFiltros())
+                        <button class="btn btn-outline-secondary btn-sm py-0 text-nowrap"
+                                wire:click="limpiarFiltros" title="Quitar todos los filtros y ver el listado completo">
+                            <i class="bi bi-x-circle me-1"></i>Ver todo
+                        </button>
+                    @endif
+                </div>
 
                 {{-- Totales de todo lo filtrado (no sólo de la página), para
                      poder cuadrar contra el libro IVA del contador. --}}
-                <div class="col-md-8 d-flex align-items-center justify-content-end gap-3 small flex-wrap">
+                <div class="col-md d-flex align-items-center justify-content-end gap-3 small flex-wrap">
                     <span class="text-body-secondary">
                         {{ $totales->cant }} comprobante(s):
                         <strong class="text-body">${{ number_format($totales->total, 2, ',', '.') }}</strong>
