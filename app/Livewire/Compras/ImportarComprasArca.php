@@ -6,7 +6,9 @@ use App\Models\Compra;
 use App\Models\Proveedor;
 use App\Support\TipoComprobanteArca;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -20,7 +22,15 @@ class ImportarComprasArca extends Component
 
     public string $paso = 'subir'; // subir | previsualizar | resultado
 
-    public array $filasParsadas = [];
+    /**
+     * Las filas del archivo NO viajan en el estado del componente: se guardan
+     * en caché del servidor y acá queda sólo la clave.
+     *
+     * Con un export de 165 comprobantes el snapshot de Livewire pesaba más de
+     * 100 KB, y ese snapshot va y vuelve en cada request. En el hosting eso
+     * terminaba en un 419 al confirmar la importación.
+     */
+    public string $lote = '';
 
     public array $resumen = ['importadas' => 0, 'reclasificadas' => 0, 'duplicadas' => 0, 'errores' => 0];
 
@@ -79,7 +89,7 @@ class ImportarComprasArca extends Component
             return;
         }
 
-        $this->filasParsadas = [];
+        $filas = [];
         for ($i = $headerIndex + 1; $i < count($rows); $i++) {
             $row = $rows[$i];
             if (! array_filter($row, fn ($v) => $v !== null && $v !== '')) {
@@ -87,11 +97,13 @@ class ImportarComprasArca extends Component
             }
             $fila = $this->parsearFila($row);
             if ($fila !== null) {
-                $this->filasParsadas[] = $fila;
+                $filas[] = $fila;
             }
         }
 
-        if (empty($this->filasParsadas)) {
+        $this->guardarFilas($filas);
+
+        if (empty($filas)) {
             $this->addError('archivo', 'No se encontraron filas con datos válidos en el archivo.');
 
             return;
@@ -113,7 +125,8 @@ class ImportarComprasArca extends Component
         $errores = 0;
         $reclasificadas = 0;
 
-        foreach ($this->filasParsadas as &$fila) {
+        $filas = $this->filas();
+        foreach ($filas as &$fila) {
             if ($fila['estado'] === 'duplicado') {
                 $duplicadas++;
 
@@ -204,6 +217,7 @@ class ImportarComprasArca extends Component
             }
         }
         unset($fila);
+        $this->guardarFilas($filas);
 
         $this->resumen = compact('importadas', 'reclasificadas', 'duplicadas', 'errores');
         $this->paso = 'resultado';
@@ -211,10 +225,40 @@ class ImportarComprasArca extends Component
 
     public function reiniciar(): void
     {
-        $this->reset(['archivo', 'filasParsadas', 'resumen']);
+        $this->olvidarFilas();
+        $this->reset(['archivo', 'resumen']);
         $this->cols = [];
         $this->paso = 'subir';
         $this->resetValidation();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Las filas del archivo, fuera del estado del componente
+    // ─────────────────────────────────────────────────────────────
+
+    /** Filas del archivo que se está importando. */
+    private function filas(): array
+    {
+        return $this->lote ? Cache::get($this->claveLote(), []) : [];
+    }
+
+    private function guardarFilas(array $filas): void
+    {
+        $this->lote = $this->lote ?: (string) Str::uuid();
+        Cache::put($this->claveLote(), $filas, now()->addHour());
+    }
+
+    private function olvidarFilas(): void
+    {
+        if ($this->lote) {
+            Cache::forget($this->claveLote());
+        }
+        $this->lote = '';
+    }
+
+    private function claveLote(): string
+    {
+        return 'importar-arca:'.$this->lote;
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -568,6 +612,10 @@ class ImportarComprasArca extends Component
 
     public function render()
     {
-        return view('livewire.compras.importar-compras-arca');
+        // Las filas se le pasan a la vista desde acá y no como propiedad del
+        // componente, para que no viajen en el snapshot de Livewire.
+        return view('livewire.compras.importar-compras-arca', [
+            'filasParsadas' => $this->filas(),
+        ]);
     }
 }
