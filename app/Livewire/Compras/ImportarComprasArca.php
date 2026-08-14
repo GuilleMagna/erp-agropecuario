@@ -3,6 +3,7 @@
 namespace App\Livewire\Compras;
 
 use App\Models\Compra;
+use App\Models\Empresa;
 use App\Models\Proveedor;
 use App\Support\TipoComprobanteArca;
 use Carbon\Carbon;
@@ -85,6 +86,12 @@ class ImportarComprasArca extends Component
 
         if ($this->cols['fecha'] === null || $this->cols['cuit'] === null || $this->cols['total'] === null) {
             $this->addError('archivo', 'Faltan columnas requeridas (Fecha, CUIT, Importe Total). El archivo no coincide con el formato esperado de ARCA.');
+
+            return;
+        }
+
+        if ($error = $this->empresaDelArchivoNoCoincide($rows, $headerIndex)) {
+            $this->addError('archivo', $error);
 
             return;
         }
@@ -236,6 +243,56 @@ class ImportarComprasArca extends Component
     // Las filas del archivo, fuera del estado del componente
     // ─────────────────────────────────────────────────────────────
 
+    /**
+     * Los comprobantes se cargan en la empresa que está seleccionada arriba, y
+     * es fácil olvidarse de cambiarla: así fue a parar el export de WILMAR 2024
+     * dentro de ELVIO. El export dice de quién es (el receptor), así que se
+     * compara antes de dejar seguir.
+     *
+     * Devuelve el mensaje de error, o null si está todo bien o no se puede
+     * determinar de quién es el archivo.
+     */
+    private function empresaDelArchivoNoCoincide(array $rows, int $headerIndex): ?string
+    {
+        // resolverEmpresaActiva() vive en el trait PerteneceAEmpresa, que usa
+        // Compra; Empresa no lo tiene porque no pertenece a otra empresa.
+        $activa = Empresa::find(Compra::resolverEmpresaActiva());
+        if (! $activa) {
+            return null;
+        }
+
+        // El CUIT del receptor puede venir en una columna o en el nombre del
+        // archivo ("Mis Comprobantes Recibidos - CUIT 20135430138.xlsx").
+        $delArchivo = null;
+        if ($this->cols['cuit_receptor'] !== null) {
+            for ($i = $headerIndex + 1; $i < count($rows); $i++) {
+                $valor = preg_replace('/\D/', '', (string) ($rows[$i][$this->cols['cuit_receptor']] ?? ''));
+                if (strlen($valor) === 11) {
+                    $delArchivo = $valor;
+                    break;
+                }
+            }
+        }
+
+        if (! $delArchivo && $this->archivo && preg_match('/(\d{11})/', $this->archivo->getClientOriginalName(), $m)) {
+            $delArchivo = $m[1];
+        }
+
+        if (! $delArchivo || $delArchivo === preg_replace('/\D/', '', $activa->cuit)) {
+            return null;
+        }
+
+        $duena = Empresa::whereRaw("REPLACE(cuit, '-', '') = ?", [$delArchivo])->first();
+
+        return sprintf(
+            'El archivo es de %s (CUIT %s) y la empresa seleccionada es %s. '.
+            'Cambiá la empresa en el selector de arriba antes de importar, o los comprobantes van a quedar en la empresa equivocada.',
+            $duena?->razon_social ?? 'otro CUIT',
+            $delArchivo,
+            $activa->razon_social
+        );
+    }
+
     /** Filas del archivo que se está importando. */
     private function filas(): array
     {
@@ -321,7 +378,7 @@ class ImportarComprasArca extends Component
             'fecha', 'tipo', 'pv', 'numero', 'moneda', 'tc',
             'cuit', 'nombre', 'neto', 'neto_ng', 'exento',
             'iva_21', 'iva_105', 'iva_27', 'iva_25', 'iva_5',
-            'otros', 'total',
+            'otros', 'total', 'cuit_receptor',
         ], null);
 
         foreach ($headerRow as $i => $header) {
@@ -335,7 +392,11 @@ class ImportarComprasArca extends Component
                 $cols['pv'] = $i;
             }
             // CUIT antes que numero: "Nro. Doc. Emisor" no tiene la palabra "cuit"
-            elseif (str_contains($h, 'cuit') ||
+            // El receptor es la empresa dueña del archivo: sirve para avisar si
+            // se está importando con la empresa equivocada seleccionada.
+            elseif (str_contains($h, 'nro') && str_contains($h, 'doc') && str_contains($h, 'receptor')) {
+                $cols['cuit_receptor'] = $i;
+            } elseif (str_contains($h, 'cuit') ||
                     (str_contains($h, 'nro') && str_contains($h, 'doc') && str_contains($h, 'emisor'))) {
                 $cols['cuit'] = $i;
             }
