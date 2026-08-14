@@ -35,4 +35,5 @@ deployment:
     - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_12_270000_add_orden_to_empresas_table.php
     - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_14_120000_mover_compras_2024_de_elvio_a_wilmar.php
     - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_14_190000_mover_lote_wilmar_2024_desde_elvio.php
+    - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_14_200000_mover_lote_1426_de_elvio_a_wilmar.php
     - cd $APPPATH && /usr/local/bin/php artisan view:clear
