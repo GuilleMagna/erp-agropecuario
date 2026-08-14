@@ -25,4 +25,6 @@ deployment:
     - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_12_211000_conciliar_ventas_elvio_enero_junio_2026.php
     - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_12_220000_conciliar_compras_wilmar_enero_junio_2026.php
     - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_12_221000_conciliar_ventas_wilmar_enero_junio_2026.php
+    - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_12_230000_conciliar_compras_sociedad_enero_junio_2026.php
+    - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_12_231000_conciliar_ventas_granos_sociedad_enero_junio_2026.php
     - cd $APPPATH && /usr/local/bin/php artisan view:clear
