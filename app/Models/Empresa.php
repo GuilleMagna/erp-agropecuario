@@ -39,6 +39,7 @@ class Empresa extends Model
 
     protected $fillable = [
         'razon_social',
+        'orden',
         'cuit',
         'condicion_fiscal',
         'domicilio_fiscal',
@@ -56,7 +57,14 @@ class Empresa extends Model
         'activa'      => 'boolean',
         'arca_activo' => 'boolean',
         'arca_clave_fiscal' => 'encrypted',
+        'orden'       => 'integer',
     ];
+
+    /** Orden de trabajo para los reportes; a igual orden, alfabético. */
+    public function scopeOrdenadas($query)
+    {
+        return $query->orderBy('orden')->orderBy('razon_social');
+    }
 
     public function establecimientos(): HasMany
     {

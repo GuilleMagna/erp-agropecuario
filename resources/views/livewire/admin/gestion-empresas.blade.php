@@ -116,11 +116,18 @@
                         </h6>
 
                         <div class="row g-3 mb-4">
-                            <div class="col-12">
+                            <div class="col-md-9">
                                 <label class="form-label small fw-semibold">Razón social <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control @error('razon_social') is-invalid @enderror"
                                        wire:model="razon_social" placeholder="Nombre o razón social completa">
                                 @error('razon_social')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">Orden</label>
+                                <input type="number" min="0" class="form-control @error('orden') is-invalid @enderror"
+                                       wire:model="orden">
+                                @error('orden')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                <small class="text-muted">Posición en los reportes</small>
                             </div>
                             <div class="col-md-5">
                                 <label class="form-label small fw-semibold">CUIT <span class="text-danger">*</span></label>
