@@ -156,7 +156,7 @@
                         <tr>
                             <th>Nombre</th>
                             <th>Localidad</th>
-                            <th class="text-center">Gastos NO ARCA vinculados</th>
+                            <th class="text-center">Gastos vinculados</th>
                             <th class="text-center">Estado</th>
                             <th></th>
                         </tr>

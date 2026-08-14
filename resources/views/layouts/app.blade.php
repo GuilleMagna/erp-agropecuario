@@ -338,7 +338,7 @@
                 @can('finanzas.gastos.gestionar')
                 <a href="{{ route('finanzas.gastos.index') }}"
                    class="nav-link {{ request()->routeIs('finanzas.gastos.*') ? 'active' : '' }}">
-                    <i class="bi bi-cash-stack me-2"></i> Gastos NO ARCA
+                    <i class="bi bi-cash-stack me-2"></i> Gastos
                 </a>
                 @endcan
                 @can('finanzas.inmuebles.gestionar')

@@ -3,7 +3,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h5 class="mb-0 fw-bold text-dark">Inmuebles</h5>
-            <small class="text-muted">Ingresos por alquiler vs. gastos NO ARCA (expensas, servicios) mes a mes y acumulado — {{ $anio }}</small>
+            <small class="text-muted">Ingresos por alquiler vs. gastos (expensas, servicios) mes a mes y acumulado — {{ $anio }}</small>
         </div>
         @can('reportes.exportar')
         <button class="btn btn-outline-success btn-sm" wire:click="exportarCsv" wire:loading.attr="disabled">
@@ -95,7 +95,7 @@
                             <td class="text-end font-monospace text-danger small">
                                 ${{ number_format($i['gastos'], 2, ',', '.') }}
                                 <a href="{{ route('finanzas.gastos.index', ['mesSeleccionado' => $datosMes['periodo']]) }}"
-                                   target="_blank" class="text-muted ms-1" title="Ver gastos NO ARCA del período">
+                                   target="_blank" class="text-muted ms-1" title="Ver gastos del período">
                                     <i class="bi bi-box-arrow-up-right"></i>
                                 </a>
                             </td>
