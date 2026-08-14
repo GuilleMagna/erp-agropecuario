@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Compra;
 use App\Models\Empresa;
 use App\Models\Proveedor;
+use App\Support\TipoComprobanteArca;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -52,14 +53,6 @@ class ImportarFacturas2024 extends Command
         'ALQUILERES' => 'alquileres',
         'BIEN DE CAPITAL' => 'bien_capital',
         'COMBUSTIBLE' => 'combustible',
-    ];
-
-    /** Mismo mapeo de tipo que MrbotService/ImportarComprasArca, por código numérico. */
-    private const MAPA_TIPOS = [
-        '1' => 'factura_a', '2' => 'otro', '3' => 'otro',
-        '6' => 'factura_b', '7' => 'otro', '8' => 'otro',
-        '11' => 'factura_c', '12' => 'otro', '13' => 'otro',
-        '51' => 'factura_a', '81' => 'ticket', '82' => 'ticket', '83' => 'ticket',
     ];
 
     public function handle(): int
@@ -274,13 +267,13 @@ class ImportarFacturas2024 extends Command
         return (float) ($celda->isFormula() ? $celda->getOldCalculatedValue() : $celda->getValue());
     }
 
+    /**
+     * Traduce el tipo que informa ARCA al tipo interno del ERP. La tabla vive
+     * en TipoComprobanteArca, compartida con los dos importadores.
+     */
     private function mapearTipo(string $tipo): string
     {
-        if (preg_match('/^(\d+)/', trim($tipo), $m)) {
-            return self::MAPA_TIPOS[ltrim($m[1], '0') ?: '0'] ?? 'otro';
-        }
-
-        return 'otro';
+        return TipoComprobanteArca::mapear($tipo);
     }
 
     private function normalizarCuit(string $raw): string
