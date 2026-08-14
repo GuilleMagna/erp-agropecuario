@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Compra;
 use App\Models\Proveedor;
+use App\Support\TipoComprobanteArca;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
@@ -19,46 +20,6 @@ class MrbotService
 
     private int $timeout;
 
-    // Mismos mapeos de tipo que ImportarComprasArca
-    const MAPA_TIPOS = [
-        '1' => 'factura_a', '01' => 'factura_a', '001' => 'factura_a',
-        '2' => 'nota_debito',  '02' => 'nota_debito',  '002' => 'nota_debito',   // ND A
-        '3' => 'nota_credito', '03' => 'nota_credito', '003' => 'nota_credito',  // NC A
-        '6' => 'factura_b', '06' => 'factura_b',  '006' => 'factura_b',
-        '7' => 'nota_debito',  '07' => 'nota_debito',  '007' => 'nota_debito',   // ND B
-        '8' => 'nota_credito', '08' => 'nota_credito', '008' => 'nota_credito',  // NC B
-        '11' => 'factura_c', '011' => 'factura_c',
-        '12' => 'nota_debito',  '012' => 'nota_debito',   // ND C
-        '13' => 'nota_credito', '013' => 'nota_credito',  // NC C
-        '51' => 'factura_a', '051' => 'factura_a',
-        '52' => 'nota_debito',  '052' => 'nota_debito',   // ND M
-        '53' => 'nota_credito', '053' => 'nota_credito',  // NC M
-        '81' => 'ticket',    '081' => 'ticket',
-        '82' => 'ticket',    '082' => 'ticket',
-        '83' => 'ticket',    '083' => 'ticket',
-        '110' => 'nota_credito',                          // Tique nota de crédito
-        '112' => 'nota_credito', '113' => 'nota_credito', '114' => 'nota_credito',
-        '115' => 'nota_debito',  '116' => 'nota_debito',  '117' => 'nota_debito',
-        '118' => 'nota_credito', '119' => 'nota_credito', '120' => 'nota_debito',
-        '201' => 'factura_a', '202' => 'nota_debito', '203' => 'nota_credito',   // FCE MiPyME A
-        '206' => 'factura_b', '207' => 'nota_debito', '208' => 'nota_credito',   // FCE MiPyME B
-        '211' => 'factura_c', '212' => 'nota_debito', '213' => 'nota_credito',   // FCE MiPyME C
-        'factura a' => 'factura_a',
-        'factura b' => 'factura_b',
-        'factura c' => 'factura_c',
-        'factura m' => 'factura_a',
-        'ticket' => 'ticket',
-        'ticket factura a' => 'ticket',
-        'ticket factura b' => 'ticket',
-        'recibo' => 'recibo',
-        // Nota: la búsqueda por texto es por str_contains, así que alcanza con
-        // el prefijo para cubrir A, B, C y M.
-        'nota de débito' => 'nota_debito',
-        'nota de credito' => 'nota_credito',
-        'nota de crédito' => 'nota_credito',
-        'nota credito' => 'nota_credito',
-        'nota debito' => 'nota_debito',
-    ];
 
     public function __construct()
     {
@@ -475,39 +436,12 @@ class MrbotService
         return $raw;
     }
 
+    /**
+     * Traduce el tipo que informa ARCA al tipo interno del ERP. La tabla vive
+     * en TipoComprobanteArca, compartida con ImportarComprasArca.
+     */
     private function mapearTipo(string $tipo): string
     {
-        $tipo = trim($tipo);
-        $lower = strtolower($tipo);
-        $sinCero = ltrim($tipo, '0') ?: '0';
-
-        if (isset(self::MAPA_TIPOS[$tipo])) {
-            return self::MAPA_TIPOS[$tipo];
-        }
-        if (isset(self::MAPA_TIPOS[$sinCero])) {
-            return self::MAPA_TIPOS[$sinCero];
-        }
-        if (isset(self::MAPA_TIPOS[$lower])) {
-            return self::MAPA_TIPOS[$lower];
-        }
-
-        if (preg_match('/^(\d+)\s*[-–]/', $tipo, $m)) {
-            $code = $m[1];
-            $sinCero = ltrim($code, '0') ?: '0';
-            if (isset(self::MAPA_TIPOS[$code])) {
-                return self::MAPA_TIPOS[$code];
-            }
-            if (isset(self::MAPA_TIPOS[$sinCero])) {
-                return self::MAPA_TIPOS[$sinCero];
-            }
-        }
-
-        foreach (self::MAPA_TIPOS as $key => $val) {
-            if (! is_numeric(str_replace(['-', '.', ' '], '', $key)) && str_contains($lower, $key)) {
-                return $val;
-            }
-        }
-
-        return 'otro';
+        return TipoComprobanteArca::mapear($tipo);
     }
 }
