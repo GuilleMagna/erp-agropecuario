@@ -130,7 +130,7 @@ class ReporteGanancias extends Component
                 $header[] = $empresa->razon_social . ' - Resultado';
             }
             $header[] = 'TOTAL Ingresos';
-            $header[] = 'TOTAL Egresos (incl. NO ARCA)';
+            $header[] = 'TOTAL Egresos (incl. gastos)';
             $header[] = 'TOTAL Resultado';
             $header[] = 'Acumulado año';
             fputcsv($handle, $header, ';');

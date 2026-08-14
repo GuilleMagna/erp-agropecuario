@@ -18,7 +18,7 @@
         <i class="bi bi-info-circle-fill mt-1"></i>
         <div>
             Este resultado es la <strong>base impositiva estimada</strong> (ingresos de ventas menos egresos de compras,
-            ambos netos de IVA, más gastos NO ARCA). No aplica el mínimo no imponible, deducciones personales ni la
+            ambos netos de IVA, más gastos). No aplica el mínimo no imponible, deducciones personales ni la
             escala progresiva del Art. 94 — eso depende de datos que no están en el ERP (cargas de familia, aportes,
             forma societaria) y debe calcularlo tu contador sobre este resultado ya consolidado.
         </div>
@@ -56,7 +56,7 @@
                 <div class="card-body">
                     <div class="text-muted small fw-semibold text-uppercase mb-1">Egresos {{ $anio }}</div>
                     <div class="fs-5 fw-bold text-danger">${{ number_format($totalesAnio['egresos'], 2, ',', '.') }}</div>
-                    <div class="text-muted small">Compras (neto) + gastos NO ARCA</div>
+                    <div class="text-muted small">Compras (neto) + gastos</div>
                 </div>
             </div>
         </div>
@@ -123,7 +123,7 @@
     {{-- Consolidado --}}
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-header bg-white border-bottom fw-semibold">
-            <i class="bi bi-collection me-2 text-dark"></i>Consolidado (incluye gastos NO ARCA, sin asignar a una empresa puntual)
+            <i class="bi bi-collection me-2 text-dark"></i>Consolidado (incluye gastos, sin asignar a una empresa puntual)
         </div>
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
@@ -132,7 +132,7 @@
                         <th class="ps-3">Mes</th>
                         <th class="text-end">Ingresos</th>
                         <th class="text-end">Egresos compras</th>
-                        <th class="text-end">Gastos NO ARCA</th>
+                        <th class="text-end">Gastos</th>
                         <th class="text-end">Resultado</th>
                         <th class="text-end pe-3">Acumulado {{ $anio }}</th>
                     </tr>
@@ -146,7 +146,7 @@
                             <td class="text-end font-monospace text-danger small">
                                 ${{ number_format($datosMes['total']['gastos_no_arca'], 2, ',', '.') }}
                                 <a href="{{ route('finanzas.gastos.index', ['mesSeleccionado' => $datosMes['periodo']]) }}"
-                                   target="_blank" class="text-muted ms-1" title="Ver gastos NO ARCA del período">
+                                   target="_blank" class="text-muted ms-1" title="Ver gastos del período">
                                     <i class="bi bi-box-arrow-up-right"></i>
                                 </a>
                             </td>
