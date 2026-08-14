@@ -17,11 +17,11 @@ class VentaHacienda extends Model
 
     protected $fillable = [
         'id_establecimiento',
-        'comprador', 'id_comprador', 'corredor_feria', 'numero_guia',
+        'comprador', 'id_comprador', 'corredor_feria', 'numero_guia', 'numero_comprobante',
         'fecha', 'tipo_operacion', 'categoria',
         'cantidad_cabezas', 'peso_promedio_kg', 'peso_total_kg',
         'precio_kg', 'precio_cabeza',
-        'importe_total', 'moneda', 'estado', 'observaciones',
+        'importe_total', 'debito_fiscal', 'moneda', 'estado', 'observaciones',
     ];
 
     protected $casts = [
@@ -32,6 +32,7 @@ class VentaHacienda extends Model
         'precio_kg' => 'decimal:4',
         'precio_cabeza' => 'decimal:2',
         'importe_total' => 'decimal:2',
+        'debito_fiscal' => 'decimal:2',
     ];
 
     const TIPOS_OPERACION = [
