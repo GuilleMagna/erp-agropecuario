@@ -27,4 +27,7 @@ deployment:
     - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_12_221000_conciliar_ventas_wilmar_enero_junio_2026.php
     - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_12_230000_conciliar_compras_sociedad_enero_junio_2026.php
     - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_12_231000_conciliar_ventas_granos_sociedad_enero_junio_2026.php
+    - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_12_240000_add_datos_fiscales_to_ventas_hacienda_table.php
+    - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_12_241000_conciliar_ventas_hacienda_sociedad_enero_junio_2026.php
+    - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_12_242000_borrar_ventas_duplicadas.php
     - cd $APPPATH && /usr/local/bin/php artisan view:clear
