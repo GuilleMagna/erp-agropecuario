@@ -15,6 +15,8 @@ class GestionEmpresas extends Component
 
     // Datos fiscales
     public string $razon_social     = '';
+    /** Posición en la que aparece la empresa en los reportes. */
+    public string $orden            = '0';
     public string $cuit             = '';
     public string $condicion_fiscal = '';
     public string $domicilio_fiscal = '';
@@ -48,6 +50,7 @@ class GestionEmpresas extends Component
 
         return [
             'razon_social'             => 'required|string|max:200',
+            'orden'                    => 'nullable|integer|min:0|max:999',
             'cuit'                     => ['required', 'string', 'max:20', 'regex:/^\d{2}-\d{8}-\d{1}$/', $unique],
             'condicion_fiscal'         => 'required|in:' . implode(',', array_keys(self::CONDICIONES_FISCALES)),
             'domicilio_fiscal'         => 'nullable|string|max:300',
@@ -85,6 +88,7 @@ class GestionEmpresas extends Component
         $this->editandoId   = $id;
         $this->modoEdicion  = true;
         $this->razon_social     = $empresa->razon_social;
+        $this->orden            = (string) $empresa->orden;
         $this->cuit             = $empresa->cuit;
         $this->condicion_fiscal = $empresa->condicion_fiscal;
         $this->domicilio_fiscal = $empresa->domicilio_fiscal ?? '';
@@ -106,6 +110,7 @@ class GestionEmpresas extends Component
 
         $datos = [
             'razon_social'     => $this->razon_social,
+            'orden'            => (int) ($this->orden ?: 0),
             'cuit'             => $this->cuit,
             'condicion_fiscal' => $this->condicion_fiscal,
             'domicilio_fiscal' => $this->domicilio_fiscal ?: null,
@@ -160,7 +165,7 @@ class GestionEmpresas extends Component
     {
         $this->reset([
             'editandoId', 'modoEdicion',
-            'razon_social', 'cuit', 'condicion_fiscal', 'domicilio_fiscal',
+            'razon_social', 'orden', 'cuit', 'condicion_fiscal', 'domicilio_fiscal',
             'arca_cuit_login', 'arca_clave_fiscal', 'arca_cuit_representado', 'arca_nombre_representado',
             'arca_activo',
         ]);
@@ -171,7 +176,7 @@ class GestionEmpresas extends Component
     public function render(): \Illuminate\View\View
     {
         return view('livewire.admin.gestion-empresas', [
-            'empresas'            => Empresa::orderBy('razon_social')->get(),
+            'empresas'            => Empresa::ordenadas()->get(),
             'condicionesFiscales' => self::CONDICIONES_FISCALES,
         ]);
     }

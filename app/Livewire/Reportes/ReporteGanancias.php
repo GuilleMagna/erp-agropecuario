@@ -27,7 +27,7 @@ class ReporteGanancias extends Component
      */
     private function calcularDatos(int $anio): array
     {
-        $empresas = Empresa::orderBy('razon_social')->get();
+        $empresas = Empresa::ordenadas()->get();
 
         // gastos_no_arca hoy no está asignado a ninguna empresa puntual (todas las
         // filas tienen id_empresa nulo), así que solo se puede sumar al consolidado.

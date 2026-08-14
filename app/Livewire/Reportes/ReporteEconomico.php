@@ -187,7 +187,7 @@ class ReporteEconomico extends Component
         $jornalesLiquidados = Jornal::sinFiltroDeEmpresa()->whereBetween('fecha', [$desde, $hasta])
             ->where('estado', 'liquidado')->sum('importe');
 
-        $empresas = Empresa::orderBy('razon_social')->get();
+        $empresas = Empresa::ordenadas()->get();
         $resumenEmpresas = $empresas->map(function (Empresa $empresa) use ($desde, $hasta, $estId) {
             $aplicarFiltros = fn ($query) => $query
                 ->where('id_empresa', $empresa->id)

@@ -32,4 +32,5 @@ deployment:
     - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_12_242000_borrar_ventas_duplicadas.php
     - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_12_250000_corregir_emisor_liquidacion_0005_00026563.php
     - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_12_260000_importar_comprobantes_arca_2024_2025.php
+    - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_12_270000_add_orden_to_empresas_table.php
     - cd $APPPATH && /usr/local/bin/php artisan view:clear

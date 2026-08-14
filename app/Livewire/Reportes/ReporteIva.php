@@ -25,7 +25,7 @@ class ReporteIva extends Component
      */
     private function calcularDatos(int $anio): array
     {
-        $empresas = Empresa::orderBy('razon_social')->get();
+        $empresas = Empresa::ordenadas()->get();
 
         $meses = [];
         $totalesAnio = ['debito' => 0.0, 'credito' => 0.0, 'saldo_tecnico' => 0.0, 'retenido' => 0.0, 'devolucion' => 0.0, 'saldo' => 0.0];
