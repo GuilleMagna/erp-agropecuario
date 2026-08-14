@@ -23,4 +23,6 @@ deployment:
     - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_12_200000_cargar_compras_faltantes_elvio_enero_junio_2026.php
     - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_12_210000_add_datos_fiscales_to_ventas_granos_table.php
     - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_12_211000_conciliar_ventas_elvio_enero_junio_2026.php
+    - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_12_220000_conciliar_compras_wilmar_enero_junio_2026.php
+    - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_08_12_221000_conciliar_ventas_wilmar_enero_junio_2026.php
     - cd $APPPATH && /usr/local/bin/php artisan view:clear
