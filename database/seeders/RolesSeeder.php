@@ -286,6 +286,7 @@ class RolesSeeder extends Seeder
             'compras.arca.gestionar',
             'compras.proveedores.gestionar',
             'finanzas.gastos.gestionar',
+            'finanzas.reintegros.gestionar',
             'sistema.empresas.cambiar',
         ]);
 

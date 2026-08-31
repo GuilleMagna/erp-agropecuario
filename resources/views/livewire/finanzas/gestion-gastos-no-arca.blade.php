@@ -107,7 +107,7 @@
                             @endphp
 
                             {{-- Encabezado de categoría --}}
-                            <tr>
+                            <tr wire:key="gastos-categoria-{{ $categoriaKey }}">
                                 <td colspan="6" class="py-1 px-3">
                                     <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
                                         <i class="bi bi-tag me-1"></i>{{ $cat }}
@@ -122,7 +122,8 @@
                                     $totalCategoria += $pagoImporte;
                                 @endphp
 
-                                <tr @class(['fila-importe-pendiente' => trim((string) $imp) === '' && $gasto->activo])>
+                                <tr wire:key="gasto-pago-{{ $gasto->id }}"
+                                    @class(['fila-importe-pendiente' => trim((string) $imp) === '' && $gasto->activo])>
                                     <td class="ps-4">
                                         {{ $gasto->nombre }}
                                         @unless ($gasto->activo)
@@ -176,7 +177,7 @@
 
                             {{-- Subtotal de categoría --}}
                             @if ($totalCategoria > 0)
-                                <tr class="table-light">
+                                <tr class="table-light" wire:key="gastos-subtotal-{{ $categoriaKey }}">
                                     <td colspan="2" class="text-end text-muted small fw-semibold pe-3">
                                         Subtotal {{ $cat }}
                                     </td>
