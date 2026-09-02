@@ -259,6 +259,12 @@ class GestionVentasGranos extends Component
             + (float) ($this->bonificacion ?: 0);
     }
 
+    /** Importe neto que se muestra en la tabla, luego de las deducciones. */
+    public function importeListadoCalculado(): float
+    {
+        return $this->totalCalculado() - (float) ($this->deducciones ?: 0);
+    }
+
     public function abrirModalCrear(): void
     {
         Gate::authorize('ventas.granos.registrar');
@@ -353,7 +359,7 @@ class GestionVentasGranos extends Component
             'cantidad_tn' => round((float) $this->cantidad_kg / 1000, 3),
             'precio_tn' => round((float) $this->precio_kg * 1000, 2),
             'moneda' => $this->moneda,
-            'importe_total' => round($this->totalCalculado(), 2),
+            'importe_total' => round($this->importeListadoCalculado(), 2),
             'cantidad_kg' => (float) $this->cantidad_kg,
             'unidad_cantidad' => $this->unidadCantidad,
             'factor' => (float) $this->factor,

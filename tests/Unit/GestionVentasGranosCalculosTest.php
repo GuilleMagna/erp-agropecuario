@@ -42,6 +42,7 @@ class GestionVentasGranosCalculosTest extends TestCase
         $componente->iva_rg4310 = '427674.97';
 
         $this->assertEqualsWithDelta(8592320.39, $componente->totalCalculado(), 0.001);
+        $this->assertEqualsWithDelta(8588024.20, $componente->importeListadoCalculado(), 0.001);
     }
 
     public function test_el_modelo_respeta_precios_historicos_anteriores_al_flete(): void

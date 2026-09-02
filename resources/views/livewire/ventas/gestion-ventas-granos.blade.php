@@ -431,7 +431,7 @@
                                 <div class="font-monospace">{{ number_format($this->resultadoIvaCalculado(), 2, ',', '.') }}</div>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label small fw-semibold text-muted text-uppercase">Total</label>
+                                <label class="form-label small fw-semibold text-muted text-uppercase">Total operación</label>
                                 <div class="font-monospace fw-bold fs-5 text-success">
                                     {{ $moneda === 'USD' ? 'U$S' : '$' }} {{ number_format($this->totalCalculado(), 2, ',', '.') }}
                                 </div>
