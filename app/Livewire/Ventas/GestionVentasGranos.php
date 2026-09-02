@@ -94,7 +94,7 @@ class GestionVentasGranos extends Component
     // Campos que replican la hoja VENTAS del Excel de control mensual.
     // cantidad_kg es el valor canónico (siempre en KG) que se valida y guarda.
     // cantidadIngresada + unidadCantidad son lo que el usuario ve y tipea: puede
-    // cargar en KG o en Quintales (1 quintal = 100kg) según cómo lo tenga a mano.
+    // cargar en KG, Quintales o TN según cómo figure en la liquidación.
     public string $cantidad_kg = '';
 
     public string $cantidadIngresada = '';
@@ -293,8 +293,11 @@ class GestionVentasGranos extends Component
         // no tienen el detalle de liquidación: se estima cantidad/precio en kg a
         // partir de lo guardado en tn para que el formulario no arranque en blanco.
         $this->cantidad_kg = (string) ($venta->cantidad_kg ?? round((float) $venta->cantidad_tn * 1000, 2));
-        $this->unidadCantidad = 'kg';
+        $this->unidadCantidad = in_array($venta->unidad_cantidad, ['kg', 'quintales', 'tn'], true)
+            ? $venta->unidad_cantidad
+            : 'kg';
         $this->cantidadIngresada = $this->cantidad_kg;
+        $this->updatedUnidadCantidad();
         $this->precio_kg = (string) ($venta->precio_kg ?? round((float) $venta->precio_tn / 1000, 4));
         $this->factor = (string) ($venta->factor ?? '100');
         // La base conserva el flete por kg por compatibilidad histórica, pero
@@ -349,6 +352,7 @@ class GestionVentasGranos extends Component
             'moneda' => $this->moneda,
             'importe_total' => round($this->totalCalculado(), 2),
             'cantidad_kg' => (float) $this->cantidad_kg,
+            'unidad_cantidad' => $this->unidadCantidad,
             'factor' => (float) $this->factor,
             'precio_kg' => (float) $this->precio_kg,
             'flete_kg' => (float) ($this->flete_tn ?: 0) / 1000,

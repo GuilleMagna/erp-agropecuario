@@ -22,7 +22,7 @@ class VentaGrano extends Model
         'cereal', 'tipo_venta', 'corredor', 'numero_comprobante',
         'fecha', 'fecha_entrega',
         'cantidad_tn', 'precio_tn', 'moneda', 'importe_total',
-        'cantidad_kg', 'factor', 'precio_kg', 'flete_kg',
+        'cantidad_kg', 'unidad_cantidad', 'factor', 'precio_kg', 'flete_kg',
         'deducciones', 'iva_deducciones', 'bonificacion',
         'ret_ganancias', 'ret_iva', 'iva_rg4310', 'debito_fiscal',
         'estado', 'observaciones',

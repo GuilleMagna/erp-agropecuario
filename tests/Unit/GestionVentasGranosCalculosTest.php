@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Livewire\Ventas\GestionVentasGranos;
+use App\Models\VentaGrano;
 use Tests\TestCase;
 
 class GestionVentasGranosCalculosTest extends TestCase
@@ -35,5 +36,12 @@ class GestionVentasGranosCalculosTest extends TestCase
         $componente->unidadCantidad = 'tn';
         $componente->updatedUnidadCantidad();
         $this->assertSame('12.6', $componente->cantidadIngresada);
+    }
+
+    public function test_la_unidad_elegida_es_un_campo_persistible_de_la_venta(): void
+    {
+        $venta = new VentaGrano(['unidad_cantidad' => 'tn']);
+
+        $this->assertSame('tn', $venta->unidad_cantidad);
     }
 }
