@@ -321,13 +321,14 @@
 
                         <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">Valores <small class="text-muted fw-normal text-lowercase">(igual que la hoja VENTAS del Excel)</small></h6>
                         <div class="row g-3 mb-3">
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label class="form-label fw-semibold">Cantidad <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <input type="number" step="0.0001" min="0"
                                            class="form-control font-monospace @error('cantidadIngresada') is-invalid @enderror"
                                            wire:model.live="cantidadIngresada" placeholder="0.00">
-                                    <select class="form-select flex-grow-0 w-auto" wire:model.live="unidadCantidad" style="max-width: 6.5rem;">
+                                    <select class="form-select flex-grow-0" wire:model.live="unidadCantidad"
+                                            style="width: 5.75rem; flex-basis: 5.75rem;">
                                         <option value="kg">KG</option>
                                         <option value="quintales">Quintales</option>
                                     </select>
@@ -341,7 +342,7 @@
                                        wire:model.live="factor" placeholder="100">
                                 @error('factor') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <label class="form-label fw-semibold">Precio / KG <span class="text-danger">*</span></label>
                                 <input type="number" step="0.0001" min="0"
                                        class="form-control font-monospace @error('precio_kg') is-invalid @enderror"
