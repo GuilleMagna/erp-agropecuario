@@ -30,6 +30,20 @@ class GestionVentasGranosCalculosTest extends TestCase
         $this->assertEqualsWithDelta(7775850.00, $componente->subtotalCalculado(), 0.001);
     }
 
+    public function test_el_total_operacion_no_descuenta_las_deducciones(): void
+    {
+        $componente = new GestionVentasGranos();
+        $componente->cantidad_kg = '15000';
+        $componente->factor = '100';
+        $componente->precio_kg = '518.39';
+        $componente->flete_tn = '1356.10';
+        $componente->deducciones = '4296.19';
+        $componente->ret_iva = '388795.42';
+        $componente->iva_rg4310 = '427674.97';
+
+        $this->assertEqualsWithDelta(8592320.39, $componente->totalCalculado(), 0.001);
+    }
+
     public function test_el_modelo_respeta_precios_historicos_anteriores_al_flete(): void
     {
         $venta = new VentaGrano([

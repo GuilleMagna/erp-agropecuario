@@ -247,15 +247,14 @@ class GestionVentasGranos extends Component
     }
 
     /**
-     * Réplica de la rama de granos de la fórmula "Total" del Excel:
-     * =+Subtotal + Ret.IVA + IVA_RG_4310 - DEDUCCIONES - IVA_deducciones + BONIF.
+     * Equivale a "Total Operación" de la liquidación. Las deducciones se
+     * registran aparte y no se descuentan en este total.
      */
     public function totalCalculado(): float
     {
         return $this->subtotalCalculado()
             + (float) ($this->ret_iva ?: 0)
             + (float) ($this->iva_rg4310 ?: 0)
-            - (float) ($this->deducciones ?: 0)
             - (float) ($this->iva_deducciones ?: 0)
             + (float) ($this->bonificacion ?: 0);
     }
