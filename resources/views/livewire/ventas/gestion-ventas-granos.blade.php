@@ -344,11 +344,12 @@
                                 @error('factor') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-2">
-                                <label class="form-label fw-semibold">Precio / TN <span class="text-danger">*</span></label>
-                                <input type="number" step="0.01" min="0"
-                                       class="form-control font-monospace @error('precio_tn') is-invalid @enderror"
-                                       wire:model.live="precio_tn" placeholder="0.00">
-                                @error('precio_tn') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                <label class="form-label fw-semibold">Precio / KG <span class="text-danger">*</span></label>
+                                <input type="number" step="0.0001" min="0"
+                                       class="form-control font-monospace @error('precio_kg') is-invalid @enderror"
+                                       wire:model.live="precio_kg" placeholder="0.0000">
+                                @error('precio_kg') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                <div class="form-text">Copiar el Precio/KG de “Operación”; ya incluye el descuento del flete.</div>
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label fw-semibold">Flete / TN</label>

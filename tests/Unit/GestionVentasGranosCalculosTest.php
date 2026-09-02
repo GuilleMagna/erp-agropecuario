@@ -8,26 +8,52 @@ use Tests\TestCase;
 
 class GestionVentasGranosCalculosTest extends TestCase
 {
-    public function test_el_flete_se_ingresa_por_tonelada_y_se_convierte_para_el_subtotal(): void
+    public function test_el_flete_se_registra_pero_no_se_descuenta_dos_veces(): void
     {
         $componente = new GestionVentasGranos();
         $componente->cantidad_kg = '12600';
         $componente->factor = '100';
-        $componente->precio_tn = '499950';
+        $componente->precio_kg = '496.56';
         $componente->flete_tn = '3390.90';
 
-        $this->assertEqualsWithDelta(6256644.66, $componente->subtotalCalculado(), 0.001);
+        $this->assertEqualsWithDelta(6256656.00, $componente->subtotalCalculado(), 0.001);
     }
 
-    public function test_precio_y_flete_se_copian_por_tonelada_desde_la_liquidacion(): void
+    public function test_el_precio_por_kg_se_copia_de_la_seccion_operacion(): void
     {
         $componente = new GestionVentasGranos();
         $componente->cantidad_kg = '15000';
         $componente->factor = '100';
-        $componente->precio_tn = '519750';
+        $componente->precio_kg = '518.39';
         $componente->flete_tn = '1356.10';
 
-        $this->assertEqualsWithDelta(7775908.50, $componente->subtotalCalculado(), 0.001);
+        $this->assertEqualsWithDelta(7775850.00, $componente->subtotalCalculado(), 0.001);
+    }
+
+    public function test_el_modelo_respeta_precios_historicos_anteriores_al_flete(): void
+    {
+        $venta = new VentaGrano([
+            'cantidad_kg' => 15000,
+            'factor' => 100,
+            'precio_kg' => 519.75,
+            'flete_kg' => 1.3561,
+            'precio_kg_es_neto' => false,
+        ]);
+
+        $this->assertEqualsWithDelta(7775908.50, $venta->subtotal, 0.001);
+    }
+
+    public function test_el_modelo_no_resta_el_flete_a_un_precio_neto_nuevo(): void
+    {
+        $venta = new VentaGrano([
+            'cantidad_kg' => 15000,
+            'factor' => 100,
+            'precio_kg' => 518.39,
+            'flete_kg' => 1.3561,
+            'precio_kg_es_neto' => true,
+        ]);
+
+        $this->assertEqualsWithDelta(7775850.00, $venta->subtotal, 0.001);
     }
 
     public function test_la_cantidad_puede_ingresarse_y_reexpresarse_en_toneladas(): void

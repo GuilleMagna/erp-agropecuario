@@ -22,7 +22,7 @@ class VentaGrano extends Model
         'cereal', 'tipo_venta', 'corredor', 'numero_comprobante',
         'fecha', 'fecha_entrega',
         'cantidad_tn', 'precio_tn', 'moneda', 'importe_total',
-        'cantidad_kg', 'unidad_cantidad', 'factor', 'precio_kg', 'flete_kg',
+        'cantidad_kg', 'unidad_cantidad', 'factor', 'precio_kg', 'precio_kg_es_neto', 'flete_kg',
         'deducciones', 'iva_deducciones', 'bonificacion',
         'ret_ganancias', 'ret_iva', 'iva_rg4310', 'debito_fiscal',
         'estado', 'observaciones',
@@ -37,6 +37,7 @@ class VentaGrano extends Model
         'cantidad_kg' => 'decimal:2',
         'factor' => 'decimal:2',
         'precio_kg' => 'decimal:4',
+        'precio_kg_es_neto' => 'boolean',
         'flete_kg' => 'decimal:4',
         'deducciones' => 'decimal:2',
         'iva_deducciones' => 'decimal:2',
@@ -94,7 +95,7 @@ class VentaGrano extends Model
 
     /**
      * Réplica de la columna "Subtotal" de la hoja VENTAS del Excel:
-     * =+Cantidad*Factor/100*(Precio-Flete)
+     * El precio por KG guardado ya es neto de flete.
      */
     public function getSubtotalAttribute(): ?float
     {
@@ -104,7 +105,11 @@ class VentaGrano extends Model
 
         $factor = (float) ($this->factor ?? 100);
 
-        return (float) $this->cantidad_kg * ($factor / 100) * ((float) $this->precio_kg - (float) ($this->flete_kg ?? 0));
+        $precioNetoKg = $this->precio_kg_es_neto
+            ? (float) $this->precio_kg
+            : (float) $this->precio_kg - (float) ($this->flete_kg ?? 0);
+
+        return (float) $this->cantidad_kg * ($factor / 100) * $precioNetoKg;
     }
 
     /** Réplica de "Total Reten. AFIP": =+Ret.Gan.+Ret.IVA */

@@ -103,8 +103,8 @@ class GestionVentasGranos extends Component
 
     public string $factor = '100';
 
-    /** Precio ingresado como figura en las condiciones de la liquidación. */
-    public string $precio_tn = '';
+    /** Precio/KG neto informado en la sección Operación de la liquidación. */
+    public string $precio_kg = '';
 
     /** Flete ingresado como figura habitualmente en la liquidación: por tonelada. */
     public string $flete_tn = '0';
@@ -137,7 +137,7 @@ class GestionVentasGranos extends Component
             'cantidadIngresada' => 'required|numeric|min:0.01',
             'unidadCantidad' => 'required|in:kg,quintales,tn',
             'factor' => 'required|numeric|min:0.01',
-            'precio_tn' => 'required|numeric|min:0',
+            'precio_kg' => 'required|numeric|min:0',
             'flete_tn' => 'nullable|numeric|min:0',
             'deducciones' => 'nullable|numeric',
             'iva_deducciones' => 'nullable|numeric',
@@ -220,20 +220,18 @@ class GestionVentasGranos extends Component
     }
 
     /**
-     * Réplica de la columna "Subtotal" de la hoja VENTAS del Excel:
-     * =+Cantidad*Factor/100*(Precio-Flete)
+     * El Precio/KG de la sección Operación ya tiene descontado el flete.
+     * Por eso el subtotal no vuelve a restarlo.
      */
     public function subtotalCalculado(): float
     {
-        if ($this->cantidad_kg === '' || $this->precio_tn === '') {
+        if ($this->cantidad_kg === '' || $this->precio_kg === '') {
             return 0.0;
         }
 
         $factor = (float) ($this->factor !== '' ? $this->factor : 100);
 
-        $precioNetoKg = ((float) $this->precio_tn - (float) ($this->flete_tn ?: 0)) / 1000;
-
-        return (float) $this->cantidad_kg * ($factor / 100) * $precioNetoKg;
+        return (float) $this->cantidad_kg * ($factor / 100) * (float) $this->precio_kg;
     }
 
     /** Réplica de "Total Reten. AFIP": =+Ret.Gan.+Ret.IVA */
@@ -299,7 +297,13 @@ class GestionVentasGranos extends Component
             : 'kg';
         $this->cantidadIngresada = $this->cantidad_kg;
         $this->updatedUnidadCantidad();
-        $this->precio_tn = (string) ($venta->precio_tn ?? round((float) $venta->precio_kg * 1000, 2));
+        $precioKgGuardado = (float) ($venta->precio_kg ?? ((float) $venta->precio_tn / 1000));
+        $this->precio_kg = (string) round(
+            $venta->precio_kg_es_neto
+                ? $precioKgGuardado
+                : $precioKgGuardado - (float) ($venta->flete_kg ?? 0),
+            4
+        );
         $this->factor = (string) ($venta->factor ?? '100');
         // La base conserva el flete por kg por compatibilidad histórica, pero
         // el formulario lo presenta por tonelada tal como viene en la liquidación.
@@ -345,17 +349,17 @@ class GestionVentasGranos extends Component
             'numero_comprobante' => $this->numero_comprobante ?: null,
             'fecha' => $this->fecha,
             'fecha_entrega' => $this->fecha_entrega ?: null,
-            // La cantidad se normaliza en TN/KG para los reportes. El precio y el
-            // flete se ingresan por TN, igual que en la liquidación, y también se
-            // conservan por KG para mantener la compatibilidad histórica.
+            // Precio/KG se copia de la sección Operación: ya es neto de flete.
+            // El flete se conserva por separado como información del documento.
             'cantidad_tn' => round((float) $this->cantidad_kg / 1000, 3),
-            'precio_tn' => round((float) $this->precio_tn, 2),
+            'precio_tn' => round((float) $this->precio_kg * 1000, 2),
             'moneda' => $this->moneda,
             'importe_total' => round($this->totalCalculado(), 2),
             'cantidad_kg' => (float) $this->cantidad_kg,
             'unidad_cantidad' => $this->unidadCantidad,
             'factor' => (float) $this->factor,
-            'precio_kg' => (float) $this->precio_tn / 1000,
+            'precio_kg' => (float) $this->precio_kg,
+            'precio_kg_es_neto' => true,
             'flete_kg' => (float) ($this->flete_tn ?: 0) / 1000,
             'deducciones' => (float) ($this->deducciones ?: 0),
             'iva_deducciones' => (float) ($this->iva_deducciones ?: 0),
@@ -411,7 +415,7 @@ class GestionVentasGranos extends Component
         $this->cantidadIngresada = '';
         $this->unidadCantidad = 'kg';
         $this->factor = '100';
-        $this->precio_tn = '';
+        $this->precio_kg = '';
         $this->flete_tn = '0';
         $this->deducciones = '0';
         $this->iva_deducciones = '0';
