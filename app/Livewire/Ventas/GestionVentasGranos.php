@@ -105,7 +105,8 @@ class GestionVentasGranos extends Component
 
     public string $precio_kg = '';
 
-    public string $flete_kg = '0';
+    /** Flete ingresado como figura habitualmente en la liquidación: por tonelada. */
+    public string $flete_tn = '0';
 
     public string $deducciones = '0';
 
@@ -135,7 +136,7 @@ class GestionVentasGranos extends Component
             'cantidadIngresada' => 'required|numeric|min:0.01',
             'factor' => 'required|numeric|min:0.01',
             'precio_kg' => 'required|numeric|min:0',
-            'flete_kg' => 'nullable|numeric|min:0',
+            'flete_tn' => 'nullable|numeric|min:0',
             'deducciones' => 'nullable|numeric',
             'iva_deducciones' => 'nullable|numeric',
             'bonificacion' => 'nullable|numeric',
@@ -218,7 +219,9 @@ class GestionVentasGranos extends Component
 
         $factor = (float) ($this->factor !== '' ? $this->factor : 100);
 
-        return (float) $this->cantidad_kg * ($factor / 100) * ((float) $this->precio_kg - (float) ($this->flete_kg ?: 0));
+        $fleteKg = (float) ($this->flete_tn ?: 0) / 1000;
+
+        return (float) $this->cantidad_kg * ($factor / 100) * ((float) $this->precio_kg - $fleteKg);
     }
 
     /** Réplica de "Total Reten. AFIP": =+Ret.Gan.+Ret.IVA */
@@ -283,7 +286,9 @@ class GestionVentasGranos extends Component
         $this->cantidadIngresada = $this->cantidad_kg;
         $this->precio_kg = (string) ($venta->precio_kg ?? round((float) $venta->precio_tn / 1000, 4));
         $this->factor = (string) ($venta->factor ?? '100');
-        $this->flete_kg = (string) ($venta->flete_kg ?? '0');
+        // La base conserva el flete por kg por compatibilidad histórica, pero
+        // el formulario lo presenta por tonelada tal como viene en la liquidación.
+        $this->flete_tn = (string) round((float) ($venta->flete_kg ?? 0) * 1000, 4);
         $this->deducciones = (string) ($venta->deducciones ?? '0');
         $this->iva_deducciones = (string) ($venta->iva_deducciones ?? '0');
         $this->bonificacion = (string) ($venta->bonificacion ?? '0');
@@ -335,7 +340,7 @@ class GestionVentasGranos extends Component
             'cantidad_kg' => (float) $this->cantidad_kg,
             'factor' => (float) $this->factor,
             'precio_kg' => (float) $this->precio_kg,
-            'flete_kg' => (float) ($this->flete_kg ?: 0),
+            'flete_kg' => (float) ($this->flete_tn ?: 0) / 1000,
             'deducciones' => (float) ($this->deducciones ?: 0),
             'iva_deducciones' => (float) ($this->iva_deducciones ?: 0),
             'bonificacion' => (float) ($this->bonificacion ?: 0),
@@ -391,7 +396,7 @@ class GestionVentasGranos extends Component
         $this->unidadCantidad = 'kg';
         $this->factor = '100';
         $this->precio_kg = '';
-        $this->flete_kg = '0';
+        $this->flete_tn = '0';
         $this->deducciones = '0';
         $this->iva_deducciones = '0';
         $this->bonificacion = '0';

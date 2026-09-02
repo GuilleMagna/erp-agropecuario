@@ -40,7 +40,7 @@ class Insumo extends Model
     const UNIDADES = [
         'kg'     => 'Kilogramos (kg)',
         'lt'     => 'Litros (lt)',
-        'tn'     => 'Toneladas (tn)',
+        'tn'     => 'Toneladas (TN)',
         'unidad' => 'Unidad',
         'saco'   => 'Saco',
         'bolsa'  => 'Bolsa',

@@ -91,8 +91,8 @@
                         <th>Comprador / Corredor</th>
                         <th>Establecimiento</th>
                         <th>Tipo</th>
-                        <th class="text-end">Cantidad (tn)</th>
-                        <th class="text-end">Precio / tn</th>
+                        <th class="text-end">Cantidad (TN)</th>
+                        <th class="text-end">Precio / TN</th>
                         <th class="text-end">Importe</th>
                         <th>Estado</th>
                         <th class="pe-4 text-end">Acciones</th>
@@ -181,7 +181,7 @@
                     <tr>
                         <td colspan="5" class="ps-4 text-muted small">Total de la página</td>
                         <td class="text-end font-monospace fw-semibold">
-                            {{ number_format($ventas->sum(fn($v) => (float)$v->cantidad_tn), 3, ',', '.') }} tn
+                            {{ number_format($ventas->sum(fn($v) => (float)$v->cantidad_tn), 3, ',', '.') }} TN
                         </td>
                         <td></td>
                         <td class="text-end fw-bold">
@@ -349,11 +349,11 @@
                                 @error('precio_kg') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-2">
-                                <label class="form-label fw-semibold">Flete / KG</label>
-                                <input type="number" step="0.0001" min="0"
-                                       class="form-control font-monospace @error('flete_kg') is-invalid @enderror"
-                                       wire:model.live="flete_kg">
-                                @error('flete_kg') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                <label class="form-label fw-semibold">Flete / TN</label>
+                                <input type="number" step="0.01" min="0"
+                                       class="form-control font-monospace @error('flete_tn') is-invalid @enderror"
+                                       wire:model.live="flete_tn">
+                                @error('flete_tn') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label fw-semibold">Moneda</label>

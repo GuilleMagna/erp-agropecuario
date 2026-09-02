@@ -81,7 +81,7 @@ class ReporteProductivo extends Component
 
             fputcsv($handle, [], ';');
             fputcsv($handle, ['--- COSECHAS DEL PERÍODO ---'], ';');
-            fputcsv($handle, ['Cultivo', 'Producción (tn)', 'Superficie (ha)', 'Rinde (kg/ha)'], ';');
+            fputcsv($handle, ['Cultivo', 'Producción (TN)', 'Superficie (ha)', 'Rinde (kg/ha)'], ';');
             foreach ($cosechas as $row) {
                 fputcsv($handle, [
                     $row['cultivo_label'],

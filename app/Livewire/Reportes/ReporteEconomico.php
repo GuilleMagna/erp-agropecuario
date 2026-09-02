@@ -44,7 +44,7 @@ class ReporteEconomico extends Component
             fputcsv($handle, [], ';');
 
             fputcsv($handle, ['--- VENTAS DE GRANOS ---'], ';');
-            fputcsv($handle, ['Cereal', 'Operaciones', 'Cantidad (tn)', 'Importe'], ';');
+            fputcsv($handle, ['Cereal', 'Operaciones', 'Cantidad (TN)', 'Importe'], ';');
             $granos = VentaGrano::sinFiltroDeEmpresa()->whereBetween('fecha', [$desde, $hasta])
                 ->when($estId, fn($q) => $q->where('id_establecimiento', $estId))
                 ->whereNotIn('estado', ['cancelada'])

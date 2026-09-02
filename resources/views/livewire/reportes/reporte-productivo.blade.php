@@ -251,7 +251,7 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th class="ps-3">Cultivo</th>
-                                        <th class="text-end">Producción (tn)</th>
+                                        <th class="text-end">Producción (TN)</th>
                                         <th class="text-end">Superficie (ha)</th>
                                         <th class="text-end pe-3">Rinde (kg/ha)</th>
                                     </tr>
@@ -274,7 +274,7 @@
                                     @if ($cosechasPorCultivo->count())
                                     <tr class="table-light fw-bold">
                                         <td class="ps-3">Total</td>
-                                        <td class="text-end font-monospace">{{ number_format($cosechasPorCultivo->sum('total_tn'), 3, ',', '.') }} tn</td>
+                                        <td class="text-end font-monospace">{{ number_format($cosechasPorCultivo->sum('total_tn'), 3, ',', '.') }} TN</td>
                                         <td class="text-end font-monospace">{{ number_format($cosechasPorCultivo->sum('total_ha'), 1, ',', '.') }} ha</td>
                                         <td></td>
                                     </tr>
