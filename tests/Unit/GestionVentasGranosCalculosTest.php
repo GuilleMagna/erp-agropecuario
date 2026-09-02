@@ -71,6 +71,28 @@ class GestionVentasGranosCalculosTest extends TestCase
         $this->assertEqualsWithDelta(7775850.00, $venta->subtotal, 0.001);
     }
 
+    public function test_el_listado_descuenta_deducciones_en_ventas_nuevas(): void
+    {
+        $venta = new VentaGrano([
+            'importe_total' => 8592320.39,
+            'deducciones' => 4296.19,
+            'precio_kg_es_neto' => true,
+        ]);
+
+        $this->assertEqualsWithDelta(8588024.20, $venta->importe_listado, 0.001);
+    }
+
+    public function test_el_listado_no_vuelve_a_descontar_deducciones_historicas(): void
+    {
+        $venta = new VentaGrano([
+            'importe_total' => 8588024.20,
+            'deducciones' => 4296.19,
+            'precio_kg_es_neto' => false,
+        ]);
+
+        $this->assertEqualsWithDelta(8588024.20, $venta->importe_listado, 0.001);
+    }
+
     public function test_la_cantidad_puede_ingresarse_y_reexpresarse_en_toneladas(): void
     {
         $componente = new GestionVentasGranos();

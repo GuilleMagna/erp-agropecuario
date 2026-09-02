@@ -128,6 +128,20 @@ class VentaGrano extends Model
         return $this->subtotal * 0.105 - (float) ($this->iva_deducciones ?? 0);
     }
 
+    /**
+     * Importe neto visible en el listado. En las ventas nuevas el importe
+     * guardado representa el Total Operación y las deducciones van aparte.
+     * Los registros históricos ya tenían las deducciones descontadas.
+     */
+    public function getImporteListadoAttribute(): float
+    {
+        if (! $this->precio_kg_es_neto) {
+            return (float) $this->importe_total;
+        }
+
+        return (float) $this->importe_total - (float) ($this->deducciones ?? 0);
+    }
+
     public function getTipoVentaLabelAttribute(): string
     {
         return self::TIPOS_VENTA[$this->tipo_venta] ?? $this->tipo_venta;

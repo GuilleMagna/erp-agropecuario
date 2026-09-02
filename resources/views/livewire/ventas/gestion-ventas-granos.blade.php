@@ -134,7 +134,7 @@
                             <small class="text-muted ms-1">{{ $venta->moneda }}</small>
                         </td>
                         <td class="text-end fw-bold">
-                            {{ $venta->moneda === 'USD' ? 'U$S' : '$' }} {{ number_format((float)$venta->importe_total, 2, ',', '.') }}
+                            {{ $venta->moneda === 'USD' ? 'U$S' : '$' }} {{ number_format($venta->importe_listado, 2, ',', '.') }}
                         </td>
                         <td>
                             <span class="badge rounded-pill {{ $badgeEstado }}">{{ $venta->estado_label }}</span>
@@ -185,7 +185,7 @@
                         </td>
                         <td></td>
                         <td class="text-end fw-bold">
-                            ${{ number_format($ventas->sum(fn($v) => (float)$v->importe_total), 2, ',', '.') }}
+                            ${{ number_format($ventas->sum(fn($v) => $v->importe_listado), 2, ',', '.') }}
                         </td>
                         <td colspan="2"></td>
                     </tr>
