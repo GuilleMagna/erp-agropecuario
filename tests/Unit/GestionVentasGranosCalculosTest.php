@@ -13,10 +13,21 @@ class GestionVentasGranosCalculosTest extends TestCase
         $componente = new GestionVentasGranos();
         $componente->cantidad_kg = '12600';
         $componente->factor = '100';
-        $componente->precio_kg = '499.95';
+        $componente->precio_tn = '499950';
         $componente->flete_tn = '3390.90';
 
         $this->assertEqualsWithDelta(6256644.66, $componente->subtotalCalculado(), 0.001);
+    }
+
+    public function test_precio_y_flete_se_copian_por_tonelada_desde_la_liquidacion(): void
+    {
+        $componente = new GestionVentasGranos();
+        $componente->cantidad_kg = '15000';
+        $componente->factor = '100';
+        $componente->precio_tn = '519750';
+        $componente->flete_tn = '1356.10';
+
+        $this->assertEqualsWithDelta(7775908.50, $componente->subtotalCalculado(), 0.001);
     }
 
     public function test_la_cantidad_puede_ingresarse_y_reexpresarse_en_toneladas(): void
