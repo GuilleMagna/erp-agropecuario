@@ -331,6 +331,7 @@
                                             style="width: 5.75rem; flex-basis: 5.75rem;">
                                         <option value="kg">KG</option>
                                         <option value="quintales">Quintales</option>
+                                        <option value="tn">TN</option>
                                     </select>
                                     @error('cantidadIngresada') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>

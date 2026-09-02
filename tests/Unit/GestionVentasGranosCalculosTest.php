@@ -17,4 +17,23 @@ class GestionVentasGranosCalculosTest extends TestCase
 
         $this->assertEqualsWithDelta(6256644.66, $componente->subtotalCalculado(), 0.001);
     }
+
+    public function test_la_cantidad_puede_ingresarse_y_reexpresarse_en_toneladas(): void
+    {
+        $componente = new GestionVentasGranos();
+        $componente->unidadCantidad = 'tn';
+        $componente->cantidadIngresada = '12.6';
+
+        $componente->updatedCantidadIngresada();
+
+        $this->assertSame('12600', $componente->cantidad_kg);
+
+        $componente->unidadCantidad = 'quintales';
+        $componente->updatedUnidadCantidad();
+        $this->assertSame('126', $componente->cantidadIngresada);
+
+        $componente->unidadCantidad = 'tn';
+        $componente->updatedUnidadCantidad();
+        $this->assertSame('12.6', $componente->cantidadIngresada);
+    }
 }

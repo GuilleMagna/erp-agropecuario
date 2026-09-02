@@ -134,6 +134,7 @@ class GestionVentasGranos extends Component
             'fecha' => 'required|date',
             'fecha_entrega' => 'nullable|date',
             'cantidadIngresada' => 'required|numeric|min:0.01',
+            'unidadCantidad' => 'required|in:kg,quintales,tn',
             'factor' => 'required|numeric|min:0.01',
             'precio_kg' => 'required|numeric|min:0',
             'flete_tn' => 'nullable|numeric|min:0',
@@ -188,7 +189,13 @@ class GestionVentasGranos extends Component
         // acá: solo se regenera cantidadIngresada a partir de cantidad_kg.
         if ($this->cantidad_kg !== '') {
             $kg = (float) $this->cantidad_kg;
-            $this->cantidadIngresada = (string) ($this->unidadCantidad === 'quintales' ? round($kg / 100, 4) : round($kg, 2));
+            $cantidad = match ($this->unidadCantidad) {
+                'quintales' => $kg / 100,
+                'tn' => $kg / 1000,
+                default => $kg,
+            };
+
+            $this->cantidadIngresada = (string) round($cantidad, 4);
         }
     }
 
@@ -200,9 +207,13 @@ class GestionVentasGranos extends Component
             return;
         }
 
-        $kg = $this->unidadCantidad === 'quintales'
-            ? (float) $this->cantidadIngresada * 100
-            : (float) $this->cantidadIngresada;
+        $multiplicador = match ($this->unidadCantidad) {
+            'quintales' => 100,
+            'tn' => 1000,
+            default => 1,
+        };
+
+        $kg = (float) $this->cantidadIngresada * $multiplicador;
 
         $this->cantidad_kg = (string) round($kg, 2);
     }
