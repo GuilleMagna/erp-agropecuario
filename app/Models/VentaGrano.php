@@ -103,13 +103,17 @@ class VentaGrano extends Model
             return null;
         }
 
-        $factor = (float) ($this->factor ?? 100);
-
         $precioNetoKg = $this->precio_kg_es_neto
             ? (float) $this->precio_kg
             : (float) $this->precio_kg - (float) ($this->flete_kg ?? 0);
 
-        return (float) $this->cantidad_kg * ($factor / 100) * $precioNetoKg;
+        // En las cargas nuevas, Precio/KG se copia de "Operación" y ya incluye
+        // el factor comercial. La rama histórica conserva el cálculo anterior.
+        $factorAplicable = $this->precio_kg_es_neto
+            ? 1
+            : (float) ($this->factor ?? 100) / 100;
+
+        return (float) $this->cantidad_kg * $factorAplicable * $precioNetoKg;
     }
 
     /** Réplica de "Total Reten. AFIP": =+Ret.Gan.+Ret.IVA */

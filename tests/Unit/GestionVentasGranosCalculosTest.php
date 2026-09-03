@@ -30,6 +30,16 @@ class GestionVentasGranosCalculosTest extends TestCase
         $this->assertEqualsWithDelta(7775850.00, $componente->subtotalCalculado(), 0.001);
     }
 
+    public function test_el_factor_es_informativo_y_no_se_aplica_dos_veces(): void
+    {
+        $componente = new GestionVentasGranos();
+        $componente->cantidad_kg = '22265';
+        $componente->factor = '96.35';
+        $componente->precio_kg = '320.50';
+
+        $this->assertEqualsWithDelta(7135932.50, $componente->subtotalCalculado(), 0.001);
+    }
+
     public function test_el_total_operacion_no_descuenta_las_deducciones(): void
     {
         $componente = new GestionVentasGranos();
@@ -62,7 +72,7 @@ class GestionVentasGranosCalculosTest extends TestCase
     {
         $venta = new VentaGrano([
             'cantidad_kg' => 15000,
-            'factor' => 100,
+            'factor' => 96.35,
             'precio_kg' => 518.39,
             'flete_kg' => 1.3561,
             'precio_kg_es_neto' => true,

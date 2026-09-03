@@ -220,8 +220,8 @@ class GestionVentasGranos extends Component
     }
 
     /**
-     * El Precio/KG de la sección Operación ya tiene descontado el flete.
-     * Por eso el subtotal no vuelve a restarlo.
+     * El Precio/KG de la sección Operación ya incorpora los ajustes comerciales
+     * (factor y flete). Ambos se conservan como datos informativos del documento.
      */
     public function subtotalCalculado(): float
     {
@@ -229,9 +229,7 @@ class GestionVentasGranos extends Component
             return 0.0;
         }
 
-        $factor = (float) ($this->factor !== '' ? $this->factor : 100);
-
-        return (float) $this->cantidad_kg * ($factor / 100) * (float) $this->precio_kg;
+        return (float) $this->cantidad_kg * (float) $this->precio_kg;
     }
 
     /** Réplica de "Total Reten. AFIP": =+Ret.Gan.+Ret.IVA */
