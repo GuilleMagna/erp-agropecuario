@@ -134,7 +134,7 @@ class VentaGrano extends Model
 
     /**
      * Importe neto visible en el listado. En las ventas nuevas el importe
-     * guardado representa el Total Operación y las deducciones van aparte.
+     * guardado incluye IVA y retenciones; las deducciones sin IVA van aparte.
      * Los registros históricos ya tenían las deducciones descontadas.
      */
     public function getImporteListadoAttribute(): float

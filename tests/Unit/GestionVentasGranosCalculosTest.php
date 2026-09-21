@@ -10,7 +10,7 @@ class GestionVentasGranosCalculosTest extends TestCase
 {
     public function test_el_flete_se_registra_pero_no_se_descuenta_dos_veces(): void
     {
-        $componente = new GestionVentasGranos();
+        $componente = new GestionVentasGranos;
         $componente->cantidad_kg = '12600';
         $componente->factor = '100';
         $componente->precio_kg = '496.56';
@@ -21,7 +21,7 @@ class GestionVentasGranosCalculosTest extends TestCase
 
     public function test_el_precio_por_kg_se_copia_de_la_seccion_operacion(): void
     {
-        $componente = new GestionVentasGranos();
+        $componente = new GestionVentasGranos;
         $componente->cantidad_kg = '15000';
         $componente->factor = '100';
         $componente->precio_kg = '518.39';
@@ -32,7 +32,7 @@ class GestionVentasGranosCalculosTest extends TestCase
 
     public function test_el_factor_es_informativo_y_no_se_aplica_dos_veces(): void
     {
-        $componente = new GestionVentasGranos();
+        $componente = new GestionVentasGranos;
         $componente->cantidad_kg = '22265';
         $componente->factor = '96.35';
         $componente->precio_kg = '320.50';
@@ -42,7 +42,7 @@ class GestionVentasGranosCalculosTest extends TestCase
 
     public function test_el_total_operacion_no_descuenta_las_deducciones(): void
     {
-        $componente = new GestionVentasGranos();
+        $componente = new GestionVentasGranos;
         $componente->cantidad_kg = '15000';
         $componente->factor = '100';
         $componente->precio_kg = '518.39';
@@ -51,8 +51,47 @@ class GestionVentasGranosCalculosTest extends TestCase
         $componente->ret_iva = '388795.42';
         $componente->iva_rg4310 = '427674.97';
 
-        $this->assertEqualsWithDelta(8592320.39, $componente->totalCalculado(), 0.001);
-        $this->assertEqualsWithDelta(8588024.20, $componente->importeListadoCalculado(), 0.001);
+        $this->assertEqualsWithDelta(8203518.83, $componente->totalCalculado(), 0.001);
+        $this->assertEqualsWithDelta(8199222.64, $componente->importeListadoCalculado(), 0.001);
+    }
+
+    public function test_la_liquidacion_descuenta_iva_deducciones_y_retenciones_sin_duplicar_iva_rg(): void
+    {
+        $componente = new GestionVentasGranos;
+        $componente->cantidad_kg = '40000';
+        $componente->precio_kg = '560';
+        $componente->deducciones = '631934.13';
+        $componente->iva_deducciones = '66353.08';
+        $componente->ret_iva = '1088403.29';
+        $componente->iva_rg4310 = '1197243.63';
+
+        $this->assertEqualsWithDelta(2285646.92, $componente->resultadoIvaCalculado(), 0.001);
+        $this->assertEqualsWithDelta(22965309.50, $componente->importeListadoCalculado(), 0.001);
+
+        // El listado debe mostrar el mismo neto tras guardar la venta.
+        $venta = new VentaGrano([
+            'importe_total' => round($componente->totalCalculado(), 2),
+            'deducciones' => $componente->deducciones,
+            'precio_kg_es_neto' => true,
+        ]);
+        $this->assertEqualsWithDelta(22965309.50, $venta->importe_listado, 0.001);
+
+        $componente->iva_rg4310 = '0';
+        $this->assertEqualsWithDelta(22965309.50, $componente->importeListadoCalculado(), 0.001);
+    }
+
+    public function test_el_neto_descuenta_ganancias_y_suma_bonificaciones(): void
+    {
+        $componente = new GestionVentasGranos;
+        $componente->cantidad_kg = '1000';
+        $componente->precio_kg = '500';
+        $componente->deducciones = '1000';
+        $componente->iva_deducciones = '105';
+        $componente->ret_ganancias = '2000';
+        $componente->ret_iva = '25000';
+        $componente->bonificacion = '500';
+
+        $this->assertEqualsWithDelta(524895.00, $componente->importeListadoCalculado(), 0.001);
     }
 
     public function test_el_modelo_respeta_precios_historicos_anteriores_al_flete(): void
@@ -105,7 +144,7 @@ class GestionVentasGranosCalculosTest extends TestCase
 
     public function test_la_cantidad_puede_ingresarse_y_reexpresarse_en_toneladas(): void
     {
-        $componente = new GestionVentasGranos();
+        $componente = new GestionVentasGranos;
         $componente->unidadCantidad = 'tn';
         $componente->cantidadIngresada = '12.6';
 

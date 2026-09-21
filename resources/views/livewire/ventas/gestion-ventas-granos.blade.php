@@ -414,6 +414,7 @@
                                        class="form-control font-monospace @error('iva_rg4310') is-invalid @enderror"
                                        wire:model.live="iva_rg4310">
                                 @error('iva_rg4310') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                <div class="form-text">Dato informativo; no se suma al neto a cobrar.</div>
                             </div>
                         </div>
 
@@ -431,9 +432,9 @@
                                 <div class="font-monospace">{{ number_format($this->resultadoIvaCalculado(), 2, ',', '.') }}</div>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label small fw-semibold text-muted text-uppercase">Total operación</label>
+                                <label class="form-label small fw-semibold text-muted text-uppercase">Neto a cobrar</label>
                                 <div class="font-monospace fw-bold fs-5 text-success">
-                                    {{ $moneda === 'USD' ? 'U$S' : '$' }} {{ number_format($this->totalCalculado(), 2, ',', '.') }}
+                                    {{ $moneda === 'USD' ? 'U$S' : '$' }} {{ number_format($this->importeListadoCalculado(), 2, ',', '.') }}
                                 </div>
                             </div>
                         </div>

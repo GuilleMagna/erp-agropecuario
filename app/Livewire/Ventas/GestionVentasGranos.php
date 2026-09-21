@@ -245,15 +245,14 @@ class GestionVentasGranos extends Component
     }
 
     /**
-     * Equivale a "Total Operación" de la liquidación. Las deducciones se
+     * Importe luego del IVA y las retenciones. Las deducciones sin IVA se
      * registran aparte y no se descuentan en este total.
      */
     public function totalCalculado(): float
     {
         return $this->subtotalCalculado()
-            + (float) ($this->ret_iva ?: 0)
-            + (float) ($this->iva_rg4310 ?: 0)
-            - (float) ($this->iva_deducciones ?: 0)
+            + $this->resultadoIvaCalculado()
+            - $this->totalRetencionesAfipCalculado()
             + (float) ($this->bonificacion ?: 0);
     }
 
@@ -357,7 +356,7 @@ class GestionVentasGranos extends Component
             'cantidad_tn' => round((float) $this->cantidad_kg / 1000, 3),
             'precio_tn' => round((float) $this->precio_kg * 1000, 2),
             'moneda' => $this->moneda,
-            // Se guarda el Total Operación del documento; el listado presenta
+            // Se guarda el importe con IVA y retenciones; el listado presenta
             // su neto descontando las deducciones mediante el modelo.
             'importe_total' => round($this->totalCalculado(), 2),
             'cantidad_kg' => (float) $this->cantidad_kg,
