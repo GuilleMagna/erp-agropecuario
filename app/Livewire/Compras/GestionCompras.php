@@ -9,8 +9,10 @@ use App\Models\Insumo;
 use App\Models\Lote;
 use App\Models\MovimientoInsumo;
 use App\Models\Proveedor;
+use App\Models\Rubro;
 use App\Traits\CambiaEmpresaDesdeQuery;
 use Illuminate\Support\Facades\Gate;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -89,6 +91,9 @@ class GestionCompras extends Component
     // Imputación
     public string $actividad = 'general';
 
+    #[Locked]
+    public bool $actividadManual = false;
+
     public string $zona = '';
 
     public string $rubro = '';
@@ -139,7 +144,7 @@ class GestionCompras extends Component
             'estado' => 'required|in:'.implode(',', array_keys(Compra::ESTADOS)),
             'actividad' => 'nullable|in:'.implode(',', array_keys(Compra::ACTIVIDADES)),
             'zona' => 'nullable|in:'.implode(',', array_keys(Compra::ZONAS)),
-            'rubro' => 'nullable|in:'.implode(',', array_keys(Compra::RUBROS)),
+            'rubro' => 'nullable|in:'.implode(',', array_keys(Rubro::opciones())),
             'id_lote' => 'nullable|exists:lotes,id',
             'id_campana' => 'nullable|exists:campanas,id',
             'iva_porc' => 'nullable|numeric|min:0|max:100',
@@ -286,29 +291,35 @@ class GestionCompras extends Component
         $this->calcularTotales();
     }
 
-    /**
-     * Al elegir un proveedor con clasificación por defecto ya cargada, se
-     * autocompletan actividad y rubro (mismo criterio que el VLOOKUP del
-     * Excel de origen). Solo pisa los campos si todavía están en su valor
-     * por defecto, para no sobrescribir una elección manual ya hecha.
-     */
+    /** La imputación parte de la clasificación del proveedor; una elección manual se conserva. */
     public function updatedIdProveedor(): void
     {
-        if (! $this->id_proveedor) {
-            return;
+        $proveedor = $this->id_proveedor ? Proveedor::find($this->id_proveedor) : null;
+        $this->rubro = $proveedor?->rubro ?? '';
+        if (! $this->actividadManual) {
+            $this->actividad = $proveedor?->actividadPredeterminada() ?? 'general';
         }
+    }
 
-        $proveedor = Proveedor::find($this->id_proveedor);
-        if (! $proveedor || $proveedor->actividad === null) {
-            return;
+    public function updatedRubro(): void
+    {
+        if (! $this->actividadManual) {
+            $this->actividad = Rubro::predeterminada($this->rubro) ?? 'general';
         }
+    }
 
-        if ($this->actividad === 'general') {
-            $this->actividad = $proveedor->actividad;
-        }
-        if ($this->rubro === '') {
-            $this->rubro = $proveedor->rubro ?? '';
-        }
+    public function updatedActividad(): void
+    {
+        $this->actividadManual = true;
+    }
+
+    public function usarActividadPredeterminada(): void
+    {
+        $this->actividadManual = false;
+        $proveedor = $this->id_proveedor ? Proveedor::find($this->id_proveedor) : null;
+        $this->actividad = ($proveedor && $proveedor->rubro === $this->rubro)
+            ? ($proveedor->actividadPredeterminada() ?? 'general')
+            : (Rubro::predeterminada($this->rubro) ?? 'general');
     }
 
     /**
@@ -383,6 +394,7 @@ class GestionCompras extends Component
         $this->fecha_vencimiento = $compra->fecha_vencimiento?->format('Y-m-d') ?? '';
         $this->estado = $compra->estado;
         $this->actividad = $compra->actividad ?? 'general';
+        $this->actividadManual = true;
         $this->zona = $compra->zona ?? '';
         $this->rubro = $compra->rubro ?? '';
         $this->id_lote = $compra->id_lote ?? '';
@@ -676,6 +688,7 @@ class GestionCompras extends Component
         $this->fecha_vencimiento = '';
         $this->estado = 'recibida';
         $this->actividad = 'general';
+        $this->actividadManual = false;
         $this->zona = '';
         $this->rubro = '';
         $this->id_lote = '';
@@ -737,7 +750,7 @@ class GestionCompras extends Component
             'estados' => Compra::ESTADOS,
             'actividades' => Compra::ACTIVIDADES,
             'zonas' => Compra::ZONAS,
-            'rubros' => Compra::RUBROS,
+            'rubros' => Rubro::opciones(),
         ]);
     }
 }

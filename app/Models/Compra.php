@@ -69,26 +69,8 @@ class Compra extends Model
         'inversiones' => 'Inversiones',
     ];
 
-    /** Mismas categorías que Proveedor::RUBROS (tomadas del Excel "Facturas AÑO 2024.xlsx"). */
-    const RUBROS = [
-        'otro' => 'Otro',
-        'insumos' => 'Insumos',
-        'varios' => 'Varios',
-        'comercializacion' => 'Comercialización',
-        'mantenimiento' => 'Mantenimiento',
-        'reparaciones' => 'Reparaciones',
-        'labores_servicios' => 'Labores / Servicios',
-        'sanidad' => 'Sanidad',
-        'transporte' => 'Transporte / Flete',
-        'empleados' => 'Empleados',
-        'alimento' => 'Alimento',
-        'administracion' => 'Administración',
-        'esporadicos' => 'Esporádicos',
-        'asesoramiento' => 'Asesoramiento',
-        'alquileres' => 'Alquileres',
-        'bien_capital' => 'Bien de capital',
-        'combustible' => 'Combustible',
-    ];
+    /** Categorías base compartidas; Rubro agrega el catálogo propio de cada empresa. */
+    const RUBROS = Proveedor::RUBROS;
 
     /** Mismas zonas que Establecimiento::ZONAS. Se autocompleta al elegir
      *  el establecimiento de la compra (ver GestionCompras). */
@@ -139,7 +121,7 @@ class Compra extends Model
 
     public function getRubroLabelAttribute(): string
     {
-        return self::RUBROS[$this->rubro] ?? ($this->rubro ?? '—');
+        return Rubro::opciones($this->id_empresa)[$this->rubro] ?? ($this->rubro ?? '—');
     }
 
     public function getZonaLabelAttribute(): string

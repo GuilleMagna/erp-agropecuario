@@ -20,7 +20,6 @@ class MrbotService
 
     private int $timeout;
 
-
     public function __construct()
     {
         $this->baseUrl = rtrim(config('mrbot.url', 'https://api-bots.mrbot.com.ar'), '/');
@@ -48,6 +47,7 @@ class MrbotService
      */
     public function importarComprobantesJson(array $comprobantes, ?string $idEmpresa = null): array
     {
+        $idEmpresa ??= Proveedor::resolverEmpresaActiva();
         $resultado = ['importadas' => 0, 'duplicadas' => 0, 'errores' => 0, 'error' => null, 'compras' => collect()];
 
         foreach ($comprobantes as $item) {
@@ -78,7 +78,7 @@ class MrbotService
                 $proveedor = null;
                 if (! empty($fila['cuit'])) {
                     $proveedor = Proveedor::withoutGlobalScope('empresa')
-                        ->where('cuit', $fila['cuit'])
+                        ->porCuit($fila['cuit'])
                         ->when($idEmpresa, fn ($q) => $q->where('id_empresa', $idEmpresa))
                         ->first();
 
@@ -117,8 +117,8 @@ class MrbotService
                     // (recién autocreado acá arriba), queda sin clasificar. La
                     // zona no se hereda acá: es del establecimiento, y esta
                     // sincronización no elige uno (queda para completar a mano).
-                    'actividad' => $proveedor?->actividad !== null ? $proveedor->actividad : null,
-                    'rubro' => $proveedor?->actividad !== null ? $proveedor->rubro : null,
+                    'actividad' => $proveedor?->actividadPredeterminada(),
+                    'rubro' => $proveedor?->rubro !== 'otro' ? $proveedor?->rubro : null,
                 ];
                 if ($idEmpresa) {
                     $compraAttrs['id_empresa'] = $idEmpresa;
@@ -326,7 +326,7 @@ class MrbotService
                 ->where('numero_comprobante', $numeroComprobante)
                 ->when($idEmpresa, fn ($q) => $q->where('id_empresa', $idEmpresa))
                 ->whereHas('proveedor', function ($q) use ($cuit, $idEmpresa) {
-                    $q->withoutGlobalScope('empresa')->where('cuit', $cuit);
+                    $q->withoutGlobalScope('empresa')->porCuit($cuit);
                     if ($idEmpresa) {
                         $q->where('id_empresa', $idEmpresa);
                     }

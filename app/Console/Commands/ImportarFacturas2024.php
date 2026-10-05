@@ -149,7 +149,7 @@ class ImportarFacturas2024 extends Command
                 ->where('id_empresa', $empresa->id)
                 ->where('numero_comprobante', $numeroComprobante)
                 ->whereHas('proveedor', function ($q) use ($cuit) {
-                    $q->withoutGlobalScope('empresa')->where('cuit', $cuit);
+                    $q->withoutGlobalScope('empresa')->porCuit($cuit);
                 })
                 ->exists();
 
@@ -162,7 +162,7 @@ class ImportarFacturas2024 extends Command
             // ── Proveedor: buscar por CUIT dentro de la empresa, o crear ──
             $proveedor = Proveedor::withoutGlobalScope('empresa')
                 ->where('id_empresa', $empresa->id)
-                ->where('cuit', $cuit)
+                ->porCuit($cuit)
                 ->first();
 
             $clasificacion = $catalogo[$cuit] ?? null;
@@ -208,7 +208,7 @@ class ImportarFacturas2024 extends Command
                     'total' => $totalArs,
                     'stock_registrado' => false,
                     'observaciones' => "Importado desde Facturas AÑO 2024.xlsx (fila {$filaExcel})",
-                    'actividad' => $proveedor?->actividad,
+                    'actividad' => $proveedor?->actividadPredeterminada(),
                     // La zona es un dato histórico de esta factura puntual (viene
                     // del catálogo CUIT→Zona de la planilla 2024), no del
                     // proveedor: la zona "actual" del proveedor ya no existe como

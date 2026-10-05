@@ -13,11 +13,71 @@
             <small class="text-muted">Directorio de proveedores de la empresa</small>
         </div>
         @can('compras.proveedores.gestionar')
+        <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary" wire:click="abrirCatalogo" wire:loading.attr="disabled">
+            <i class="bi bi-tags me-1"></i> Administrar rubros
+        </button>
         <button class="btn btn-primary" wire:click="abrirModalCrear" wire:loading.attr="disabled">
             <i class="bi bi-plus-lg me-1"></i> Nuevo proveedor
         </button>
+        </div>
         @endcan
     </div>
+
+    @if ($catalogoAbierto)
+    @can('compras.proveedores.gestionar')
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h6 class="fw-bold">Catálogo de rubros</h6>
+            <p class="small text-muted">Creá o editá rubros para esta empresa. Definí sus actividades y cuál se sugiere al clasificar un proveedor. Las compras anteriores conservan su imputación.</p>
+            <div class="row g-3">
+                <div class="col-md-5">
+                    <div class="list-group overflow-auto" style="max-height: 300px">
+                        @foreach ($catalogoRubros as $codigo => $datos)
+                        <button type="button" wire:key="rubro-{{ $codigo }}" class="list-group-item list-group-item-action {{ $rubroEditando === $codigo ? 'active' : '' }}" wire:click="editarRubro('{{ $codigo }}')">
+                            {{ $datos['nombre'] }} <small class="d-block">Predeterminada: {{ $actividades[$datos['actividad_default']] ?? 'Sin clasificar' }}</small>
+                        </button>
+                        @endforeach
+                    </div>
+                </div>
+                <div class="col-md-7">
+                    <form wire:submit="guardarRubro">
+                        <div class="d-flex justify-content-between mb-2">
+                            <strong>{{ $rubroEditando ? 'Editar rubro' : 'Nuevo rubro' }}</strong>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" wire:click="nuevoRubro">Nuevo rubro</button>
+                        </div>
+                        <label for="rubro-nombre" class="form-label">Nombre</label>
+                        <input id="rubro-nombre" class="form-control @error('nuevoRubroNombre') is-invalid @enderror" wire:model="nuevoRubroNombre" maxlength="100" placeholder="Ej.: Servicios de cosecha">
+                        @error('nuevoRubroNombre') <div class="text-danger small">{{ $message }}</div> @enderror
+                        <fieldset class="mt-3">
+                            <legend class="fs-6">Actividades disponibles</legend>
+                            @foreach ($actividades as $codigo => $nombre)
+                            <div class="form-check form-check-inline">
+                                <input id="rubro-actividad-{{ $codigo }}" type="checkbox" class="form-check-input" wire:model.live="nuevoRubroActividades" value="{{ $codigo }}">
+                                <label class="form-check-label" for="rubro-actividad-{{ $codigo }}">{{ $nombre }}</label>
+                            </div>
+                            @endforeach
+                            @error('nuevoRubroActividades') <div class="text-danger small">{{ $message }}</div> @enderror
+                            @error('nuevoRubroActividades.*') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </fieldset>
+                        <label for="rubro-default" class="form-label mt-3">Actividad predeterminada</label>
+                        <select id="rubro-default" class="form-select" wire:model="nuevoRubroDefault">
+                            <option value="">Elegir actividad</option>
+                            @foreach ($actividades as $codigo => $nombre)
+                                @if (in_array($codigo, $nuevoRubroActividades, true))
+                                <option value="{{ $codigo }}">{{ $nombre }}</option>
+                                @endif
+                            @endforeach
+                        </select>
+                        @error('nuevoRubroDefault') <div class="text-danger small">{{ $message }}</div> @enderror
+                        <button class="btn btn-primary mt-3" type="submit" wire:loading.attr="disabled">Guardar rubro</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endcan
+    @endif
 
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body py-3">
@@ -64,7 +124,7 @@
                     <tr>
                         <th class="ps-4">Nombre / Razón social</th>
                         <th>CUIT</th>
-                        <th>Rubro</th>
+                        <th>Rubro / Actividad</th>
                         <th>Contacto</th>
                         <th class="text-center">Compras</th>
                         <th>Estado</th>
@@ -84,6 +144,7 @@
                         <td>
                             @if ($prov->rubro)
                                 <span class="badge rounded-pill bg-secondary-subtle text-secondary">{{ $prov->rubro_label }}</span>
+                                <small class="d-block text-muted">{{ $prov->actividad_label }}</small>
                             @else
                                 <span class="text-muted">—</span>
                             @endif
@@ -172,7 +233,7 @@
                             </div>
                             <div class="col-md-5">
                                 <label class="form-label fw-semibold">Rubro</label>
-                                <select class="form-select @error('rubro') is-invalid @enderror" wire:model="rubro">
+                                <select class="form-select @error('rubro') is-invalid @enderror" wire:model.live="rubro">
                                     <option value="">Sin especificar</option>
                                     @foreach ($rubros as $val => $etq)
                                         <option value="{{ $val }}">{{ $etq }}</option>
@@ -196,11 +257,12 @@
                                 <label class="form-label fw-semibold">Actividad por defecto</label>
                                 <select class="form-select @error('actividad') is-invalid @enderror" wire:model="actividad">
                                     <option value="">Sin especificar</option>
-                                    @foreach ($actividades as $val => $etq)
+                                    @foreach ($actividadesProveedor as $val => $etq)
                                         <option value="{{ $val }}">{{ $etq }}</option>
                                     @endforeach
                                 </select>
                                 @error('actividad') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                <div class="form-text">Se sugiere según el Rubro. Si hay varias actividades, elegí la habitual para este CUIT.</div>
                                 <div class="form-text">Se usa para autocompletar las compras nuevas de este proveedor.</div>
                             </div>
                         </div>

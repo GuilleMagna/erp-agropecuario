@@ -38,7 +38,6 @@ class ImportarComprasArca extends Component
     // Indices de columnas detectados del encabezado
     protected array $cols = [];
 
-
     // ─────────────────────────────────────────────────────────────
     // Paso 1: procesar el archivo subido
     // ─────────────────────────────────────────────────────────────
@@ -181,7 +180,7 @@ class ImportarComprasArca extends Component
                 // Buscar o crear proveedor por CUIT
                 $proveedor = null;
                 if (! empty($fila['cuit'])) {
-                    $proveedor = Proveedor::where('cuit', $fila['cuit'])->first();
+                    $proveedor = Proveedor::porCuit($fila['cuit'])->first();
                     if (! $proveedor) {
                         $proveedor = Proveedor::create([
                             'nombre' => $fila['nombre'] ?: $fila['cuit'],
@@ -211,8 +210,8 @@ class ImportarComprasArca extends Component
                     // Heredado del proveedor si ya tiene clasificación cargada.
                     // La zona no se hereda acá: es del establecimiento, y esta
                     // importación no elige uno (queda para completar a mano).
-                    'actividad' => $proveedor?->actividad !== null ? $proveedor->actividad : null,
-                    'rubro' => $proveedor?->actividad !== null ? $proveedor->rubro : null,
+                    'actividad' => $proveedor?->actividadPredeterminada(),
+                    'rubro' => $proveedor?->rubro !== 'otro' ? $proveedor?->rubro : null,
                 ]);
 
                 $fila['estado'] = 'importado';
@@ -536,7 +535,7 @@ class ImportarComprasArca extends Component
         $existente = null;
         if (! empty($cuit) && $numeroComprobante !== '0000-00000000') {
             $existente = Compra::where('numero_comprobante', $numeroComprobante)
-                ->whereHas('proveedor', fn ($q) => $q->where('cuit', $cuit))
+                ->whereHas('proveedor', fn ($q) => $q->porCuit($cuit))
                 ->first();
             $yaExiste = $existente !== null;
         }

@@ -351,7 +351,7 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label small fw-semibold">Proveedor</label>
-                            <select class="form-select form-select-sm" wire:model="id_proveedor">
+                            <select class="form-select form-select-sm" wire:model.live="id_proveedor">
                                 <option value="">— Sin proveedor —</option>
                                 @foreach ($proveedoresOpciones as $p)
                                     <option value="{{ $p->id }}">{{ $p->nombre }}</option>
@@ -389,10 +389,14 @@
                         <div class="small fw-semibold text-muted mb-2">
                             <i class="bi bi-tags me-1"></i> Imputación
                         </div>
+                        <div class="small text-muted mb-2">
+                            Se completa desde la Actividad del proveedor y su Rubro. Podés elegir otra Actividad para este comprobante.
+                            <button type="button" class="btn btn-link btn-sm p-0" wire:click="usarActividadPredeterminada">Usar predeterminada</button>
+                        </div>
                         <div class="row g-2">
                             <div class="col-md-3">
-                                <label class="form-label small">Actividad</label>
-                                <select class="form-select form-select-sm" wire:model="actividad">
+                                <label class="form-label small">Actividad / Imputación</label>
+                                <select class="form-select form-select-sm" wire:model.live="actividad">
                                     @foreach ($actividades as $k => $v)
                                         <option value="{{ $k }}">{{ $v }}</option>
                                     @endforeach
@@ -409,7 +413,7 @@
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label small">Rubro</label>
-                                <select class="form-select form-select-sm" wire:model="rubro">
+                                <select class="form-select form-select-sm" wire:model.live="rubro">
                                     <option value="">— Sin rubro —</option>
                                     @foreach ($rubros as $k => $v)
                                         <option value="{{ $k }}">{{ $v }}</option>
