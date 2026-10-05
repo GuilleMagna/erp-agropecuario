@@ -40,4 +40,5 @@ deployment:
     - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_09_02_120000_add_unidad_cantidad_to_ventas_granos_table.php
     - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_09_02_130000_add_precio_kg_es_neto_to_ventas_granos_table.php
     - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_10_05_000001_create_rubros_table.php
+    - cd $APPPATH && /usr/local/bin/php artisan migrate --force --path=database/migrations/2026_10_05_120000_conciliar_presentacion_compras_jun_agosto_2026.php
     - cd $APPPATH && /usr/local/bin/php artisan view:clear
