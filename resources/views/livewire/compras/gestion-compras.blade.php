@@ -17,6 +17,13 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0">Comprobantes de Compra</h1>
         <div class="d-flex gap-2">
+            @can('reportes.economicos.ver')
+                <a class="btn btn-outline-secondary btn-sm" href="{{ route('reportes.compras') }}">Informe de compras</a>
+            @endcan
+            @can('compras.editar')
+                <button class="btn btn-outline-primary btn-sm" wire:click="completarClasificacion" wire:loading.attr="disabled"
+                    wire:confirm="Se completarán sólo Actividad y Rubro vacíos de todos los comprobantes de la empresa activa, usando la clasificación del proveedor. Lote y campaña requieren selección manual. ¿Continuar?">Completar clasificación pendiente</button>
+            @endcan
             @can('compras.crear')
                 <button type="button" class="btn btn-primary btn-sm" wire:click="abrirModalCrear">
                     <i class="bi bi-plus-lg me-1"></i> Nueva Compra
@@ -152,7 +159,7 @@
                             <th>Comprobante</th>
                             <th>Proveedor</th>
                             <th>Actividad</th>
-                            <th>Imputación</th>
+                            <th>Rubro / Imputación</th>
                             <th class="text-end">Total</th>
                             <th>Estado</th>
                             <th class="text-end pe-3">Acciones</th>
@@ -194,6 +201,7 @@
                                     @endif
                                 </td>
                                 <td class="small text-muted">
+                                    <div>{{ $compra->rubro_label }}</div>
                                     @if ($compra->lote)
                                         <i class="bi bi-map me-1"></i>{{ $compra->lote->nombre }}
                                     @endif
@@ -201,7 +209,7 @@
                                         @if ($compra->lote) · @endif
                                         <i class="bi bi-calendar2-range me-1"></i>{{ $compra->campana->nombre }}
                                     @endif
-                                    @if (!$compra->lote && !$compra->campana) — @endif
+                                    @if (!$compra->lote && !$compra->campana && $compra->actividad) <small>{{ $compra->actividad_label }}</small> @endif
                                 </td>
                                 <td class="text-end text-nowrap fw-semibold {{ $compra->total < 0 ? 'text-danger' : '' }}">
                                     ${{ number_format($compra->total, 2, ',', '.') }}

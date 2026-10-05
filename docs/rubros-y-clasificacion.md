@@ -26,3 +26,10 @@ Se conservan los 17 rubros anteriores y se agregan 29:
 ## Despliegue
 
 La nueva tabla se crea con `php artisan migrate --path=database/migrations/2026_10_05_000001_create_rubros_table.php --force`. La tarea de despliegue de cPanel ya incluye este comando. Los códigos históricos de Rubro se mantienen y los cambios del catálogo se guardan por empresa.
+
+
+## Comprobantes anteriores e informes
+
+Clasificar proveedores no modifica automáticamente los comprobantes anteriores. En **Compras → Completar clasificación pendiente** se completan únicamente Actividad y Rubro vacíos de la empresa activa, incluso fuera de los filtros del listado. Los valores ya cargados prevalecen y los proveedores sin evidencia suficiente permanecen pendientes. Un rubro específico del comprobante determina su actividad predeterminada antes que el proveedor. Lote y Campaña se eligen manualmente: no se pueden deducir del CUIT.
+
+La columna **Rubro / Imputación** muestra el rubro y el destino de la compra. **Reportes → Compras por clasificación** agrupa los comprobantes por Rubro, Actividad, Lote y Campaña, permite filtrar fechas y proveedor y exporta CSV. Se excluyen cancelados, las notas de crédito conservan su signo negativo y los pendientes se muestran sin clasificar. El informe usa los valores guardados del comprobante, por lo que primero debe completarse la clasificación pendiente si se desean incluir esas compras en los grupos correspondientes.

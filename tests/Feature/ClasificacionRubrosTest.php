@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Livewire\Compras\GestionCompras;
 use App\Livewire\Compras\GestionProveedores;
+use App\Livewire\Reportes\ReporteCompras;
 use App\Models\Compra;
 use App\Models\Proveedor;
 use App\Models\Rubro;
@@ -230,5 +231,51 @@ class ClasificacionRubrosTest extends TestCase
         Gate::swap(new \Illuminate\Auth\Access\Gate($this->app, fn () => auth()->user()));
         $this->expectException(AuthorizationException::class);
         (new GestionProveedores)->guardarRubro();
+    }
+
+    private function comprobante(array $datos = []): Compra
+    {
+        return Compra::create(array_merge([
+            'tipo_comprobante' => 'factura_a', 'numero_comprobante' => '0001-123',
+            'fecha' => '2026-10-01', 'estado' => 'recibida', 'subtotal' => 100,
+            'iva_importe' => 21, 'total' => 121,
+        ], $datos));
+    }
+
+    public function test_completar_pendientes_preserva_manuales_y_aisla_empresa(): void
+    {
+        $p = $this->proveedor();
+        $pendiente = $this->comprobante(['id_proveedor' => $p->id]);
+        $manual = $this->comprobante(['id_proveedor' => $p->id, 'actividad' => 'ganaderia', 'rubro' => 'alquileres']);
+        $otra = $this->comprobante(['id_empresa' => $this->empresaB, 'id_proveedor' => $p->id]);
+        $sinProveedor = $this->comprobante();
+        $panel = Livewire::test(GestionCompras::class)->call('completarClasificacion')->assertHasNoErrors();
+        $this->assertSame('agricultura', $pendiente->fresh()->actividad);
+        $this->assertSame('cosecha', $pendiente->fresh()->rubro);
+        $this->assertSame('ganaderia', $manual->fresh()->actividad);
+        $this->assertSame('alquileres', $manual->fresh()->rubro);
+        $this->assertNull($otra->fresh()->actividad);
+        $this->assertNull($sinProveedor->fresh()->actividad);
+        $panel->call('completarClasificacion')->assertSee('0 comprobantes completados');
+    }
+
+    public function test_informe_resta_creditos_excluye_cancelados_y_otra_empresa(): void
+    {
+        $this->comprobante(['rubro' => 'cosecha', 'actividad' => 'agricultura']);
+        $this->comprobante(['rubro' => 'cosecha', 'actividad' => 'agricultura', 'tipo_comprobante' => 'nota_credito', 'subtotal' => -20, 'iva_importe' => -4.2, 'total' => -24.2]);
+        $this->comprobante(['estado' => 'cancelada']);
+        $this->comprobante(['id_empresa' => $this->empresaB]);
+        Livewire::test(ReporteCompras::class)
+            ->assertViewHas('filas', fn ($filas) => $filas->count() === 1 && (float) $filas->sum('importe') === 96.8 && (int) $filas->sum('cantidad') === 2)
+            ->set('actividad', 'ganaderia')->assertViewHas('filas', fn ($filas) => $filas->isEmpty());
+    }
+
+    public function test_informe_exporta_y_actualizacion_exige_permiso(): void
+    {
+        $this->comprobante(['rubro' => 'cosecha', 'actividad' => 'agricultura']);
+        Livewire::test(ReporteCompras::class)->call('exportar')->assertFileDownloaded('informe-compras.csv');
+        Gate::swap(new \Illuminate\Auth\Access\Gate($this->app, fn () => auth()->user()));
+        Gate::before(fn ($user, $ability) => false);
+        Livewire::test(GestionCompras::class)->call('completarClasificacion')->assertForbidden();
     }
 }

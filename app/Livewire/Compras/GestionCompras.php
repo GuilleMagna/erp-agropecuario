@@ -393,10 +393,12 @@ class GestionCompras extends Component
         $this->fecha = $compra->fecha->format('Y-m-d');
         $this->fecha_vencimiento = $compra->fecha_vencimiento?->format('Y-m-d') ?? '';
         $this->estado = $compra->estado;
-        $this->actividad = $compra->actividad ?? 'general';
-        $this->actividadManual = true;
+        $this->actividad = $compra->actividad ?: (($compra->rubro && $compra->rubro !== $compra->proveedor?->rubro
+            ? Rubro::predeterminada($compra->rubro, $compra->id_empresa)
+            : $compra->proveedor?->actividadPredeterminada()) ?? 'general');
+        $this->actividadManual = (bool) $compra->actividad;
         $this->zona = $compra->zona ?? '';
-        $this->rubro = $compra->rubro ?? '';
+        $this->rubro = $compra->rubro ?: ($compra->proveedor?->rubro ?? '');
         $this->id_lote = $compra->id_lote ?? '';
         $this->id_campana = $compra->id_campana ?? '';
         $this->iva_porc = $compra->iva_porc !== null ? (string) $compra->iva_porc : '';
@@ -700,6 +702,42 @@ class GestionCompras extends Component
         $this->total = '0.00';
         $this->items = [];
         $this->resetValidation();
+    }
+
+    /** Completa únicamente campos vacíos de la empresa activa. */
+    public function completarClasificacion(): void
+    {
+        Gate::authorize('compras.editar');
+        $cantidad = 0;
+        Compra::with('proveedor')->where(function ($q) {
+            $q->whereNull('actividad')->orWhere('actividad', '')->orWhereNull('rubro')->orWhere('rubro', '');
+        })->chunkById(200, function ($compras) use (&$cantidad) {
+            foreach ($compras as $compra) {
+                $proveedor = $compra->proveedor;
+                if (! $proveedor || $proveedor->id_empresa !== $compra->id_empresa) {
+                    continue;
+                }
+                $cambios = [];
+                if (! $compra->rubro && $proveedor->rubro && $proveedor->rubro !== 'otro') {
+                    $cambios['rubro'] = $proveedor->rubro;
+                }
+                if (! $compra->actividad) {
+                    // Un rubro ya elegido en el comprobante prevalece sobre el del proveedor.
+                    $actividad = $compra->rubro && $compra->rubro !== $proveedor->rubro
+                        ? Rubro::predeterminada($compra->rubro, $compra->id_empresa)
+                        : $proveedor->actividadPredeterminada();
+                    if ($actividad) {
+                        $cambios['actividad'] = $actividad;
+                    }
+                }
+                if ($cambios) {
+                    $cantidad += Compra::whereKey($compra->id)
+                        ->where('actividad', $compra->actividad)
+                        ->where('rubro', $compra->rubro)->update($cambios);
+                }
+            }
+        });
+        session()->flash('success', "{$cantidad} comprobantes completados. Se conservaron los valores existentes; los proveedores pendientes siguen sin clasificar.");
     }
 
     public function render()

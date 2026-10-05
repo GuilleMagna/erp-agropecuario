@@ -399,6 +399,9 @@
                     <i class="bi bi-graph-up-arrow me-2"></i> Económico
                 </a>
                 @endcan
+                @can('reportes.economicos.ver')
+                <a href="{{ route('reportes.compras') }}" class="nav-link {{ request()->routeIs('reportes.compras') ? 'active' : '' }}"><i class="bi bi-tags me-2"></i> Compras por clasificación</a>
+                @endcan
                 @can('reportes.fiscales.ver')
                 <a href="{{ route('reportes.fiscal') }}"
                    class="nav-link {{ request()->routeIs('reportes.fiscal') ? 'active' : '' }}">
