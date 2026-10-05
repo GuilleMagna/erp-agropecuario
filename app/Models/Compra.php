@@ -114,6 +114,34 @@ class Compra extends Model
         return self::ESTADOS[$this->estado] ?? $this->estado;
     }
 
+    /** Valores sugeridos; consultar no modifica la imputación guardada. */
+    public function actividadSugerida(): ?string
+    {
+        if ($this->actividad) {
+            return $this->actividad;
+        }
+        $proveedor = $this->proveedor;
+        if ($proveedor && $proveedor->id_empresa !== $this->id_empresa) {
+            $proveedor = null;
+        }
+        if ($this->rubro && $this->rubro !== 'otro' && $this->rubro !== $proveedor?->rubro) {
+            return Rubro::predeterminada($this->rubro, $this->id_empresa);
+        }
+
+        return $proveedor?->actividadPredeterminada();
+    }
+
+    public function rubroSugerido(): ?string
+    {
+        if ($this->rubro && $this->rubro !== 'otro') {
+            return $this->rubro;
+        }
+        $proveedor = $this->proveedor;
+
+        return $proveedor && $proveedor->id_empresa === $this->id_empresa && $proveedor->rubro !== 'otro'
+            ? $proveedor->rubro : $this->rubro;
+    }
+
     public function getActividadLabelAttribute(): string
     {
         return self::ACTIVIDADES[$this->actividad] ?? ($this->actividad ?? '—');

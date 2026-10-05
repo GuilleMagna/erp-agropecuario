@@ -49,7 +49,7 @@ class ReporteCompras extends Component
             ->when($this->rubro === 'sin_clasificar', fn ($q) => $q->where(fn ($q) => $q->whereNull('rubro')->orWhereIn('rubro', ['', 'otro'])))
             ->when($this->rubro && $this->rubro !== 'sin_clasificar', fn ($q) => $q->where('rubro', $this->rubro))
             ->selectRaw("COALESCE(NULLIF(rubro, ''), 'otro') AS rubro, COALESCE(NULLIF(actividad, ''), '') AS actividad, id_lote, id_campana, COUNT(*) AS cantidad, SUM(subtotal) AS neto, SUM(COALESCE(iva_importe,0)) AS iva, SUM(total) AS importe")
-            ->groupByRaw("COALESCE(NULLIF(rubro, ''), 'otro'), COALESCE(NULLIF(actividad, ''), ''), id_lote, id_campana")
+            ->groupBy('rubro', 'actividad', 'id_lote', 'id_campana')
             ->orderBy('rubro')->orderBy('actividad')->get();
     }
 

@@ -190,18 +190,23 @@
                                 </td>
                                 <td>{{ $compra->proveedor?->nombre ?? '—' }}</td>
                                 <td>
-                                    @if ($compra->actividad)
+                                    @if ($actividadMostrada = $compra->actividadSugerida())
                                         @php
                                             $colorMap = ['agricultura'=>'success','ganaderia'=>'warning','feedlot'=>'info','general'=>'secondary'];
-                                            $color = $colorMap[$compra->actividad] ?? 'secondary';
+                                            $color = $colorMap[$actividadMostrada] ?? 'secondary';
                                         @endphp
-                                        <span class="badge bg-{{ $color }} bg-opacity-75">{{ $compra->actividad_label }}</span>
+                                        <span class="badge bg-{{ $color }} bg-opacity-75">{{ $actividades[$actividadMostrada] ?? $actividadMostrada }}</span>
+                                        @if (!$compra->actividad)<small class="d-block text-muted">Sugerida</small>@endif
                                     @else
                                         <span class="text-muted">—</span>
                                     @endif
                                 </td>
                                 <td class="small text-muted">
-                                    <div>{{ $compra->rubro_label }}</div>
+                                    @php
+                                        $rubroMostrado = $compra->rubroSugerido();
+                                    @endphp
+                                    <div>{{ $rubros[$rubroMostrado] ?? ($rubroMostrado ?: 'Sin clasificar') }}</div>
+                                    @if ($rubroMostrado && $rubroMostrado !== $compra->rubro)<small>Sugerido</small>@endif
                                     @if ($compra->lote)
                                         <i class="bi bi-map me-1"></i>{{ $compra->lote->nombre }}
                                     @endif
@@ -209,7 +214,7 @@
                                         @if ($compra->lote) · @endif
                                         <i class="bi bi-calendar2-range me-1"></i>{{ $compra->campana->nombre }}
                                     @endif
-                                    @if (!$compra->lote && !$compra->campana && $compra->actividad) <small>{{ $compra->actividad_label }}</small> @endif
+                                    @if (!$compra->lote && !$compra->campana && $actividadMostrada) <small>{{ $actividades[$actividadMostrada] ?? $actividadMostrada }}</small> @endif
                                 </td>
                                 <td class="text-end text-nowrap fw-semibold {{ $compra->total < 0 ? 'text-danger' : '' }}">
                                     ${{ number_format($compra->total, 2, ',', '.') }}

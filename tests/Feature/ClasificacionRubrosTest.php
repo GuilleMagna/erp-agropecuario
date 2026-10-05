@@ -278,4 +278,16 @@ class ClasificacionRubrosTest extends TestCase
         Gate::before(fn ($user, $ability) => false);
         Livewire::test(GestionCompras::class)->call('completarClasificacion')->assertForbidden();
     }
+
+    public function test_listado_muestra_sugerencias_sin_modificar_comprobantes(): void
+    {
+        $p = $this->proveedor();
+        $compra = $this->comprobante(['id_proveedor' => $p->id]);
+        Livewire::test(GestionCompras::class)->assertSee('Sugerida')->assertSee('Servicios de cosecha')->assertSee('Agricultura');
+        $this->assertNull($compra->fresh()->actividad);
+        $this->assertNull($compra->fresh()->rubro);
+        $manual = $this->comprobante(['id_proveedor' => $p->id, 'actividad' => 'ganaderia', 'rubro' => 'alquileres']);
+        $this->assertSame('ganaderia', $manual->actividadSugerida());
+        $this->assertSame('alquileres', $manual->rubroSugerido());
+    }
 }
