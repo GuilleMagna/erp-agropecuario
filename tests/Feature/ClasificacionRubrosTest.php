@@ -33,6 +33,7 @@ class ClasificacionRubrosTest extends TestCase
         });
         DB::table('empresas')->insert([['id' => $this->empresaA], ['id' => $this->empresaB]]);
         (require database_path('migrations/2026_10_05_000001_create_rubros_table.php'))->up();
+        (require database_path('migrations/2026_10_15_120000_add_deleted_at_to_rubros_table.php'))->up();
         (require database_path('migrations/2026_06_26_000015_create_proveedores_table.php'))->up();
         Schema::table('proveedores', fn (Blueprint $table) => $table->string('actividad')->nullable());
         Schema::create('compras', function (Blueprint $table) {
@@ -417,5 +418,46 @@ class ClasificacionRubrosTest extends TestCase
         $claves = array_keys($opciones);
         $this->assertLessThan(array_search('seguros', $claves), array_search('reparaciones', $claves));
         $this->assertSame('Servicios de cosecha', $opciones['cosecha']);
+    }
+
+    public function test_eliminar_rubro_base_deja_proveedores_y_compras_sin_rubro_solo_en_empresa_activa(): void
+    {
+        $p = $this->proveedor(['actividad' => 'agricultura']);
+        $compra = $this->comprobante(['id_proveedor' => $p->id, 'rubro' => 'cosecha', 'actividad' => 'ganaderia']);
+        $pOtra = $this->proveedor(['id_empresa' => $this->empresaB]);
+        $compraOtra = $this->comprobante(['id_empresa' => $this->empresaB, 'id_proveedor' => $pOtra->id, 'rubro' => 'cosecha']);
+        Livewire::test(GestionProveedores::class)->call('abrirCatalogo')->call('eliminarRubro', 'cosecha')->assertHasNoErrors();
+        $this->assertNull($p->fresh()->rubro);
+        $this->assertSame('agricultura', $p->fresh()->actividad);
+        $this->assertNull($compra->fresh()->rubro);
+        $this->assertSame('ganaderia', $compra->fresh()->actividad);
+        $this->assertSame('121.00', $compra->fresh()->total);
+        $this->assertSame('cosecha', $pOtra->fresh()->rubro);
+        $this->assertSame('cosecha', $compraOtra->fresh()->rubro);
+        $this->assertArrayNotHasKey('cosecha', Rubro::catalogo($this->empresaA));
+        $this->assertArrayHasKey('cosecha', Rubro::catalogo($this->empresaB));
+        $this->assertTrue(Rubro::withTrashed()->where('codigo', 'cosecha')->firstOrFail()->trashed());
+        Livewire::test(GestionCompras::class)->set('filtroRubro', 'sin_clasificar')
+            ->assertViewHas('compras', fn ($compras) => $compras->total() === 1);
+    }
+
+    public function test_eliminar_personalizado_permite_crearlo_de_nuevo_sin_reclasificar_compras(): void
+    {
+        Rubro::create(['codigo' => 'obra_social', 'nombre' => 'Obra social', 'actividades' => ['general'], 'actividad_default' => 'general']);
+        $compra = $this->comprobante(['rubro' => 'obra_social']);
+        $panel = Livewire::test(GestionProveedores::class)->call('eliminarRubro', 'obra_social');
+        $this->assertArrayNotHasKey('obra_social', Rubro::opciones());
+        $panel->set('nuevoRubroNombre', 'Obra social')->set('nuevoRubroActividades', ['general'])->set('nuevoRubroDefault', 'general')
+            ->call('guardarRubro')->assertHasNoErrors();
+        $this->assertArrayHasKey('obra_social', Rubro::opciones());
+        $this->assertNull($compra->fresh()->rubro);
+    }
+
+    public function test_eliminar_rubro_exige_permiso_de_edicion_de_compras(): void
+    {
+        Gate::swap(new \Illuminate\Auth\Access\Gate($this->app, fn () => auth()->user()));
+        Gate::before(fn ($user, $ability) => $ability === 'compras.proveedores.gestionar');
+        Livewire::test(GestionProveedores::class)->call('eliminarRubro', 'cosecha')->assertForbidden();
+        $this->assertArrayHasKey('cosecha', Rubro::opciones());
     }
 }

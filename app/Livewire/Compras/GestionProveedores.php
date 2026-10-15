@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Compras;
 
+use App\Models\Compra;
 use App\Models\Proveedor;
 use App\Models\Rubro;
 use App\Services\CompletarClasificacionCompras;
@@ -119,15 +120,45 @@ class GestionProveedores extends Component
                 return;
             }
         }
-        Rubro::withoutGlobalScope('empresa')->updateOrCreate(
+        Rubro::withoutGlobalScope('empresa')->withTrashed()->updateOrCreate(
             ['id_empresa' => $empresaId, 'codigo' => $codigo],
-            ['nombre' => $this->nuevoRubroNombre, 'actividades' => array_values(array_unique($this->nuevoRubroActividades)), 'actividad_default' => $this->nuevoRubroDefault],
+            ['nombre' => $this->nuevoRubroNombre, 'actividades' => array_values(array_unique($this->nuevoRubroActividades)), 'actividad_default' => $this->nuevoRubroDefault, 'deleted_at' => null],
         );
         if ($this->rubro === $codigo) {
             $this->updatedRubro();
         }
         $this->nuevoRubro();
         session()->flash('success', 'Rubro guardado. Disponible en proveedores y compras de esta empresa.');
+    }
+
+    public function eliminarRubro(string $codigo): void
+    {
+        Gate::authorize('compras.proveedores.gestionar');
+        Gate::authorize('compras.editar');
+        $empresa = Proveedor::resolverEmpresaActiva();
+        abort_unless($empresa, 403);
+        $datos = Rubro::catalogo($empresa)[$codigo] ?? null;
+        abort_unless($datos, 404);
+        [$proveedores, $compras] = DB::transaction(function () use ($empresa, $codigo, $datos) {
+            $rubro = Rubro::withoutGlobalScope('empresa')->firstOrCreate(
+                ['id_empresa' => $empresa, 'codigo' => $codigo],
+                ['nombre' => $datos['nombre'], 'actividades' => $datos['actividades'], 'actividad_default' => $datos['actividad_default']],
+            );
+            // También registrar la baja de rubros base para que no reaparezcan.
+            $rubro->delete();
+            $proveedores = Proveedor::where('id_empresa', $empresa)->where('rubro', $codigo)->update(['rubro' => null]);
+            $compras = Compra::where('id_empresa', $empresa)->where('rubro', $codigo)->update(['rubro' => null]);
+
+            return [$proveedores, $compras];
+        });
+        if ($this->rubro === $codigo) {
+            $this->rubro = '';
+        }
+        if ($this->filtroRubro === $codigo) {
+            $this->filtroRubro = '';
+        }
+        $this->nuevoRubro();
+        session()->flash('success', "Rubro eliminado. {$proveedores} proveedores y {$compras} comprobantes quedaron sin rubro. Se conservaron sus actividades y demás datos.");
     }
 
     public function updatedRubro(): void

@@ -34,9 +34,16 @@
                 <div class="col-md-5">
                     <div class="list-group overflow-auto" style="max-height: 300px">
                         @foreach ($catalogoRubros as $codigo => $datos)
-                        <button type="button" wire:key="rubro-{{ $codigo }}" class="list-group-item list-group-item-action {{ $rubroEditando === $codigo ? 'active' : '' }}" wire:click="editarRubro('{{ $codigo }}')">
-                            {{ $datos['nombre'] }} <small class="d-block">Predeterminada: {{ $actividades[$datos['actividad_default']] ?? 'Sin clasificar' }}</small>
-                        </button>
+                        <div wire:key="rubro-{{ $codigo }}" class="list-group-item d-flex align-items-center gap-2 {{ $rubroEditando === $codigo ? 'active' : '' }}">
+                            <button type="button" class="btn text-start flex-grow-1 p-0 {{ $rubroEditando === $codigo ? 'text-white' : '' }}" wire:click="editarRubro('{{ $codigo }}')">
+                                {{ $datos['nombre'] }} <small class="d-block">Predeterminada: {{ $actividades[$datos['actividad_default']] ?? 'Sin clasificar' }}</small>
+                            </button>
+                            @can('compras.editar')
+                                <button type="button" class="btn btn-sm btn-outline-danger" wire:click="eliminarRubro('{{ $codigo }}')" wire:loading.attr="disabled"
+                                    wire:confirm="¿Eliminar {{ $datos['nombre'] }}? Todos los proveedores y comprobantes de esta empresa que lo tengan quedarán sin rubro. Sus actividades y demás datos se conservarán."
+                                    aria-label="Eliminar {{ $datos['nombre'] }}" title="Eliminar rubro"><i class="bi bi-trash" aria-hidden="true"></i></button>
+                            @endcan
+                        </div>
                         @endforeach
                     </div>
                 </div>

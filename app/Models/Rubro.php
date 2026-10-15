@@ -5,13 +5,14 @@ namespace App\Models;
 use App\Traits\PerteneceAEmpresa;
 use App\Traits\UsaUuid;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class Rubro extends Model
 {
-    use PerteneceAEmpresa, UsaUuid;
+    use PerteneceAEmpresa, SoftDeletes, UsaUuid;
 
-    protected $fillable = ['id_empresa', 'codigo', 'nombre', 'actividades', 'actividad_default'];
+    protected $fillable = ['id_empresa', 'codigo', 'nombre', 'actividades', 'actividad_default', 'deleted_at'];
 
     protected $casts = ['actividades' => 'array'];
 
@@ -39,7 +40,12 @@ class Rubro extends Model
         }
         $empresaId ??= self::resolverEmpresaActiva();
         if ($empresaId) {
-            foreach (self::withoutGlobalScope('empresa')->where('id_empresa', $empresaId)->get() as $rubro) {
+            foreach (self::withoutGlobalScope('empresa')->withTrashed()->where('id_empresa', $empresaId)->get() as $rubro) {
+                if ($rubro->trashed()) {
+                    unset($catalogo[$rubro->codigo]);
+
+                    continue;
+                }
                 $catalogo[$rubro->codigo] = $rubro->only(['nombre', 'actividades', 'actividad_default']);
             }
         }

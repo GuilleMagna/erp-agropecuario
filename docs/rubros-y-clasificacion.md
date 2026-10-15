@@ -56,3 +56,10 @@ Para proveedores clasificados antes de esta mejora, **Completar clasificación p
 ## Corregir una clasificación ya aplicada
 
 En Compras, filtrar por Proveedor y revisar los filtros de fecha/rubro. **Seleccionar los N comprobantes filtrados** incluye todas las páginas. Luego **Editar selección → Rubro** permite reemplazar incluso rubros ya asignados. Las actividades y los demás datos se conservan; se pueden corregir por separado con la acción Actividad. El cambio masivo no cambia la ficha del proveedor: actualizarla también para futuras compras. Los listados y el administrador de rubros se ordenan alfabéticamente por nombre, incluyendo rubros personalizados y nombres con acentos.
+
+
+## Eliminar rubros
+
+En Administrar rubros, el icono de papelera permite eliminar un rubro de la empresa activa tras confirmar la operación. Sus proveedores y comprobantes quedan con Rubro vacío; se conservan Actividad, importes y demás campos. La baja se registra también para rubros base, para que no reaparezcan en el catálogo. Se requieren `compras.proveedores.gestionar` y `compras.editar`. Un rubro personalizado puede crearse nuevamente, pero no recupera automáticamente las asociaciones eliminadas.
+
+El reporte Compras por clasificación requiere actualmente `reportes.economicos.ver`, tanto para acceder como para exportar. Ese permiso también habilita el Reporte Económico; el rol `cargador_datos` no lo recibe en el seeder actual.
