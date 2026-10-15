@@ -290,4 +290,44 @@ class ClasificacionRubrosTest extends TestCase
         $this->assertSame('ganaderia', $manual->actividadSugerida());
         $this->assertSame('alquileres', $manual->rubroSugerido());
     }
+
+    public function test_graficos_agrupan_pendientes_y_conservan_importes_negativos(): void
+    {
+        foreach ([null, '', 'otro'] as $rubro) {
+            $this->comprobante(['rubro' => $rubro, 'actividad' => null]);
+        }
+        $this->comprobante(['rubro' => 'cosecha', 'actividad' => 'agricultura', 'total' => -25]);
+        $this->comprobante(['estado' => 'cancelada', 'total' => 5000]);
+        $this->comprobante(['id_empresa' => $this->empresaB, 'total' => 9000]);
+        Livewire::test(ReporteCompras::class)
+            ->assertSee('Sin rubro')->assertSee('Ver y completar')
+            ->assertViewHas('filas', fn ($filas) => $filas->count() === 2)
+            ->assertViewHas('porRubro', fn ($serie) => count($serie) === 2
+                && collect($serie)->firstWhere('codigo', 'sin_clasificar')['cantidad'] === 3
+                && collect($serie)->firstWhere('codigo', 'sin_clasificar')['importe'] === 363.0
+                && collect($serie)->firstWhere('codigo', 'cosecha')['importe'] === -25.0)
+            ->assertViewHas('porActividad', fn ($serie) => count($serie) === 2)
+            ->set('rubro', 'cosecha')->assertViewHas('porRubro', fn ($serie) => count($serie) === 1);
+    }
+
+    public function test_enlaces_del_informe_abren_el_mismo_conjunto_de_compras(): void
+    {
+        $p = $this->proveedor();
+        $pendiente = $this->comprobante(['id_proveedor' => $p->id, 'actividad' => '']);
+        $this->comprobante(['id_proveedor' => $p->id, 'rubro' => 'cosecha']);
+        $this->comprobante(['id_proveedor' => $p->id, 'estado' => 'cancelada']);
+        $this->comprobante(['id_proveedor' => $p->id, 'fecha' => '2026-09-01']);
+        $this->comprobante(['id_empresa' => $this->empresaB]);
+        $reporte = Livewire::test(ReporteCompras::class)->set('desde', '2026-10-01')->set('hasta', '2026-10-31')->set('proveedor', $p->id);
+        $url = $reporte->instance()->enlaceCompras('sin_clasificar', 'sin_clasificar', 'sin_asignar', 'sin_asignar');
+        parse_str(parse_url($url, PHP_URL_QUERY), $filtros);
+        $this->assertSame($this->empresaA, $filtros['empresa']);
+        Livewire::test(GestionCompras::class)
+            ->set('filtroFechaDesde', $filtros['filtroFechaDesde'])->set('filtroFechaHasta', $filtros['filtroFechaHasta'])
+            ->set('filtroProveedor', $filtros['filtroProveedor'])->set('filtroRubro', $filtros['filtroRubro'])
+            ->set('filtroActividad', $filtros['filtroActividad'])->set('filtroLote', $filtros['filtroLote'])
+            ->set('filtroCampana', $filtros['filtroCampana'])->set('filtroExcluirCanceladas', true)
+            ->assertViewHas('compras', fn ($compras) => $compras->total() === 1 && $compras->first()->id === $pendiente->id)
+            ->call('limpiarFiltros')->assertSet('filtroRubro', '')->assertSet('filtroExcluirCanceladas', false);
+    }
 }

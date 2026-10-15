@@ -32,6 +32,9 @@
         </div>
     </div>
 
+    @if ($filtroExcluirCanceladas || $filtroLote || $filtroCampana)
+        <div class="alert alert-info py-2">Detalle del informe: se conservan los filtros de lote y campaña y se excluyen cancelados cuando corresponde. <button class="btn btn-link btn-sm" wire:click="limpiarFiltros">Ver todos</button></div>
+    @endif
     {{-- Filtros --}}
     <div class="card mb-3">
         <div class="card-body py-2">
@@ -63,6 +66,12 @@
                         @foreach ($actividades as $k => $v)
                             <option value="{{ $k }}">{{ $v }}</option>
                         @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select form-select-sm" wire:model.live="filtroRubro" aria-label="Filtrar por rubro">
+                        <option value="">Todos los rubros</option><option value="sin_clasificar">Sin rubro</option>
+                        @foreach ($rubros as $codigo => $nombre)<option value="{{ $codigo }}">{{ $nombre }}</option>@endforeach
                     </select>
                 </div>
                 <div class="col-md-1">
@@ -188,7 +197,7 @@
                                         </span>
                                     @endunless
                                 </td>
-                                <td>{{ $compra->proveedor?->nombre ?? '—' }}</td>
+                                <td>{{ $compra->proveedor?->nombre ?? '—' }}@if($compra->proveedor?->cuit)<small class="d-block text-muted">CUIT {{ $compra->proveedor->cuit }}</small>@endif</td>
                                 <td>
                                     @if ($actividadMostrada = $compra->actividadSugerida())
                                         @php

@@ -35,3 +35,12 @@ Clasificar proveedores no modifica automáticamente los comprobantes anteriores.
 La columna **Rubro / Imputación** muestra el rubro y el destino de la compra. **Reportes → Compras por clasificación** agrupa los comprobantes por Rubro, Actividad, Lote y Campaña, permite filtrar fechas y proveedor y exporta CSV. Se excluyen cancelados, las notas de crédito conservan su signo negativo y los pendientes se muestran sin clasificar. El informe usa los valores guardados del comprobante, por lo que primero debe completarse la clasificación pendiente si se desean incluir esas compras en los grupos correspondientes.
 
 Cuando el comprobante no tiene clasificación guardada, el listado muestra la del proveedor como **Sugerida / Sugerido**. Consultar no la guarda ni modifica la compra. Para incorporarla a los informes, usar **Completar clasificación pendiente**.
+
+
+## Gráficos y acceso a comprobantes
+
+El informe de compras incluye barras y tortas por Rubro y por Actividad / Imputación. Se calculan sobre los comprobantes filtrados, usando su total: las notas de crédito restan y los cancelados se excluyen. Las barras admiten saldos negativos; las tortas representan únicamente la participación de grupos con saldo positivo y lo aclaran en pantalla.
+
+Los iconos, barras, porciones y leyendas abren los comprobantes del grupo conservando empresa, fechas y proveedor. El detalle de la tabla conserva también Actividad, Lote y Campaña. El listado muestra CUIT del proveedor para facilitar la revisión.
+
+**Sin rubro** reúne campos nulos, vacíos y `otro`. Tiene cantidad, importe y enlace **Ver y completar**. El filtro también está disponible en Compras. La clasificación del informe sigue siendo la guardada en el comprobante, aunque el listado muestre una sugerencia del proveedor.

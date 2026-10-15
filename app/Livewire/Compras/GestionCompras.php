@@ -33,6 +33,18 @@ class GestionCompras extends Component
     public string $filtroActividad = '';
 
     #[Url]
+    public string $filtroRubro = '';
+
+    #[Url]
+    public string $filtroLote = '';
+
+    #[Url]
+    public string $filtroCampana = '';
+
+    #[Url]
+    public bool $filtroExcluirCanceladas = false;
+
+    #[Url]
     public string $filtroEstablecimiento = '';
 
     #[Url]
@@ -180,6 +192,12 @@ class GestionCompras extends Component
         $this->seleccionados = [];
     }
 
+    public function updatedFiltroRubro(): void
+    {
+        $this->resetPage();
+        $this->seleccionados = [];
+    }
+
     public function updatedFiltroEstablecimiento(): void
     {
         $this->resetPage();
@@ -224,6 +242,7 @@ class GestionCompras extends Component
             'busqueda', 'filtroProveedor', 'filtroEstado', 'filtroActividad',
             'filtroEstablecimiento', 'filtroFechaDesde', 'filtroFechaHasta',
             'filtroTipo', 'filtroPresentacion', 'filtroConIva',
+            'filtroRubro', 'filtroLote', 'filtroCampana', 'filtroExcluirCanceladas',
         ]);
         $this->resetPage();
         $this->seleccionados = [];
@@ -237,7 +256,8 @@ class GestionCompras extends Component
         return $this->busqueda !== '' || $this->filtroProveedor !== '' || $this->filtroEstado !== ''
             || $this->filtroActividad !== '' || $this->filtroEstablecimiento !== ''
             || $this->filtroFechaDesde !== '' || $this->filtroFechaHasta !== ''
-            || $this->filtroTipo !== '' || $this->filtroPresentacion !== '' || $this->filtroConIva;
+            || $this->filtroTipo !== '' || $this->filtroPresentacion !== '' || $this->filtroConIva
+            || $this->filtroRubro !== '' || $this->filtroLote !== '' || $this->filtroCampana !== '' || $this->filtroExcluirCanceladas;
     }
 
     /**
@@ -749,8 +769,15 @@ class GestionCompras extends Component
             ))
             ->when($this->filtroProveedor, fn ($q) => $q->where('id_proveedor', $this->filtroProveedor))
             ->when($this->filtroEstado, fn ($q) => $q->where('estado', $this->filtroEstado))
-            ->when($this->filtroActividad === 'sin_imputar', fn ($q) => $q->whereNull('actividad'))
+            ->when($this->filtroActividad === 'sin_imputar', fn ($q) => $q->where(fn ($q) => $q->whereNull('actividad')->orWhere('actividad', '')))
             ->when($this->filtroActividad && $this->filtroActividad !== 'sin_imputar', fn ($q) => $q->where('actividad', $this->filtroActividad))
+            ->when($this->filtroRubro === 'sin_clasificar', fn ($q) => $q->where(fn ($q) => $q->whereNull('rubro')->orWhereIn('rubro', ['', 'otro'])))
+            ->when($this->filtroRubro && $this->filtroRubro !== 'sin_clasificar', fn ($q) => $q->where('rubro', $this->filtroRubro))
+            ->when($this->filtroLote === 'sin_asignar', fn ($q) => $q->whereNull('id_lote'))
+            ->when($this->filtroLote && $this->filtroLote !== 'sin_asignar', fn ($q) => $q->where('id_lote', $this->filtroLote))
+            ->when($this->filtroCampana === 'sin_asignar', fn ($q) => $q->whereNull('id_campana'))
+            ->when($this->filtroCampana && $this->filtroCampana !== 'sin_asignar', fn ($q) => $q->where('id_campana', $this->filtroCampana))
+            ->when($this->filtroExcluirCanceladas, fn ($q) => $q->where('estado', '!=', 'cancelada'))
             ->when($this->filtroEstablecimiento, fn ($q) => $q->where('id_establecimiento', $this->filtroEstablecimiento))
             ->when($this->filtroFechaDesde, fn ($q) => $q->where('fecha', '>=', $this->filtroFechaDesde))
             ->when($this->filtroFechaHasta, fn ($q) => $q->where('fecha', '<=', $this->filtroFechaHasta))

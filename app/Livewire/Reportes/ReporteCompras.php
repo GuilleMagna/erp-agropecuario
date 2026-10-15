@@ -50,7 +50,16 @@ class ReporteCompras extends Component
             ->when($this->rubro && $this->rubro !== 'sin_clasificar', fn ($q) => $q->where('rubro', $this->rubro))
             ->selectRaw("COALESCE(NULLIF(rubro, ''), 'otro') AS rubro, COALESCE(NULLIF(actividad, ''), '') AS actividad, id_lote, id_campana, COUNT(*) AS cantidad, SUM(subtotal) AS neto, SUM(COALESCE(iva_importe,0)) AS iva, SUM(total) AS importe")
             ->groupBy('rubro', 'actividad', 'id_lote', 'id_campana')
-            ->orderBy('rubro')->orderBy('actividad')->get();
+            ->orderBy('rubro')->orderBy('actividad')->get()
+            ->groupBy(fn ($fila) => json_encode([$fila->rubro, $fila->actividad, $fila->id_lote, $fila->id_campana]))
+            ->map(function ($grupo) {
+                $fila = $grupo->first();
+                foreach (['cantidad', 'neto', 'iva', 'importe'] as $campo) {
+                    $fila->{$campo} = $grupo->sum($campo);
+                }
+
+                return $fila;
+            })->values();
     }
 
     public function exportar()
@@ -76,10 +85,50 @@ class ReporteCompras extends Component
         }, 'informe-compras.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
+    public function enlaceCompras(?string $rubro = null, ?string $actividad = null, ?string $lote = null, ?string $campana = null): string
+    {
+        return route('compras.index', array_filter([
+            'empresa' => Compra::resolverEmpresaActiva(),
+            'filtroFechaDesde' => $this->desde,
+            'filtroFechaHasta' => $this->hasta,
+            'filtroProveedor' => $this->proveedor,
+            'filtroRubro' => $rubro ?? $this->rubro,
+            'filtroActividad' => ($actividad ?? $this->actividad) === 'sin_clasificar' ? 'sin_imputar' : ($actividad ?? $this->actividad),
+            'filtroLote' => $lote,
+            'filtroCampana' => $campana,
+            'filtroExcluirCanceladas' => true,
+        ], fn ($valor) => $valor !== null && $valor !== ''));
+    }
+
+    private function serie($filas, string $campo, array $etiquetas): array
+    {
+        $colores = ['#198754', '#0d6efd', '#fd7e14', '#6f42c1', '#0dcaf0', '#d63384', '#64748b', '#a16207'];
+
+        return $filas->groupBy(fn ($fila) => $campo === 'rubro'
+            ? ($fila->rubro && $fila->rubro !== 'otro' ? $fila->rubro : 'sin_clasificar')
+            : ($fila->actividad ?: 'sin_clasificar'))
+            ->map(function ($grupo, $codigo) use ($campo, $etiquetas) {
+                return [
+                    'codigo' => $codigo,
+                    'nombre' => $codigo === 'sin_clasificar' ? ($campo === 'rubro' ? 'Sin rubro' : 'Sin imputación') : ($etiquetas[$codigo] ?? $codigo),
+                    'importe' => round((float) $grupo->sum('importe'), 2),
+                    'cantidad' => (int) $grupo->sum('cantidad'),
+                    'url' => $campo === 'rubro' ? $this->enlaceCompras($codigo) : $this->enlaceCompras(null, $codigo),
+                ];
+            })->sortByDesc('importe')->values()
+            ->map(fn ($grupo, $i) => $grupo + ['color' => $colores[$i % count($colores)]])->all();
+    }
+
     public function render()
     {
+        $filas = $this->resumen();
+        $porRubro = $this->serie($filas, 'rubro', Rubro::opciones());
+
         return view('livewire.reportes.reporte-compras', [
-            'filas' => $this->resumen(),
+            'filas' => $filas,
+            'porRubro' => $porRubro,
+            'porActividad' => $this->serie($filas, 'actividad', Compra::ACTIVIDADES),
+            'sinRubro' => collect($porRubro)->firstWhere('codigo', 'sin_clasificar'),
             'rubros' => Rubro::opciones(),
             'actividades' => Compra::ACTIVIDADES,
             'proveedores' => Proveedor::orderBy('nombre')->get(),
