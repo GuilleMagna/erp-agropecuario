@@ -81,3 +81,10 @@ El catálogo de Gastos no ARCA mantiene su Categoría y agrega un Rubro específ
 **Finanzas → Informe de gastos** combina Compras de la empresa activa y registros mensuales no ARCA de esa empresa. Los generales sin empresa se identifican por separado y pueden excluirse. Se muestran gráficos, importes por origen, filtros por mes y rubro, exportación CSV y enlaces al detalle. El acceso requiere `finanzas.gastos.gestionar` y `compras.ver`, permisos que ya tiene el rol cargador_datos.
 
 Compras usa fecha del comprobante y total con IVA; notas de crédito restan y cancelados se excluyen. Gastos no ARCA usa el mes registrado del importe. No existe una relación para deduplicar una misma factura entre ambas fuentes: el informe aclara que la suma es el total registrado sin conciliación de duplicados. El enlace de No ARCA abre el catálogo del rubro para revisar servicios e historial; el de Compras conserva el período.
+
+
+## Zonas en Gastos no ARCA
+
+Cada servicio no ARCA tiene Zona propia (Santa Fe o Corrientes), independiente del proveedor y del rubro: EPE puede estar en cualquiera de las dos. Al editarla, su historial mensual se agrupa bajo la zona elegida sin cambiar importes ni fechas. La migración asigna Santa Fe por defecto y Corrientes cuando aparece explícitamente en el nombre; una calle Corrientes seguida de número no determina provincia.
+
+El catálogo permite filtrar por Zona y la muestra también en la grilla mensual. Gastos por rubro incluye Zona en la tabla y CSV, filtro para ambos orígenes y gráficos por zona. Los enlaces conservan la zona seleccionada. El Trébol histórico de Compras se agrupa como Santa Fe.

@@ -530,13 +530,17 @@ class ClasificacionRubrosTest extends TestCase
             ->assertViewHas('compras', fn ($compras) => $compras->total() === 2);
     }
 
-    private function prepararGastos(bool $conRubro = true): void
+    private function prepararGastos(bool $conRubro = true, bool $conZona = true): void
     {
         (require database_path('migrations/2026_07_01_000002_create_gastos_no_arca_table.php'))->up();
-        Schema::table('gastos_no_arca', function (Blueprint $table) use ($conRubro) {
+        Schema::table('gastos_no_arca', function (Blueprint $table) use ($conRubro, $conZona) {
             if ($conRubro) {
                 $table->string('rubro')->nullable();
-            } $table->uuid('id_inmueble')->nullable();
+            }
+            if ($conZona) {
+                $table->string('zona')->default('santa_fe');
+            }
+            $table->uuid('id_inmueble')->nullable();
         });
         Schema::create('inmuebles', function (Blueprint $table) {
             $table->uuid('id')->primary();
@@ -596,5 +600,36 @@ class ClasificacionRubrosTest extends TestCase
         $this->assertSame('energia', $proveedor->fresh()->rubro);
         $this->assertSame('energia', $compra->fresh()->rubro);
         $this->assertSame('121.00', $compra->fresh()->total);
+    }
+
+    public function test_zona_no_arca_clasifica_historial_y_filtra_informe_conjunto(): void
+    {
+        $this->prepararGastos();
+        $gasto = GastoNoArca::create(['nombre' => 'EPE servicio', 'categoria' => 'servicios_publicos', 'id_empresa' => $this->empresaA]);
+        PagoGastoNoArca::create(['id_gasto' => $gasto->id, 'mes' => '2026-08-01', 'importe' => 200]);
+        $this->comprobante(['fecha' => '2026-08-01', 'zona' => 'corrientes', 'rubro' => 'energia', 'total' => 100]);
+        $this->comprobante(['fecha' => '2026-08-01', 'zona' => 'santa_fe', 'rubro' => 'energia', 'total' => 50]);
+        Livewire::test(GestionGastosNoArca::class)->call('abrirModalEditar', $gasto->id)->set('zona', 'corrientes')->call('guardarServicio')->assertHasNoErrors();
+        $this->assertSame('corrientes', $gasto->fresh()->zona);
+        $this->assertSame('200.00', $gasto->pagos()->first()->importe);
+        $report = Livewire::test(ReporteGastos::class)->set('desde', '2026-08')->set('hasta', '2026-08')->set('zona', 'corrientes')
+            ->assertViewHas('filas', fn ($filas) => $filas->count() === 2 && $filas->sum('importe') === 300.0)
+            ->assertViewHas('porZona', fn ($serie) => count($serie) === 1 && $serie[0]['codigo'] === 'corrientes' && $serie[0]['importe'] === 300.0);
+        parse_str(parse_url($report->instance()->enlace('energia', 'no_arca', 'corrientes'), PHP_URL_QUERY), $filtros);
+        $this->assertSame('corrientes', $filtros['filtroZona']);
+        Livewire::test(GestionGastosNoArca::class)->set('vistaActiva', 'catalogo')->set('filtroZona', 'corrientes')
+            ->assertViewHas('catalogo', fn ($catalogo) => $catalogo->count() === 1);
+    }
+
+    public function test_migracion_zonas_no_arca_solo_infiere_corrientes_explicito(): void
+    {
+        $this->prepararGastos(true, false);
+        foreach (['EPE Corrientes', 'EPE Santa Fe', 'EPE calle Corrientes 123'] as $nombre) {
+            DB::table('gastos_no_arca')->insert(['id' => (string) Str::uuid(), 'nombre' => $nombre, 'categoria' => 'servicios_publicos', 'orden' => 0, 'activo' => true]);
+        }
+        (require database_path('migrations/2026_10_15_150000_add_zona_to_gastos_no_arca.php'))->up();
+        $this->assertSame('corrientes', DB::table('gastos_no_arca')->where('nombre', 'EPE Corrientes')->value('zona'));
+        $this->assertSame('santa_fe', DB::table('gastos_no_arca')->where('nombre', 'EPE Santa Fe')->value('zona'));
+        $this->assertSame('santa_fe', DB::table('gastos_no_arca')->where('nombre', 'EPE calle Corrientes 123')->value('zona'));
     }
 }

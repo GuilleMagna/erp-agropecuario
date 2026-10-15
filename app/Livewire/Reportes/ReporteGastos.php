@@ -29,6 +29,9 @@ class ReporteGastos extends Component
     public string $origen = '';
 
     #[Url]
+    public string $zona = '';
+
+    #[Url]
     public bool $incluirGenerales = true;
 
     public function mount(): void
@@ -42,7 +45,7 @@ class ReporteGastos extends Component
     {
         Gate::authorize('finanzas.gastos.gestionar');
         Gate::authorize('compras.ver');
-        $this->validate(['desde' => 'required|date_format:Y-m', 'hasta' => 'required|date_format:Y-m|after_or_equal:desde', 'origen' => 'nullable|in:compras,no_arca']);
+        $this->validate(['desde' => 'required|date_format:Y-m', 'hasta' => 'required|date_format:Y-m|after_or_equal:desde', 'origen' => 'nullable|in:compras,no_arca', 'zona' => 'nullable|in:sin_clasificar,'.implode(',', array_keys(Compra::ZONAS))]);
         $desde = Carbon::parse($this->desde.'-01');
         $hasta = Carbon::parse($this->hasta.'-01')->endOfMonth();
         $empresa = Compra::resolverEmpresaActiva();
@@ -50,30 +53,30 @@ class ReporteGastos extends Component
         $filas = collect();
         if ($this->origen !== 'no_arca') {
             $filas = Compra::where('estado', '!=', 'cancelada')->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()])
-                ->selectRaw("COALESCE(NULLIF(rubro, ''), 'sin_clasificar') AS rubro, COUNT(*) AS cantidad, SUM(total) AS importe")
-                ->groupBy('rubro')->get()->map(fn ($fila) => ['rubro' => $fila->rubro === 'otro' ? 'sin_clasificar' : $fila->rubro, 'origen' => 'compras', 'cantidad' => (int) $fila->cantidad, 'importe' => (float) $fila->importe]);
+                ->selectRaw("COALESCE(NULLIF(rubro, ''), 'sin_clasificar') AS rubro, CASE WHEN zona = 'el_trebol' THEN 'santa_fe' ELSE COALESCE(NULLIF(zona, ''), 'sin_clasificar') END AS zona, COUNT(*) AS cantidad, SUM(total) AS importe")
+                ->groupBy('rubro', 'zona')->get()->map(fn ($fila) => ['rubro' => $fila->rubro === 'otro' ? 'sin_clasificar' : $fila->rubro, 'origen' => 'compras', 'zona' => $fila->zona, 'cantidad' => (int) $fila->cantidad, 'importe' => (float) $fila->importe]);
         }
         if ($this->origen !== 'compras') {
             $pagos = DB::table('pagos_gasto_no_arca as p')->join('gastos_no_arca as g', 'g.id', '=', 'p.id_gasto')
                 ->whereBetween('p.mes', [$desde->toDateString(), $hasta->toDateString()])
                 ->where(fn ($q) => $q->where('g.id_empresa', $empresa)->when($this->incluirGenerales, fn ($q) => $q->orWhereNull('g.id_empresa')))
-                ->selectRaw("COALESCE(NULLIF(g.rubro, ''), 'sin_clasificar') AS rubro, g.id_empresa, COUNT(*) AS cantidad, SUM(p.importe) AS importe")
-                ->groupBy('g.rubro', 'g.id_empresa')->get()
-                ->map(fn ($fila) => ['rubro' => $fila->rubro, 'origen' => $fila->id_empresa ? 'no_arca' : 'generales', 'cantidad' => (int) $fila->cantidad, 'importe' => (float) $fila->importe]);
+                ->selectRaw("COALESCE(NULLIF(g.rubro, ''), 'sin_clasificar') AS rubro, COALESCE(NULLIF(g.zona, ''), 'sin_clasificar') AS zona, g.id_empresa, COUNT(*) AS cantidad, SUM(p.importe) AS importe")
+                ->groupBy('g.rubro', 'g.zona', 'g.id_empresa')->get()
+                ->map(fn ($fila) => ['rubro' => $fila->rubro, 'origen' => $fila->id_empresa ? 'no_arca' : 'generales', 'zona' => $fila->zona, 'cantidad' => (int) $fila->cantidad, 'importe' => (float) $fila->importe]);
             $filas = $filas->concat($pagos);
         }
-        $filas = $filas->groupBy(fn ($fila) => $fila['rubro'].'|'.$fila['origen'])->map(fn ($grupo) => array_replace($grupo->first(), ['cantidad' => $grupo->sum('cantidad'), 'importe' => round($grupo->sum('importe'), 2)]))->values();
+        $filas = $filas->groupBy(fn ($fila) => $fila['rubro'].'|'.$fila['origen'].'|'.$fila['zona'])->map(fn ($grupo) => array_replace($grupo->first(), ['cantidad' => $grupo->sum('cantidad'), 'importe' => round($grupo->sum('importe'), 2)]))->values();
 
-        return $filas->when($this->rubro, fn ($c) => $c->where('rubro', $this->rubro))->values();
+        return $filas->when($this->zona, fn ($c) => $c->where('zona', $this->zona))->when($this->rubro, fn ($c) => $c->where('rubro', $this->rubro))->values();
     }
 
-    public function enlace(string $rubro, string $origen): string
+    public function enlace(string $rubro, string $origen, ?string $zona = null): string
     {
         if ($origen === 'compras') {
-            return route('compras.index', ['empresa' => Compra::resolverEmpresaActiva(), 'filtroRubro' => $rubro === 'sin_clasificar' ? 'sin_clasificar' : $rubro, 'filtroFechaDesde' => $this->desde.'-01', 'filtroFechaHasta' => Carbon::parse($this->hasta.'-01')->endOfMonth()->toDateString(), 'filtroExcluirCanceladas' => true]);
+            return route('compras.index', ['empresa' => Compra::resolverEmpresaActiva(), 'filtroZona' => $zona ?? $this->zona, 'filtroRubro' => $rubro === 'sin_clasificar' ? 'sin_clasificar' : $rubro, 'filtroFechaDesde' => $this->desde.'-01', 'filtroFechaHasta' => Carbon::parse($this->hasta.'-01')->endOfMonth()->toDateString(), 'filtroExcluirCanceladas' => true]);
         }
 
-        return route('finanzas.gastos.index', ['vistaActiva' => 'catalogo', 'filtroRubro' => $rubro]);
+        return route('finanzas.gastos.index', ['vistaActiva' => 'catalogo', 'filtroRubro' => $rubro, 'filtroZona' => $zona ?? $this->zona]);
     }
 
     public function exportar()
@@ -84,13 +87,13 @@ class ReporteGastos extends Component
         return response()->streamDownload(function () use ($filas, $rubros) {
             $f = fopen('php://output', 'w');
             fwrite($f, "\xEF\xBB\xBF");
-            fputcsv($f, ['Rubro', 'Origen', 'Cantidad', 'Importe'], ';');
+            fputcsv($f, ['Rubro', 'Zona', 'Origen', 'Cantidad', 'Importe'], ';');
             foreach ($filas as $fila) {
                 $nombre = $rubros[$fila['rubro']] ?? 'Sin rubro';
                 if (preg_match('/^[=+@\-\t\r]/', $nombre)) {
                     $nombre = "'".$nombre;
                 }
-                fputcsv($f, [$nombre, $fila['origen'], $fila['cantidad'], $fila['importe']], ';');
+                fputcsv($f, [$nombre, Compra::ZONAS[$fila['zona']] ?? 'Sin zona', $fila['origen'], $fila['cantidad'], $fila['importe']], ';');
             }
             fclose($f);
         }, 'informe-gastos.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
@@ -103,9 +106,15 @@ class ReporteGastos extends Component
         asort($rubros, SORT_NATURAL | SORT_FLAG_CASE);
         $serie = $filas->groupBy('rubro')->map(fn ($grupo, $codigo) => [
             'codigo' => $codigo, 'nombre' => $rubros[$codigo] ?? 'Sin rubro', 'importe' => round($grupo->sum('importe'), 2),
-            'cantidad' => $grupo->sum('cantidad'), 'url' => route('reportes.gastos', ['empresa' => Compra::resolverEmpresaActiva(), 'origen' => $this->origen, 'incluirGenerales' => $this->incluirGenerales, 'rubro' => $codigo, 'desde' => $this->desde, 'hasta' => $this->hasta]),
+            'cantidad' => $grupo->sum('cantidad'), 'url' => route('reportes.gastos', ['empresa' => Compra::resolverEmpresaActiva(), 'zona' => $this->zona, 'origen' => $this->origen, 'incluirGenerales' => $this->incluirGenerales, 'rubro' => $codigo, 'desde' => $this->desde, 'hasta' => $this->hasta]),
         ])->sortByDesc('importe')->values()->map(fn ($grupo, $i) => $grupo + ['color' => ['#198754', '#0d6efd', '#fd7e14', '#6f42c1', '#d63384', '#64748b'][$i % 6]])->all();
 
-        return view('livewire.reportes.reporte-gastos', compact('filas', 'rubros', 'serie'));
+        $zonas = Compra::ZONAS;
+        $porZona = $filas->groupBy('zona')->map(fn ($grupo, $codigo) => [
+            'codigo' => $codigo, 'nombre' => $zonas[$codigo] ?? 'Sin zona', 'importe' => round($grupo->sum('importe'), 2),
+            'cantidad' => $grupo->sum('cantidad'), 'url' => route('reportes.gastos', ['zona' => $codigo, 'rubro' => $this->rubro, 'desde' => $this->desde, 'hasta' => $this->hasta, 'origen' => $this->origen, 'incluirGenerales' => $this->incluirGenerales, 'empresa' => Compra::resolverEmpresaActiva()]),
+        ])->sortByDesc('importe')->values()->map(fn ($grupo, $i) => $grupo + ['color' => ['#198754', '#0d6efd', '#fd7e14', '#6f42c1'][$i % 4]])->all();
+
+        return view('livewire.reportes.reporte-gastos', compact('filas', 'rubros', 'serie', 'zonas', 'porZona'));
     }
 }

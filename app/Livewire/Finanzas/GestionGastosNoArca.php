@@ -36,6 +36,11 @@ class GestionGastosNoArca extends Component
 
     public string $rubro = '';
 
+    public string $zona = 'santa_fe';
+
+    #[Url]
+    public string $filtroZona = '';
+
     public string $filtroEstado = '';     // '' | activos | inactivos
 
     public string $busqueda = '';
@@ -187,6 +192,7 @@ class GestionGastosNoArca extends Component
         $this->nombre = $gasto->nombre;
         $this->categoria = $gasto->categoria;
         $this->rubro = $gasto->rubro ?? '';
+        $this->zona = $gasto->zona ?? 'santa_fe';
         $this->id_inmueble = $gasto->id_inmueble ?? '';
         $this->activo = $gasto->activo;
         $this->orden = (string) $gasto->orden;
@@ -199,6 +205,7 @@ class GestionGastosNoArca extends Component
 
         $this->validate([
             'nombre' => 'required|string|max:200',
+            'zona' => 'required|in:santa_fe,corrientes',
             'rubro' => 'nullable|in:'.implode(',', array_keys(GastoNoArca::RUBROS)),
             'categoria' => 'required|in:'.implode(',', array_keys(GastoNoArca::CATEGORIAS)),
             'id_inmueble' => 'nullable|exists:inmuebles,id',
@@ -209,6 +216,7 @@ class GestionGastosNoArca extends Component
 
         $datos = [
             'nombre' => $this->nombre,
+            'zona' => $this->zona,
             'rubro' => $this->rubro ?: GastoNoArca::rubroSugerido($this->nombre, $this->categoria),
             'categoria' => $this->categoria,
             'id_inmueble' => $this->id_inmueble ?: null,
@@ -293,6 +301,7 @@ class GestionGastosNoArca extends Component
     {
         $this->reset(['editandoId', 'modoEdicion', 'nombre', 'id_inmueble', 'rubro']);
         $this->categoria = 'otros';
+        $this->zona = 'santa_fe';
         $this->activo = true;
         $this->orden = '0';
         $this->resetValidation();
@@ -317,6 +326,7 @@ class GestionGastosNoArca extends Component
         $catalogo = GastoNoArca::query()
             ->with('inmueble')
             ->withCount('pagos')
+            ->when($this->filtroZona, fn ($q) => $q->where('zona', $this->filtroZona))
             ->when($this->filtroRubro === 'sin_clasificar', fn ($q) => $q->whereNull('rubro'))
             ->when($this->filtroRubro && $this->filtroRubro !== 'sin_clasificar', fn ($q) => $q->where('rubro', $this->filtroRubro))
             ->when($this->filtroCategoria, fn ($q) => $q->where('categoria', $this->filtroCategoria))
@@ -334,6 +344,7 @@ class GestionGastosNoArca extends Component
             'totalCatalogo' => GastoNoArca::count(),
             'categorias' => GastoNoArca::CATEGORIAS,
             'rubros' => GastoNoArca::RUBROS,
+            'zonas' => GastoNoArca::ZONAS,
             'inmuebles' => Inmueble::where('activo', true)->orderBy('nombre')->get(),
             'mesLabel' => $this->formatearMes($this->mesSeleccionado),
         ]);

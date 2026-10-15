@@ -15,7 +15,7 @@ class GastoNoArca extends Model
     protected $table = 'gastos_no_arca';
 
     protected $fillable = [
-        'id_empresa', 'nombre', 'categoria', 'rubro', 'id_inmueble', 'orden', 'activo',
+        'id_empresa', 'nombre', 'categoria', 'rubro', 'zona', 'id_inmueble', 'orden', 'activo',
     ];
 
     protected $casts = [
@@ -44,6 +44,13 @@ class GastoNoArca extends Model
         'empleados' => 'Sueldos y RRHH', 'tarjetas' => 'Tarjetas de crédito', 'comunicaciones' => 'Telefonía / Internet',
     ];
 
+    const ZONAS = ['santa_fe' => 'Santa Fe', 'corrientes' => 'Corrientes'];
+
+    public static function zonaSugerida(string $nombre): string
+    {
+        return preg_match('/\bcorrientes\b(?!\s+\d)/', Str::lower(Str::ascii($nombre))) ? 'corrientes' : 'santa_fe';
+    }
+
     public static function rubroSugerido(string $nombre, string $categoria): ?string
     {
         $nombre = Str::lower(Str::ascii($nombre));
@@ -70,6 +77,7 @@ class GastoNoArca extends Model
     protected static function booted(): void
     {
         static::creating(function (self $gasto) {
+            $gasto->zona ??= self::zonaSugerida($gasto->nombre);
             $gasto->rubro ??= self::rubroSugerido($gasto->nombre, $gasto->categoria ?? 'otros');
         });
     }
