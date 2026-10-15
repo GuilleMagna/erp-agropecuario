@@ -24,6 +24,8 @@ class GestionProveedores extends Component
 
     public string $filtroActivo = '';
 
+    public string $filtroZona = '';
+
     public bool $modalAbierto = false;
 
     public bool $modoEdicion = false;
@@ -240,6 +242,11 @@ class GestionProveedores extends Component
         $this->resetPage();
     }
 
+    public function updatedFiltroZona(): void
+    {
+        $this->resetPage();
+    }
+
     public function updatedFiltroActivo(): void
     {
         $this->resetPage();
@@ -364,6 +371,7 @@ class GestionProveedores extends Component
                 ->orWhere('cuit', 'like', "%{$this->busqueda}%")
                 ->orWhere('email', 'like', "%{$this->busqueda}%")
             ))
+            ->when($this->filtroZona, fn ($q) => $q->where('zona', $this->filtroZona))
             ->when($this->filtroRubro, fn ($q) => $q->where('rubro', $this->filtroRubro))
             ->when($this->filtroActivo !== '', fn ($q) => $q->where('activo', (bool) $this->filtroActivo))
             ->withCount('compras')

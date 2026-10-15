@@ -89,7 +89,7 @@
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body py-3">
             <div class="row g-3 align-items-end">
-                <div class="col-md-5">
+                <div class="col-md-4">
                     <label class="form-label small fw-semibold text-muted mb-1">Búsqueda</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0">
@@ -100,7 +100,7 @@
                                wire:model.live.debounce.300ms="busqueda">
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label small fw-semibold text-muted mb-1">Rubro</label>
                     <select class="form-select" wire:model.live="filtroRubro">
                         <option value="">Todos</option>
@@ -115,6 +115,13 @@
                         <option value="">Todos</option>
                         <option value="1">Activos</option>
                         <option value="0">Inactivos</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold text-muted mb-1">Zona</label>
+                    <select class="form-select" wire:model.live="filtroZona">
+                        <option value="">Todas</option>
+                        @foreach ($zonas as $codigo => $nombre)<option value="{{ $codigo }}">{{ $nombre }}</option>@endforeach
                     </select>
                 </div>
                 <div class="col-md-2 text-end">
@@ -132,6 +139,7 @@
                         <th class="ps-4">Nombre / Razón social</th>
                         <th>CUIT</th>
                         <th>Rubro / Actividad</th>
+                        <th>Zona</th>
                         <th>Contacto</th>
                         <th class="text-center">Compras</th>
                         <th>Estado</th>
@@ -151,11 +159,12 @@
                         <td>
                             @if ($prov->rubro)
                                 <span class="badge rounded-pill bg-secondary-subtle text-secondary">{{ $prov->rubro_label }}</span>
-                                <small class="d-block text-muted">{{ $prov->actividad_label }}</small><small class="d-block text-muted">Zona: {{ $zonas[$prov->zonaPredeterminada()] }}</small>
+                                <small class="d-block text-muted">{{ $prov->actividad_label }}</small>
                             @else
                                 <span class="text-muted">—</span>
                             @endif
                         </td>
+                        <td class="text-nowrap">{{ $zonas[$prov->zonaPredeterminada()] }}</td>
                         <td>
                             @if ($prov->telefono)
                                 <div class="small"><i class="bi bi-telephone me-1 text-muted"></i>{{ $prov->telefono }}</div>
@@ -200,7 +209,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-5">
+                        <td colspan="8" class="text-center text-muted py-5">
                             <i class="bi bi-building display-6 d-block mb-2 opacity-25"></i>
                             No se encontraron proveedores.
                         </td>
@@ -277,7 +286,7 @@
                             </div>
                         </div>
 
-                        <div class="mb-3"><label class="form-label fw-semibold">Zona del CUIT</label><select class="form-select" wire:model.live="zona">@foreach($zonas as $codigo=>$nombre)<option value="{{ $codigo }}">{{ $nombre }}</option>@endforeach</select>@error('zona')<small class="text-danger">{{ $message }}</small>@enderror<div class="form-text">Santa Fe por defecto. Al cambiarla se actualizarán todos los comprobantes de este proveedor en la empresa activa.</div></div>
+                        <div class="mb-3"><label class="form-label fw-semibold">Zona</label><select class="form-select" wire:model.live="zona">@foreach($zonas as $codigo=>$nombre)<option value="{{ $codigo }}">{{ $nombre }}</option>@endforeach</select>@error('zona')<small class="text-danger">{{ $message }}</small>@enderror<div class="form-text">Santa Fe por defecto. Al cambiarla se actualizarán todos los comprobantes de este proveedor en la empresa activa.</div></div>
                         <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">Contacto</h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-4">
