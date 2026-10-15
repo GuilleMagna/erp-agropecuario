@@ -340,6 +340,7 @@
                    class="nav-link {{ request()->routeIs('finanzas.gastos.*') ? 'active' : '' }}">
                     <i class="bi bi-cash-stack me-2"></i> Gastos
                 </a>
+                @can('compras.ver')<a href="{{ route('reportes.gastos') }}" class="nav-link {{ request()->routeIs('reportes.gastos') ? 'active' : '' }}"><i class="bi bi-bar-chart me-2"></i> Informe de gastos</a>@endcan
                 @endcan
                 @can('finanzas.inmuebles.gestionar')
                 <a href="{{ route('finanzas.inmuebles.index') }}"

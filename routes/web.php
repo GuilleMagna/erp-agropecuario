@@ -143,6 +143,9 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('can:auditoria.ver')
         ->name('sistema.auditoria');
 
+    Route::get('/reportes/gastos', fn () => view('reportes.reporte-gastos'))
+        ->middleware(['can:finanzas.gastos.gestionar', 'can:compras.ver'])->name('reportes.gastos');
+
     Route::get('/reportes/compras', fn () => view('reportes.reporte-compras'))
         ->middleware('can:reportes.economicos.ver')
         ->name('reportes.compras');

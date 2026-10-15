@@ -21,6 +21,7 @@
         </div>
     @endif
 
+    @can('compras.ver')<a class="btn btn-outline-primary mb-3" href="{{ route('reportes.gastos') }}"><i class="bi bi-bar-chart me-1"></i>Informe de gastos</a>@endcan
     {{-- Tabs ──────────────────────────────────────────────────────────────── --}}
     <ul class="nav nav-tabs mb-4">
         <li class="nav-item">
@@ -125,7 +126,7 @@
                                 <tr wire:key="gasto-pago-{{ $gasto->id }}"
                                     @class(['fila-importe-pendiente' => trim((string) $imp) === '' && $gasto->activo])>
                                     <td class="ps-4">
-                                        {{ $gasto->nombre }}
+                                        {{ $gasto->nombre }}<small class="d-block text-muted">{{ $rubros[$gasto->rubro] ?? 'Sin rubro' }}</small>
                                         @unless ($gasto->activo)
                                             <span class="badge bg-secondary-subtle text-secondary border ms-1"
                                                   title="Dado de baja: se muestra sólo porque tiene un pago cargado en este mes">
@@ -235,6 +236,7 @@
             </button>
         </div>
 
+        <select class="form-select form-select-sm w-auto mb-3" wire:model.live="filtroRubro"><option value="">Todos los rubros</option><option value="sin_clasificar">Sin rubro</option>@foreach($rubros as $codigo=>$nombre)<option value="{{ $codigo }}">{{ $nombre }}</option>@endforeach</select>
         <div class="card border-0 shadow-sm">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0" style="font-size:.85rem;">
@@ -242,7 +244,7 @@
                         <tr>
                             <th style="width:40px">#</th>
                             <th>Nombre</th>
-                            <th>Categoría</th>
+                            <th>Categoría</th><th>Rubro</th>
                             <th>Inmueble</th>
                             <th class="text-center">Pagos</th>
                             <th class="text-center">Estado</th>
@@ -259,6 +261,7 @@
                                         {{ \App\Models\GastoNoArca::CATEGORIAS[$gasto->categoria] ?? $gasto->categoria }}
                                     </span>
                                 </td>
+                                <td>{{ $rubros[$gasto->rubro] ?? 'Sin rubro' }}</td>
                                 <td>
                                     @if ($gasto->inmueble)
                                         <span class="badge bg-info-subtle text-info border border-info-subtle">
@@ -305,7 +308,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-5">
+                                <td colspan="8" class="text-center text-muted py-5">
                                     <i class="bi bi-list-ul fs-2 d-block mb-2 opacity-25"></i>
                                     No hay servicios que coincidan con el filtro.
                                 </td>
@@ -330,7 +333,7 @@
                         </h5>
                         <button type="button" class="btn-close" wire:click="cerrarModal"></button>
                     </div>
-                    <div class="modal-body">
+                    <div class="modal-body"><div class="mb-3"><label class="form-label">Rubro</label><select class="form-select" wire:model="rubro"><option value="">Sugerir según servicio / categoría</option>@foreach($rubros as $codigo=>$nombre)<option value="{{ $codigo }}">{{ $nombre }}</option>@endforeach</select>@error('rubro')<small class="text-danger">{{ $message }}</small>@enderror</div>
                         <div class="mb-3">
                             <label class="form-label small fw-semibold">Nombre <span class="text-danger">*</span></label>
                             <input type="text" class="form-control @error('nombre') is-invalid @enderror"

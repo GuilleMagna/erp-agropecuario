@@ -4,8 +4,12 @@ namespace Tests\Feature;
 
 use App\Livewire\Compras\GestionCompras;
 use App\Livewire\Compras\GestionProveedores;
+use App\Livewire\Finanzas\GestionGastosNoArca;
 use App\Livewire\Reportes\ReporteCompras;
+use App\Livewire\Reportes\ReporteGastos;
 use App\Models\Compra;
+use App\Models\GastoNoArca;
+use App\Models\PagoGastoNoArca;
 use App\Models\Proveedor;
 use App\Models\Rubro;
 use App\Models\Usuario;
@@ -15,6 +19,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -523,5 +528,73 @@ class ClasificacionRubrosTest extends TestCase
             ->assertViewHas('porZona', fn ($serie) => count($serie) === 1 && $serie[0]['cantidad'] === 2);
         Livewire::test(GestionCompras::class)->set('filtroZona', 'santa_fe')
             ->assertViewHas('compras', fn ($compras) => $compras->total() === 2);
+    }
+
+    private function prepararGastos(bool $conRubro = true): void
+    {
+        (require database_path('migrations/2026_07_01_000002_create_gastos_no_arca_table.php'))->up();
+        Schema::table('gastos_no_arca', function (Blueprint $table) use ($conRubro) {
+            if ($conRubro) {
+                $table->string('rubro')->nullable();
+            } $table->uuid('id_inmueble')->nullable();
+        });
+        Schema::create('inmuebles', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->string('nombre');
+            $table->string('localidad')->nullable();
+            $table->boolean('activo')->default(true);
+        });
+    }
+
+    public function test_informe_gastos_separa_compras_no_arca_generales_y_otra_empresa(): void
+    {
+        $this->prepararGastos();
+        $this->comprobante(['rubro' => 'energia', 'total' => 121]);
+        $this->comprobante(['rubro' => 'energia', 'total' => -21, 'tipo_comprobante' => 'nota_credito']);
+        $this->comprobante(['rubro' => 'energia', 'estado' => 'cancelada', 'total' => 500]);
+        foreach ([$this->empresaA, null, $this->empresaB] as $empresa) {
+            $g = GastoNoArca::create(['nombre' => 'EPE servicio', 'categoria' => 'servicios_publicos', 'id_empresa' => $empresa]);
+            PagoGastoNoArca::create(['id_gasto' => $g->id, 'mes' => '2026-10-01', 'importe' => 50]);
+            PagoGastoNoArca::create(['id_gasto' => $g->id, 'mes' => '2025-10-01', 'importe' => 5000]);
+        }
+        Livewire::test(ReporteGastos::class)->set('desde', '2026-10')->set('hasta', '2026-10')
+            ->assertViewHas('filas', fn ($filas) => $filas->count() === 3 && $filas->sum('importe') === 200.0)
+            ->set('incluirGenerales', false)->assertViewHas('filas', fn ($filas) => $filas->sum('importe') === 150.0)
+            ->set('origen', 'compras')->assertViewHas('filas', fn ($filas) => $filas->sum('importe') === 100.0)
+            ->call('exportar')->assertFileDownloaded('informe-gastos.csv');
+    }
+
+    public function test_gasto_epe_se_subclasifica_y_permite_cambiar_rubro(): void
+    {
+        $this->prepararGastos();
+        $g = GastoNoArca::create(['nombre' => 'EPE EL TREBOL', 'categoria' => 'servicios_publicos']);
+        $this->assertSame('energia', $g->rubro);
+        $this->assertSame('gas', GastoNoArca::rubroSugerido('Litoral Gas', 'servicios_publicos'));
+        $this->assertSame('servicios_agua', GastoNoArca::rubroSugerido('Aguas Santafesinas', 'servicios_publicos'));
+        Livewire::test(GestionGastosNoArca::class)->call('abrirModalEditar', $g->id)
+            ->assertSet('rubro', 'energia')->set('rubro', 'gas')->call('guardarServicio')->assertHasNoErrors();
+        $this->assertSame('gas', $g->fresh()->rubro);
+    }
+
+    public function test_reporte_gastos_exige_permisos_de_ambos_origenes(): void
+    {
+        $this->prepararGastos();
+        Gate::swap(new \Illuminate\Auth\Access\Gate($this->app, fn () => auth()->user()));
+        Gate::before(fn ($user, $ability) => $ability !== 'compras.ver');
+        Livewire::test(ReporteGastos::class)->assertForbidden();
+    }
+
+    public function test_migracion_gastos_clasifica_epe_sin_cambiar_importes(): void
+    {
+        $this->prepararGastos(false);
+        $id = (string) Str::uuid();
+        DB::table('gastos_no_arca')->insert(['id' => $id, 'nombre' => 'EPE CASA', 'categoria' => 'servicios_publicos', 'orden' => 0, 'activo' => true]);
+        $proveedor = $this->proveedor(['nombre' => 'EMPRESA PROVINCIAL DE LA ENERGIA']);
+        $compra = $this->comprobante(['id_proveedor' => $proveedor->id, 'rubro' => 'insumos']);
+        (require database_path('migrations/2026_10_15_140000_clasificar_rubros_de_gastos.php'))->up();
+        $this->assertSame('energia', DB::table('gastos_no_arca')->where('id', $id)->value('rubro'));
+        $this->assertSame('energia', $proveedor->fresh()->rubro);
+        $this->assertSame('energia', $compra->fresh()->rubro);
+        $this->assertSame('121.00', $compra->fresh()->total);
     }
 }

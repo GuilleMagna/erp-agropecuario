@@ -72,3 +72,12 @@ Cada proveedor tiene Zona: Santa Fe (predeterminada) o Corrientes. La carga inic
 Las compras nuevas heredan la zona del proveedor, también al importar desde ARCA/Mrbot. El establecimiento ya no reemplaza esa zona. Al cambiar la Zona del proveedor, se actualizan sus comprobantes de la misma empresa (requiere edición de compras). No se modifican importes, rubros ni actividades.
 
 La migración clasifica todos los proveedores existentes y completa compras con zona vacía, General o El Trébol; conserva compras históricas explícitamente en Corrientes. El reporte agrupa El Trébol histórico dentro de Santa Fe. Incluye barras, torta, filtro y enlaces por Zona, además del detalle y exportación CSV. La migración no modifica la fecha de emisión ni la marca de presentación fiscal.
+
+
+## Gastos no ARCA e informe conjunto
+
+El catálogo de Gastos no ARCA mantiene su Categoría y agrega un Rubro específico (Luz, Gas, Agua, Telefonía, Obra social, etc.). Se edita desde el servicio; cambiarlo agrupa también sus registros mensuales históricos bajo el nuevo rubro. La carga inicial identifica EPE como Luz, Litoral Gas como Gas y servicios de agua por su nombre. También clasifica proveedores EPE existentes y sus comprobantes como Energía/Luz, sin alterar importes ni imputaciones.
+
+**Finanzas → Informe de gastos** combina Compras de la empresa activa y registros mensuales no ARCA de esa empresa. Los generales sin empresa se identifican por separado y pueden excluirse. Se muestran gráficos, importes por origen, filtros por mes y rubro, exportación CSV y enlaces al detalle. El acceso requiere `finanzas.gastos.gestionar` y `compras.ver`, permisos que ya tiene el rol cargador_datos.
+
+Compras usa fecha del comprobante y total con IVA; notas de crédito restan y cancelados se excluyen. Gastos no ARCA usa el mes registrado del importe. No existe una relación para deduplicar una misma factura entre ambas fuentes: el informe aclara que la suma es el total registrado sin conciliación de duplicados. El enlace de No ARCA abre el catálogo del rubro para revisar servicios e historial; el de Compras conserva el período.

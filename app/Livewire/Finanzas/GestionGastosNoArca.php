@@ -6,37 +6,56 @@ use App\Models\GastoNoArca;
 use App\Models\Inmueble;
 use App\Models\PagoGastoNoArca;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class GestionGastosNoArca extends Component
 {
     // ── Vista ────────────────────────────────────────────────────────────────
-    public string $vistaActiva  = 'pagos';   // pagos | catalogo
+    #[Url]
+    public string $vistaActiva = 'pagos';   // pagos | catalogo
+
     #[Url]
     public string $mesSeleccionado = '';     // YYYY-MM
 
     // ── Pagos del mes (grilla inline) ────────────────────────────────────────
     // [gasto_id => ['importe' => '', 'fecha_pago' => '', 'notas' => '']]
     public array $pagos = [];
-    public bool  $hayDirtyCambios = false;
+
+    public bool $hayDirtyCambios = false;
 
     // ── Filtros catálogo ─────────────────────────────────────────────────────
     public string $filtroCategoria = '';
-    public string $filtroEstado    = '';     // '' | activos | inactivos
-    public string $busqueda        = '';
+
+    #[Url]
+    public string $filtroRubro = '';
+
+    public string $rubro = '';
+
+    public string $filtroEstado = '';     // '' | activos | inactivos
+
+    public string $busqueda = '';
 
     // ── Modal servicio ───────────────────────────────────────────────────────
-    public bool    $modalAbierto = false;
-    public bool    $modoEdicion  = false;
-    public ?string $editandoId   = null;
-    public string  $nombre       = '';
-    public string  $categoria    = 'otros';
-    public string  $id_inmueble  = '';
-    public bool    $activo       = true;
-    public string  $orden        = '0';
+    public bool $modalAbierto = false;
+
+    public bool $modoEdicion = false;
+
+    public ?string $editandoId = null;
+
+    public string $nombre = '';
+
+    public string $categoria = 'otros';
+
+    public string $id_inmueble = '';
+
+    public bool $activo = true;
+
+    public string $orden = '0';
 
     public function mount(): void
     {
@@ -49,7 +68,7 @@ class GestionGastosNoArca extends Component
     // ─────────────────────────────────────────────────────────────────────────
     public function mesPrevio(): void
     {
-        $this->mesSeleccionado = Carbon::parse($this->mesSeleccionado . '-01')
+        $this->mesSeleccionado = Carbon::parse($this->mesSeleccionado.'-01')
             ->subMonth()->format('Y-m');
         $this->hayDirtyCambios = false;
         $this->cargarPagos();
@@ -57,7 +76,7 @@ class GestionGastosNoArca extends Component
 
     public function meSiguiente(): void
     {
-        $this->mesSeleccionado = Carbon::parse($this->mesSeleccionado . '-01')
+        $this->mesSeleccionado = Carbon::parse($this->mesSeleccionado.'-01')
             ->addMonth()->format('Y-m');
         $this->hayDirtyCambios = false;
         $this->cargarPagos();
@@ -74,13 +93,13 @@ class GestionGastosNoArca extends Component
      * más los dados de baja que igual tengan un pago cargado en ese mes, para
      * que el historial de meses anteriores no desaparezca al dar de baja.
      */
-    private function gastosDelMes(string $mesDate): \Illuminate\Support\Collection
+    private function gastosDelMes(string $mesDate): Collection
     {
         $idsConPago = PagoGastoNoArca::where('mes', $mesDate)->pluck('id_gasto');
 
         return GastoNoArca::where(function ($q) use ($idsConPago) {
-                $q->where('activo', true)->orWhereIn('id', $idsConPago);
-            })
+            $q->where('activo', true)->orWhereIn('id', $idsConPago);
+        })
             ->orderBy('orden')
             ->orderBy('nombre')
             ->get();
@@ -88,8 +107,8 @@ class GestionGastosNoArca extends Component
 
     private function cargarPagos(): void
     {
-        $mesDate = $this->mesSeleccionado . '-01';
-        $gastos  = $this->gastosDelMes($mesDate);
+        $mesDate = $this->mesSeleccionado.'-01';
+        $gastos = $this->gastosDelMes($mesDate);
 
         $pagosDb = PagoGastoNoArca::where('mes', $mesDate)
             ->whereIn('id_gasto', $gastos->pluck('id'))
@@ -99,9 +118,9 @@ class GestionGastosNoArca extends Component
         foreach ($gastos as $gasto) {
             $pago = $pagosDb->get($gasto->id);
             $this->pagos[$gasto->id] = [
-                'importe'    => $pago ? number_format((float) $pago->importe, 2, '.', '') : '',
+                'importe' => $pago ? number_format((float) $pago->importe, 2, '.', '') : '',
                 'fecha_pago' => $pago?->fecha_pago?->format('Y-m-d') ?? '',
-                'notas'      => $pago?->notas ?? '',
+                'notas' => $pago?->notas ?? '',
             ];
         }
     }
@@ -118,33 +137,34 @@ class GestionGastosNoArca extends Component
     {
         Gate::authorize('finanzas.gastos.gestionar');
 
-        $mesDate = $this->mesSeleccionado . '-01';
+        $mesDate = $this->mesSeleccionado.'-01';
 
         foreach ($this->pagos as $gastoId => $datos) {
             $importeStr = trim($datos['importe'] ?? '');
-            $importe    = $this->parsearImporte($importeStr);
-            $fechaPago  = $datos['fecha_pago'] ?: null;
-            $notas      = trim($datos['notas'] ?? '') ?: null;
+            $importe = $this->parsearImporte($importeStr);
+            $fechaPago = $datos['fecha_pago'] ?: null;
+            $notas = trim($datos['notas'] ?? '') ?: null;
 
-            if ($importe === null && !$fechaPago && !$notas) {
+            if ($importe === null && ! $fechaPago && ! $notas) {
                 // Sin datos → borrar si existe
                 PagoGastoNoArca::where('id_gasto', $gastoId)->where('mes', $mesDate)->delete();
+
                 continue;
             }
 
             PagoGastoNoArca::updateOrCreate(
                 ['id_gasto' => $gastoId, 'mes' => $mesDate],
                 [
-                    'importe'    => $importe ?? 0,
+                    'importe' => $importe ?? 0,
                     'fecha_pago' => $fechaPago,
-                    'notas'      => $notas,
+                    'notas' => $notas,
                 ]
             );
         }
 
         $this->hayDirtyCambios = false;
         $this->cargarPagos();
-        session()->flash('success', 'Pagos guardados para ' . $this->formatearMes($this->mesSeleccionado) . '.');
+        session()->flash('success', 'Pagos guardados para '.$this->formatearMes($this->mesSeleccionado).'.');
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -162,13 +182,14 @@ class GestionGastosNoArca extends Component
         Gate::authorize('finanzas.gastos.gestionar');
         $gasto = GastoNoArca::findOrFail($id);
 
-        $this->editandoId  = $id;
+        $this->editandoId = $id;
         $this->modoEdicion = true;
-        $this->nombre      = $gasto->nombre;
-        $this->categoria   = $gasto->categoria;
+        $this->nombre = $gasto->nombre;
+        $this->categoria = $gasto->categoria;
+        $this->rubro = $gasto->rubro ?? '';
         $this->id_inmueble = $gasto->id_inmueble ?? '';
-        $this->activo      = $gasto->activo;
-        $this->orden       = (string) $gasto->orden;
+        $this->activo = $gasto->activo;
+        $this->orden = (string) $gasto->orden;
         $this->modalAbierto = true;
     }
 
@@ -177,20 +198,22 @@ class GestionGastosNoArca extends Component
         Gate::authorize('finanzas.gastos.gestionar');
 
         $this->validate([
-            'nombre'      => 'required|string|max:200',
-            'categoria'   => 'required|in:' . implode(',', array_keys(GastoNoArca::CATEGORIAS)),
+            'nombre' => 'required|string|max:200',
+            'rubro' => 'nullable|in:'.implode(',', array_keys(GastoNoArca::RUBROS)),
+            'categoria' => 'required|in:'.implode(',', array_keys(GastoNoArca::CATEGORIAS)),
             'id_inmueble' => 'nullable|exists:inmuebles,id',
-            'orden'       => 'nullable|integer|min:0',
+            'orden' => 'nullable|integer|min:0',
         ], [
             'nombre.required' => 'El nombre es obligatorio.',
         ]);
 
         $datos = [
-            'nombre'      => $this->nombre,
-            'categoria'   => $this->categoria,
+            'nombre' => $this->nombre,
+            'rubro' => $this->rubro ?: GastoNoArca::rubroSugerido($this->nombre, $this->categoria),
+            'categoria' => $this->categoria,
             'id_inmueble' => $this->id_inmueble ?: null,
-            'activo'      => $this->activo,
-            'orden'       => (int) ($this->orden ?: 0),
+            'activo' => $this->activo,
+            'orden' => (int) ($this->orden ?: 0),
         ];
 
         if ($this->modoEdicion) {
@@ -213,7 +236,7 @@ class GestionGastosNoArca extends Component
     {
         Gate::authorize('finanzas.gastos.gestionar');
         $gasto = GastoNoArca::findOrFail($id);
-        $gasto->update(['activo' => !$gasto->activo]);
+        $gasto->update(['activo' => ! $gasto->activo]);
 
         session()->flash('success', $gasto->activo
             ? "Servicio \"{$gasto->nombre}\" reactivado."
@@ -234,7 +257,7 @@ class GestionGastosNoArca extends Component
 
         $this->cargarPagos();
         session()->flash('success', "\"{$gasto->nombre}\" ya no se paga más: se dio de baja. "
-            . 'Los pagos históricos se conservan y podés reactivarlo desde "Catálogo de servicios".');
+            .'Los pagos históricos se conservan y podés reactivarlo desde "Catálogo de servicios".');
     }
 
     /**
@@ -248,7 +271,8 @@ class GestionGastosNoArca extends Component
 
         if ($gasto->pagos_count > 0) {
             session()->flash('error', "No se puede eliminar \"{$gasto->nombre}\": tiene {$gasto->pagos_count} "
-                . 'pago(s) registrados. Dalo de baja para que deje de aparecer sin perder el historial.');
+                .'pago(s) registrados. Dalo de baja para que deje de aparecer sin perder el historial.');
+
             return;
         }
 
@@ -267,22 +291,22 @@ class GestionGastosNoArca extends Component
 
     private function limpiarModal(): void
     {
-        $this->reset(['editandoId', 'modoEdicion', 'nombre', 'id_inmueble']);
+        $this->reset(['editandoId', 'modoEdicion', 'nombre', 'id_inmueble', 'rubro']);
         $this->categoria = 'otros';
-        $this->activo    = true;
-        $this->orden     = '0';
+        $this->activo = true;
+        $this->orden = '0';
         $this->resetValidation();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
     // Render
     // ─────────────────────────────────────────────────────────────────────────
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         // Gastos para la grilla de pagos (vigentes + bajas con pago en el mes),
         // agrupados por categoría para que cada rubro tenga un solo encabezado
         // y un solo subtotal aunque el "orden" no venga contiguo.
-        $gastosGrilla = $this->gastosDelMes($this->mesSeleccionado . '-01')
+        $gastosGrilla = $this->gastosDelMes($this->mesSeleccionado.'-01')
             ->groupBy('categoria');
 
         // Total del mes
@@ -293,6 +317,8 @@ class GestionGastosNoArca extends Component
         $catalogo = GastoNoArca::query()
             ->with('inmueble')
             ->withCount('pagos')
+            ->when($this->filtroRubro === 'sin_clasificar', fn ($q) => $q->whereNull('rubro'))
+            ->when($this->filtroRubro && $this->filtroRubro !== 'sin_clasificar', fn ($q) => $q->where('rubro', $this->filtroRubro))
             ->when($this->filtroCategoria, fn ($q) => $q->where('categoria', $this->filtroCategoria))
             ->when($this->filtroEstado === 'activos', fn ($q) => $q->where('activo', true))
             ->when($this->filtroEstado === 'inactivos', fn ($q) => $q->where('activo', false))
@@ -302,13 +328,14 @@ class GestionGastosNoArca extends Component
             ->get();
 
         return view('livewire.finanzas.gestion-gastos-no-arca', [
-            'gastosGrilla'  => $gastosGrilla,
-            'totalMes'      => $totalMes,
-            'catalogo'      => $catalogo,
+            'gastosGrilla' => $gastosGrilla,
+            'totalMes' => $totalMes,
+            'catalogo' => $catalogo,
             'totalCatalogo' => GastoNoArca::count(),
-            'categorias'    => GastoNoArca::CATEGORIAS,
-            'inmuebles'     => Inmueble::where('activo', true)->orderBy('nombre')->get(),
-            'mesLabel'      => $this->formatearMes($this->mesSeleccionado),
+            'categorias' => GastoNoArca::CATEGORIAS,
+            'rubros' => GastoNoArca::RUBROS,
+            'inmuebles' => Inmueble::where('activo', true)->orderBy('nombre')->get(),
+            'mesLabel' => $this->formatearMes($this->mesSeleccionado),
         ]);
     }
 
@@ -318,7 +345,9 @@ class GestionGastosNoArca extends Component
     private function parsearImporte(string $valor): ?float
     {
         $valor = trim($valor);
-        if ($valor === '' || $valor === '-') return null;
+        if ($valor === '' || $valor === '-') {
+            return null;
+        }
         // Acepta formato argentino (punto=miles, coma=decimal) y estándar
         if (preg_match('/^\d{1,3}(\.\d{3})+(,\d+)?$/', $valor)) {
             $valor = str_replace('.', '', $valor);
@@ -326,13 +355,14 @@ class GestionGastosNoArca extends Component
         } else {
             $valor = str_replace(',', '.', str_replace(' ', '', $valor));
         }
+
         return is_numeric($valor) ? (float) $valor : null;
     }
 
     private function formatearMes(string $ym): string
     {
         try {
-            return Carbon::parse($ym . '-01')->locale('es')->isoFormat('MMMM [de] YYYY');
+            return Carbon::parse($ym.'-01')->locale('es')->isoFormat('MMMM [de] YYYY');
         } catch (\Exception) {
             return $ym;
         }
