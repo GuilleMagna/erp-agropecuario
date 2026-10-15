@@ -340,7 +340,7 @@
                    class="nav-link {{ request()->routeIs('finanzas.gastos.*') ? 'active' : '' }}">
                     <i class="bi bi-cash-stack me-2"></i> Gastos
                 </a>
-                @can('compras.ver')<a href="{{ route('reportes.gastos') }}" class="nav-link {{ request()->routeIs('reportes.gastos') ? 'active' : '' }}"><i class="bi bi-bar-chart me-2"></i> Informe de gastos</a>@endcan
+                @can('compras.ver')<a href="{{ route('reportes.gastos') }}" class="nav-link {{ request()->routeIs('reportes.gastos') ? 'active' : '' }}"><i class="bi bi-bar-chart me-2"></i> Gastos por rubro</a>@endcan
                 @endcan
                 @can('finanzas.inmuebles.gestionar')
                 <a href="{{ route('finanzas.inmuebles.index') }}"
@@ -379,7 +379,7 @@
         @endcanany
 
         {{-- ── REPORTES ─────────────────────────────────────── --}}
-        @canany(['reportes.productivos.ver','reportes.economicos.ver','reportes.fiscales.ver','reportes.iva.ver','reportes.ganancias.ver','reportes.inmuebles.ver'])
+        @canany(['reportes.productivos.ver','reportes.economicos.ver','reportes.fiscales.ver','reportes.iva.ver','reportes.ganancias.ver','reportes.inmuebles.ver','finanzas.gastos.gestionar'])
         <li>
             <button class="sec-toggle" type="button"
                     data-bs-toggle="collapse" data-bs-target="#secReportes"
@@ -400,8 +400,13 @@
                     <i class="bi bi-graph-up-arrow me-2"></i> Económico
                 </a>
                 @endcan
+                @can('finanzas.gastos.gestionar')
+                @can('compras.ver')
+                <a href="{{ route('reportes.gastos') }}" class="nav-link {{ request()->routeIs('reportes.gastos') ? 'active' : '' }}"><i class="bi bi-bar-chart me-2"></i> Gastos por rubro</a>
+                @endcan
+                @endcan
                 @can('reportes.economicos.ver')
-                <a href="{{ route('reportes.compras') }}" class="nav-link {{ request()->routeIs('reportes.compras') ? 'active' : '' }}"><i class="bi bi-tags me-2"></i> Compras por clasificación</a>
+                <a href="{{ route('reportes.compras') }}" class="nav-link {{ request()->routeIs('reportes.compras') ? 'active' : '' }}"><i class="bi bi-tags me-2"></i> Compras: rubros y zonas</a>
                 @endcan
                 @can('reportes.fiscales.ver')
                 <a href="{{ route('reportes.fiscal') }}"

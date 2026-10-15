@@ -1,5 +1,5 @@
 <div>
-    <div class="d-flex justify-content-between mb-3"><h1 class="h3">Informe de gastos</h1><button class="btn btn-outline-success" wire:click="exportar">Exportar CSV</button></div>
+    <div class="d-flex justify-content-between mb-3"><div><h1 class="h3 mb-1">Gastos por rubro</h1><p class="text-muted mb-0">Comprobantes de compras y gastos no ARCA</p></div><button class="btn btn-outline-success" wire:click="exportar">Exportar CSV</button></div>
     <p class="text-muted">Empresa activa: comprobantes de Compras (total con IVA, notas de crédito restan, cancelados excluidos) y registros mensuales de Gastos no ARCA. Los gastos generales sin empresa se identifican por separado.</p>
     <div class="alert alert-info">El total reúne ambos registros: no elimina duplicados automáticamente. Si una misma factura también se cargó en Gastos no ARCA, revisá sus orígenes antes de interpretar la suma como gasto consolidado. El período usa fecha del comprobante en Compras y mes registrado en Gastos no ARCA.</div>
     <div class="card card-body mb-3"><div class="row g-3">

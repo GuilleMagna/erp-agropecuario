@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Informe de gastos')
+@section('title', 'Gastos por rubro')
 @section('content')
 <livewire:reportes.reporte-gastos />
 @endsection

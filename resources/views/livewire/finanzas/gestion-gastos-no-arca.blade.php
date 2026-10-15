@@ -21,7 +21,7 @@
         </div>
     @endif
 
-    @can('compras.ver')<a class="btn btn-outline-primary mb-3" href="{{ route('reportes.gastos') }}"><i class="bi bi-bar-chart me-1"></i>Informe de gastos</a>@endcan
+    @can('compras.ver')<a class="btn btn-outline-primary mb-3" href="{{ route('reportes.gastos') }}"><i class="bi bi-bar-chart me-1"></i>Gastos por rubro</a>@endcan
     {{-- Tabs ──────────────────────────────────────────────────────────────── --}}
     <ul class="nav nav-tabs mb-4">
         <li class="nav-item">
