@@ -222,6 +222,9 @@
                 </div>
                 <div class="modal-body pt-3">
                     <form wire:submit="guardar" id="form-proveedor">
+                        @can('compras.editar')
+                            <div class="alert alert-info py-2 small">Al guardar, el rubro y la actividad completarán los campos pendientes de todos los comprobantes de este proveedor en la empresa activa. Se conservarán los rubros específicos y las actividades ya elegidas.</div>
+                        @endcan
 
                         <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">Identificación</h6>
                         <div class="row g-3 mb-4">

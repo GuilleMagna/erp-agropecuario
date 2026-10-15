@@ -330,4 +330,47 @@ class ClasificacionRubrosTest extends TestCase
             ->assertViewHas('compras', fn ($compras) => $compras->total() === 1 && $compras->first()->id === $pendiente->id)
             ->call('limpiarFiltros')->assertSet('filtroRubro', '')->assertSet('filtroExcluirCanceladas', false);
     }
+
+    public function test_guardar_rubro_del_proveedor_completa_todas_sus_compras_pendientes(): void
+    {
+        $p = $this->proveedor(['rubro' => 'otro']);
+        $pendientes = [];
+        foreach ([null, '', 'otro'] as $rubro) {
+            $pendientes[] = $this->comprobante(['id_proveedor' => $p->id, 'rubro' => $rubro]);
+        }
+        $actividadManual = $this->comprobante(['id_proveedor' => $p->id, 'rubro' => 'otro', 'actividad' => 'ganaderia']);
+        $rubroManual = $this->comprobante(['id_proveedor' => $p->id, 'rubro' => 'combustible', 'actividad' => 'general']);
+        $otraEmpresa = $this->comprobante(['id_empresa' => $this->empresaB, 'id_proveedor' => $p->id]);
+        $otroProveedor = $this->comprobante(['id_proveedor' => $this->proveedor(['cuit' => '30888888888'])->id]);
+        Livewire::test(GestionProveedores::class)->call('abrirModalEditar', $p->id)
+            ->set('rubro', 'reparaciones')->set('actividad', 'agricultura')->call('guardar')->assertHasNoErrors();
+        foreach ($pendientes as $compra) {
+            $this->assertSame('reparaciones', $compra->fresh()->rubro);
+            $this->assertSame('agricultura', $compra->fresh()->actividad);
+            $this->assertSame('121.00', $compra->fresh()->total);
+            $this->assertSame('2026-10-01', $compra->fresh()->fecha->toDateString());
+        }
+        $this->assertSame('reparaciones', $actividadManual->fresh()->rubro);
+        $this->assertSame('ganaderia', $actividadManual->fresh()->actividad);
+        $this->assertSame('combustible', $rubroManual->fresh()->rubro);
+        $this->assertSame('general', $rubroManual->fresh()->actividad);
+        $this->assertNull($otraEmpresa->fresh()->rubro);
+        $this->assertNull($otroProveedor->fresh()->rubro);
+        Livewire::test(GestionCompras::class)->set('filtroProveedor', $p->id)->set('filtroRubro', 'sin_clasificar')
+            ->assertViewHas('compras', fn ($compras) => $compras->total() === 0);
+    }
+
+    public function test_completar_y_editar_incluyen_rubro_otro_como_pendiente(): void
+    {
+        $p = $this->proveedor(['rubro' => 'reparaciones', 'actividad' => 'agricultura']);
+        $compra = $this->comprobante(['id_proveedor' => $p->id, 'rubro' => 'otro']);
+        $manual = $this->comprobante(['id_proveedor' => $p->id, 'rubro' => 'otro', 'actividad' => 'ganaderia']);
+        Livewire::test(GestionCompras::class)->call('abrirModalEditar', $compra->id)
+            ->assertSet('rubro', 'reparaciones')->assertSet('actividad', 'agricultura');
+        Livewire::test(GestionCompras::class)->call('completarClasificacion')->assertHasNoErrors();
+        $this->assertSame('reparaciones', $compra->fresh()->rubro);
+        $this->assertSame('agricultura', $compra->fresh()->actividad);
+        $this->assertSame('reparaciones', $manual->fresh()->rubro);
+        $this->assertSame('ganaderia', $manual->fresh()->actividad);
+    }
 }

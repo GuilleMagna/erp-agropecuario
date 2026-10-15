@@ -44,3 +44,10 @@ El informe de compras incluye barras y tortas por Rubro y por Actividad / Imputa
 Los iconos, barras, porciones y leyendas abren los comprobantes del grupo conservando empresa, fechas y proveedor. El detalle de la tabla conserva también Actividad, Lote y Campaña. El listado muestra CUIT del proveedor para facilitar la revisión.
 
 **Sin rubro** reúne campos nulos, vacíos y `otro`. Tiene cantidad, importe y enlace **Ver y completar**. El filtro también está disponible en Compras. La clasificación del informe sigue siendo la guardada en el comprobante, aunque el listado muestre una sugerencia del proveedor.
+
+
+## Aplicar el rubro del CUIT a sus comprobantes
+
+Al guardar un proveedor, se completan automáticamente los comprobantes de ese proveedor en la misma empresa cuyo Rubro sea nulo, vacío u `otro`. Las actividades vacías también se completan; las actividades y los rubros específicos existentes se conservan. Se requiere permiso de edición de compras para actualizar sus comprobantes.
+
+Para proveedores clasificados antes de esta mejora, **Completar clasificación pendiente** aplica el mismo criterio, incluyendo `otro`. Al editar una compra pendiente, se muestra la sugerencia del proveedor para poder guardarla. El filtro **Sin rubro** consulta la clasificación guardada: una vez aplicada, el comprobante deja de pertenecer a ese grupo. No cambian importes, fechas, presentación fiscal, lote ni campaña.

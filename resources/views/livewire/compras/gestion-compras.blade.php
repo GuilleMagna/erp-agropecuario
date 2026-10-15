@@ -22,7 +22,7 @@
             @endcan
             @can('compras.editar')
                 <button class="btn btn-outline-primary btn-sm" wire:click="completarClasificacion" wire:loading.attr="disabled"
-                    wire:confirm="Se completarán sólo Actividad y Rubro vacíos de todos los comprobantes de la empresa activa, usando la clasificación del proveedor. Lote y campaña requieren selección manual. ¿Continuar?">Completar clasificación pendiente</button>
+                    wire:confirm="Se completarán Actividad vacía y Rubro vacío u Otro de todos los comprobantes de la empresa activa, usando la clasificación del proveedor. Lote y campaña requieren selección manual. ¿Continuar?">Completar clasificación pendiente</button>
             @endcan
             @can('compras.crear')
                 <button type="button" class="btn btn-primary btn-sm" wire:click="abrirModalCrear">

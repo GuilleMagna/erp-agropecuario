@@ -4,6 +4,8 @@ namespace App\Livewire\Compras;
 
 use App\Models\Proveedor;
 use App\Models\Rubro;
+use App\Services\CompletarClasificacionCompras;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -241,8 +243,15 @@ class GestionProveedores extends Component
         ];
 
         if ($this->modoEdicion) {
-            Proveedor::findOrFail($this->proveedorEditandoId)->update($data);
-            session()->flash('success', 'Proveedor actualizado correctamente.');
+            $cantidad = DB::transaction(function () use ($data) {
+                $proveedor = Proveedor::findOrFail($this->proveedorEditandoId);
+                $proveedor->update($data);
+
+                return Gate::allows('compras.editar')
+                    ? app(CompletarClasificacionCompras::class)->ejecutar($proveedor)
+                    : 0;
+            });
+            session()->flash('success', "Proveedor actualizado. {$cantidad} comprobantes pendientes completados; se conservaron los rubros e imputaciones existentes.");
         } else {
             Proveedor::create($data);
             session()->flash('success', 'Proveedor creado correctamente.');
