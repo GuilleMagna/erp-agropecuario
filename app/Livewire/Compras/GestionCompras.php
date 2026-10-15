@@ -132,11 +132,13 @@ class GestionCompras extends Component
 
     public bool $modalMasivoAbierto = false;
 
-    public string $accionMasiva = 'estado';      // 'estado' | 'actividad' | 'imputacion' | 'presentacion'
+    public string $accionMasiva = 'estado';      // 'estado' | 'rubro' | 'actividad' | 'imputacion' | 'presentacion'
 
     public string $valorMasivoEstado = '';
 
     public string $valorMasivoActividad = '';
+
+    public string $valorMasivoRubro = '';
 
     public string $lotesMasivo = '';
 
@@ -600,6 +602,13 @@ class GestionCompras extends Component
         }
     }
 
+    public function seleccionarFiltrados(): void
+    {
+        Gate::authorize('compras.editar');
+        $this->seleccionados = $this->consultaCompras()->pluck('id')->all();
+        $this->seleccionarTodos = true;
+    }
+
     public function abrirModalMasivo(): void
     {
         Gate::authorize('compras.editar');
@@ -609,6 +618,7 @@ class GestionCompras extends Component
         $this->accionMasiva = 'estado';
         $this->valorMasivoEstado = '';
         $this->valorMasivoActividad = '';
+        $this->valorMasivoRubro = '';
         $this->lotesMasivo = '';
         $this->campanaMasivo = '';
         $this->valorMasivoPresentado = '';
@@ -623,13 +633,19 @@ class GestionCompras extends Component
         }
 
         $query = Compra::whereIn('id', $this->seleccionados);
-        $count = count($this->seleccionados);
+        $count = (clone $query)->count();
 
         switch ($this->accionMasiva) {
             case 'estado':
                 $this->validate(['valorMasivoEstado' => 'required|in:'.implode(',', array_keys(Compra::ESTADOS))]);
                 $query->update(['estado' => $this->valorMasivoEstado]);
                 session()->flash('success', "{$count} comprobante(s) actualizados a estado «".Compra::ESTADOS[$this->valorMasivoEstado].'».');
+                break;
+
+            case 'rubro':
+                $this->validate(['valorMasivoRubro' => 'required|in:'.implode(',', array_keys(Rubro::opciones()))]);
+                $count = $query->update(['rubro' => $this->valorMasivoRubro]);
+                session()->flash('success', "{$count} comprobante(s) con rubro actualizado a «".Rubro::opciones()[$this->valorMasivoRubro].'». Se conservaron las actividades y demás datos.');
                 break;
 
             case 'actividad':
@@ -731,9 +747,9 @@ class GestionCompras extends Component
         session()->flash('success', "{$cantidad} comprobantes completados. Se conservaron los valores existentes; los proveedores pendientes siguen sin clasificar.");
     }
 
-    public function render()
+    private function consultaCompras()
     {
-        $base = Compra::query()
+        return Compra::query()
             ->when($this->busqueda, fn ($q) => $q->where(fn ($q) => $q->where('numero_comprobante', 'like', "%{$this->busqueda}%")
                 ->orWhereHas('proveedor', fn ($q) => $q->where('nombre', 'like', "%{$this->busqueda}%")
                 )
@@ -756,6 +772,11 @@ class GestionCompras extends Component
             ->when($this->filtroPresentacion === 'presentados', fn ($q) => $q->where('presentado_arca', true))
             ->when($this->filtroPresentacion === 'no_presentados', fn ($q) => $q->where('presentado_arca', false))
             ->when($this->filtroConIva, fn ($q) => $q->where('iva_importe', '!=', 0));
+    }
+
+    public function render()
+    {
+        $base = $this->consultaCompras();
 
         // Totales sobre TODO lo filtrado, no sobre la página actual, para poder
         // cuadrar contra el libro IVA del contador.

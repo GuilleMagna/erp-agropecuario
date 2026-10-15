@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\PerteneceAEmpresa;
 use App\Traits\UsaUuid;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Rubro extends Model
 {
@@ -42,6 +43,8 @@ class Rubro extends Model
                 $catalogo[$rubro->codigo] = $rubro->only(['nombre', 'actividades', 'actividad_default']);
             }
         }
+
+        uasort($catalogo, fn ($a, $b) => strnatcasecmp(Str::ascii($a['nombre']), Str::ascii($b['nombre'])));
 
         return $catalogo;
     }

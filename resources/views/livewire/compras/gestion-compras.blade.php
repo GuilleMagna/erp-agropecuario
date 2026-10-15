@@ -147,6 +147,12 @@
         </div>
     </div>
 
+    @can('compras.editar')
+        <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+            <button class="btn btn-outline-primary btn-sm" wire:click="seleccionarFiltrados" wire:loading.attr="disabled">Seleccionar los {{ $totales->cant }} comprobantes filtrados</button>
+            <small class="text-muted">Incluye todas las páginas. Filtrá por proveedor para corregir sus comprobantes.</small>
+        </div>
+    @endcan
     {{-- Tabla --}}
     <div class="card">
         <div class="card-body p-0">
@@ -593,6 +599,9 @@
                                 <i class="bi bi-arrow-repeat me-1"></i>Estado
                             </label>
 
+                            <input type="radio" class="btn-check" name="accionMasiva" id="am-rubro" wire:model.live="accionMasiva" value="rubro">
+                            <label class="btn btn-sm btn-outline-secondary" for="am-rubro"><i class="bi bi-tags me-1"></i>Rubro</label>
+
                             <input type="radio" class="btn-check" name="accionMasiva" id="am-actividad"
                                    wire:model.live="accionMasiva" value="actividad">
                             <label class="btn btn-sm btn-outline-secondary" for="am-actividad">
@@ -629,6 +638,16 @@
                             @error('valorMasivoEstado') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
 
+                    @elseif ($accionMasiva === 'rubro')
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Nuevo rubro *</label>
+                            <select class="form-select @error('valorMasivoRubro') is-invalid @enderror" wire:model="valorMasivoRubro">
+                                <option value="">— Seleccionar —</option>
+                                @foreach ($rubros as $codigo => $nombre)<option value="{{ $codigo }}">{{ $nombre }}</option>@endforeach
+                            </select>
+                            @error('valorMasivoRubro')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            <div class="alert alert-warning mt-3 small">Se reemplazará el rubro de los {{ count($seleccionados) }} comprobantes seleccionados, aunque ya tengan uno. Las actividades, importes y demás datos se conservan. Para futuras compras, corregí también el rubro del proveedor.</div>
+                        </div>
                     @elseif ($accionMasiva === 'actividad')
                         <div class="mb-3">
                             <label class="form-label small fw-semibold">Actividad *</label>

@@ -373,4 +373,49 @@ class ClasificacionRubrosTest extends TestCase
         $this->assertSame('reparaciones', $manual->fresh()->rubro);
         $this->assertSame('ganaderia', $manual->fresh()->actividad);
     }
+
+    public function test_cambio_masivo_de_rubro_incluye_todas_las_paginas_filtradas(): void
+    {
+        $p = $this->proveedor();
+        $ids = [];
+        for ($i = 0; $i < 25; $i++) {
+            $ids[] = $this->comprobante(['id_proveedor' => $p->id, 'rubro' => 'cosecha', 'actividad' => 'agricultura'])->id;
+        }
+        $otroProveedor = $this->comprobante(['rubro' => 'cosecha']);
+        $otraEmpresa = $this->comprobante(['id_empresa' => $this->empresaB, 'id_proveedor' => $p->id, 'rubro' => 'cosecha']);
+        $otraFecha = $this->comprobante(['id_proveedor' => $p->id, 'rubro' => 'cosecha', 'fecha' => '2026-09-01']);
+        Livewire::test(GestionCompras::class)->set('filtroProveedor', $p->id)->set('filtroFechaDesde', '2026-10-01')
+            ->call('seleccionarFiltrados')->assertSet('seleccionados', fn ($seleccionados) => count($seleccionados) === 25)
+            ->call('abrirModalMasivo')->set('accionMasiva', 'rubro')->set('valorMasivoRubro', 'reparaciones')
+            ->call('aplicarMasivo')->assertHasNoErrors()->assertSet('seleccionados', []);
+        $this->assertSame(25, Compra::whereIn('id', $ids)->where('rubro', 'reparaciones')->where('actividad', 'agricultura')->where('total', 121)->count());
+        $this->assertSame('cosecha', $otroProveedor->fresh()->rubro);
+        $this->assertSame('cosecha', $otraEmpresa->fresh()->rubro);
+        $this->assertSame('cosecha', $otraFecha->fresh()->rubro);
+        $this->assertSame('cosecha', $p->fresh()->rubro);
+    }
+
+    public function test_rubro_masivo_valida_catalogo_y_no_modifica_otra_empresa(): void
+    {
+        $propia = $this->comprobante(['rubro' => 'cosecha']);
+        $ajena = $this->comprobante(['id_empresa' => $this->empresaB, 'rubro' => 'cosecha']);
+        Livewire::test(GestionCompras::class)->set('seleccionados', [$propia->id, $ajena->id])
+            ->set('accionMasiva', 'rubro')->set('valorMasivoRubro', 'no_existe')
+            ->call('aplicarMasivo')->assertHasErrors('valorMasivoRubro')
+            ->set('valorMasivoRubro', 'seguros')->call('aplicarMasivo')->assertHasNoErrors();
+        $this->assertSame('seguros', $propia->fresh()->rubro);
+        $this->assertSame('cosecha', $ajena->fresh()->rubro);
+    }
+
+    public function test_rubros_base_y_personalizados_se_ordenan_por_nombre_sin_acentos(): void
+    {
+        Rubro::create(['codigo' => 'salud_abaco', 'nombre' => 'Ábaco Salud', 'actividades' => ['general'], 'actividad_default' => 'general']);
+        Rubro::create(['codigo' => 'aa_final', 'nombre' => 'Zeta Servicios', 'actividades' => ['general'], 'actividad_default' => 'general']);
+        $opciones = Rubro::opciones();
+        $this->assertSame('salud_abaco', array_key_first($opciones));
+        $this->assertSame('aa_final', array_key_last($opciones));
+        $claves = array_keys($opciones);
+        $this->assertLessThan(array_search('seguros', $claves), array_search('reparaciones', $claves));
+        $this->assertSame('Servicios de cosecha', $opciones['cosecha']);
+    }
 }

@@ -51,3 +51,8 @@ Los iconos, barras, porciones y leyendas abren los comprobantes del grupo conser
 Al guardar un proveedor, se completan automáticamente los comprobantes de ese proveedor en la misma empresa cuyo Rubro sea nulo, vacío u `otro`. Las actividades vacías también se completan; las actividades y los rubros específicos existentes se conservan. Se requiere permiso de edición de compras para actualizar sus comprobantes.
 
 Para proveedores clasificados antes de esta mejora, **Completar clasificación pendiente** aplica el mismo criterio, incluyendo `otro`. Al editar una compra pendiente, se muestra la sugerencia del proveedor para poder guardarla. El filtro **Sin rubro** consulta la clasificación guardada: una vez aplicada, el comprobante deja de pertenecer a ese grupo. No cambian importes, fechas, presentación fiscal, lote ni campaña.
+
+
+## Corregir una clasificación ya aplicada
+
+En Compras, filtrar por Proveedor y revisar los filtros de fecha/rubro. **Seleccionar los N comprobantes filtrados** incluye todas las páginas. Luego **Editar selección → Rubro** permite reemplazar incluso rubros ya asignados. Las actividades y los demás datos se conservan; se pueden corregir por separado con la acción Actividad. El cambio masivo no cambia la ficha del proveedor: actualizarla también para futuras compras. Los listados y el administrador de rubros se ordenan alfabéticamente por nombre, incluyendo rubros personalizados y nombres con acentos.
