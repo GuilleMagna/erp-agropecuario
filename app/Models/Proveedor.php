@@ -6,6 +6,7 @@ use App\Traits\PerteneceAEmpresa;
 use App\Traits\UsaUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -18,7 +19,7 @@ class Proveedor extends Model
     protected $fillable = [
         'id_empresa',
         'nombre', 'razon_social', 'cuit', 'rubro', 'actividad',
-        'telefono', 'email', 'direccion', 'ciudad', 'provincia',
+        'telefono', 'email', 'direccion', 'ciudad', 'provincia', 'zona',
         'observaciones', 'activo',
     ];
 
@@ -78,6 +79,40 @@ class Proveedor extends Model
         'impuestos_tasas' => 'Impuestos / Tasas',
         'gastos_bancarios' => 'Gastos bancarios / Financieros',
     ];
+
+    const ZONAS = ['santa_fe' => 'Santa Fe', 'corrientes' => 'Corrientes'];
+
+    public static function inferirZona(?string $provincia, ?string $ciudad = null, ?string $direccion = null): string
+    {
+        $provincia = Str::lower(Str::ascii(trim($provincia ?? '')));
+        if (preg_match('/\bcorrientes\b/', $provincia)) {
+            return 'corrientes';
+        }
+        if (preg_match('/\bsanta\s+fe\b/', $provincia)) {
+            return 'santa_fe';
+        }
+        $direccion = Str::lower(Str::ascii($direccion ?? ''));
+        // Evitar confundir la calle Corrientes con la provincia.
+        if (preg_match('/(?:provincia\s+(?:de\s+)?|prov[.:]\s*)corrientes\b|[,(-]\s*corrientes\s*\)?\s*$/', $direccion)
+            || Str::lower(trim($ciudad ?? '')) === 'corrientes') {
+            return 'corrientes';
+        }
+
+        return 'santa_fe';
+    }
+
+    public function zonaPredeterminada(): string
+    {
+        return array_key_exists($this->zona ?? '', self::ZONAS)
+            ? $this->zona : self::inferirZona($this->provincia, $this->ciudad, $this->direccion);
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $proveedor) {
+            $proveedor->zona ??= self::inferirZona($proveedor->provincia, $proveedor->ciudad, $proveedor->direccion);
+        });
+    }
 
     const ACTIVIDADES = [
         'general' => 'General',

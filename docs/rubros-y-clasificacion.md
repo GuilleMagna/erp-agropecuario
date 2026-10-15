@@ -63,3 +63,12 @@ En Compras, filtrar por Proveedor y revisar los filtros de fecha/rubro. **Selecc
 En Administrar rubros, el icono de papelera permite eliminar un rubro de la empresa activa tras confirmar la operación. Sus proveedores y comprobantes quedan con Rubro vacío; se conservan Actividad, importes y demás campos. La baja se registra también para rubros base, para que no reaparezcan en el catálogo. Se requieren `compras.proveedores.gestionar` y `compras.editar`. Un rubro personalizado puede crearse nuevamente, pero no recupera automáticamente las asociaciones eliminadas.
 
 El reporte Compras por clasificación requiere actualmente `reportes.economicos.ver`, tanto para acceder como para exportar. Ese permiso también habilita el Reporte Económico; el rol `cargador_datos` no lo recibe en el seeder actual.
+
+
+## Zona del CUIT y gastos por provincia
+
+Cada proveedor tiene Zona: Santa Fe (predeterminada) o Corrientes. La carga inicial reconoce la provincia explícita, la ciudad Corrientes o una provincia claramente identificada al final de la dirección. Una calle llamada Corrientes no se interpreta como provincia. La zona puede corregirse manualmente desde Proveedores.
+
+Las compras nuevas heredan la zona del proveedor, también al importar desde ARCA/Mrbot. El establecimiento ya no reemplaza esa zona. Al cambiar la Zona del proveedor, se actualizan sus comprobantes de la misma empresa (requiere edición de compras). No se modifican importes, rubros ni actividades.
+
+La migración clasifica todos los proveedores existentes y completa compras con zona vacía, General o El Trébol; conserva compras históricas explícitamente en Corrientes. El reporte agrupa El Trébol histórico dentro de Santa Fe. Incluye barras, torta, filtro y enlaces por Zona, además del detalle y exportación CSV. La migración no modifica la fecha de emisión ni la marca de presentación fiscal.

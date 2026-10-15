@@ -35,7 +35,10 @@ class ClasificacionRubrosTest extends TestCase
         (require database_path('migrations/2026_10_05_000001_create_rubros_table.php'))->up();
         (require database_path('migrations/2026_10_15_120000_add_deleted_at_to_rubros_table.php'))->up();
         (require database_path('migrations/2026_06_26_000015_create_proveedores_table.php'))->up();
-        Schema::table('proveedores', fn (Blueprint $table) => $table->string('actividad')->nullable());
+        Schema::table('proveedores', function (Blueprint $table) {
+            $table->string('actividad')->nullable();
+            $table->string('zona')->nullable();
+        });
         Schema::create('compras', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('id_empresa');
@@ -459,5 +462,66 @@ class ClasificacionRubrosTest extends TestCase
         Gate::before(fn ($user, $ability) => $ability === 'compras.proveedores.gestionar');
         Livewire::test(GestionProveedores::class)->call('eliminarRubro', 'cosecha')->assertForbidden();
         $this->assertArrayHasKey('cosecha', Rubro::opciones());
+    }
+
+    public function test_zona_se_infiere_de_provincia_o_direccion_sin_confundir_calle(): void
+    {
+        $this->assertSame('santa_fe', Proveedor::inferirZona(null));
+        $this->assertSame('corrientes', Proveedor::inferirZona('CORRIENTES'));
+        $this->assertSame('corrientes', Proveedor::inferirZona(null, null, 'Ruta 12, Corrientes'));
+        $this->assertSame('corrientes', Proveedor::inferirZona(null, null, 'Provincia de Corrientes'));
+        $this->assertSame('santa_fe', Proveedor::inferirZona(null, null, 'Corrientes 123'));
+        $this->assertSame('santa_fe', Proveedor::inferirZona('Santa Fe', null, 'Corrientes 123'));
+        Livewire::test(GestionProveedores::class)->call('abrirModalCrear')->set('provincia', 'Corrientes')
+            ->assertSet('zona', 'corrientes')->set('zona', 'santa_fe')->set('ciudad', 'Corrientes')->assertSet('zona', 'santa_fe');
+    }
+
+    public function test_cambiar_zona_del_cuit_actualiza_compras_y_graficos_solo_de_su_empresa(): void
+    {
+        $p = $this->proveedor();
+        $compra = $this->comprobante(['id_proveedor' => $p->id, 'rubro' => 'cosecha', 'actividad' => 'agricultura']);
+        $otra = $this->comprobante(['id_empresa' => $this->empresaB, 'id_proveedor' => $p->id, 'zona' => 'santa_fe']);
+        $this->assertSame('santa_fe', $compra->zona);
+        Livewire::test(GestionProveedores::class)->call('abrirModalEditar', $p->id)->set('zona', 'corrientes')->call('guardar')->assertHasNoErrors();
+        $this->assertSame('corrientes', $compra->fresh()->zona);
+        $this->assertSame('santa_fe', $otra->fresh()->zona);
+        $this->assertSame('121.00', $compra->fresh()->total);
+        $this->assertSame('agricultura', $compra->fresh()->actividad);
+        $this->assertSame('corrientes', $this->comprobante(['id_proveedor' => $p->id])->zona);
+        $report = Livewire::test(ReporteCompras::class)->set('zona', 'corrientes')
+            ->assertViewHas('porZona', fn ($serie) => count($serie) === 1 && $serie[0]['codigo'] === 'corrientes' && $serie[0]['importe'] === 242.0);
+        parse_str(parse_url($report->instance()->enlaceCompras(), PHP_URL_QUERY), $filtros);
+        $this->assertSame('corrientes', $filtros['filtroZona']);
+        Livewire::test(GestionCompras::class)->set('filtroZona', 'corrientes')
+            ->assertViewHas('compras', fn ($compras) => $compras->total() === 2);
+    }
+
+    public function test_migracion_zonas_completa_historial_y_preserva_corrientes_existente(): void
+    {
+        $p = $this->proveedor(['provincia' => 'Corrientes']);
+        $compra = $this->comprobante(['id_proveedor' => $p->id]);
+        DB::table('proveedores')->where('id', $p->id)->update(['zona' => null]);
+        DB::table('compras')->where('id', $compra->id)->update(['zona' => 'general']);
+        $sf = $this->proveedor(['cuit' => '30888888888', 'direccion' => 'Corrientes 123']);
+        $vieja = $this->comprobante(['id_proveedor' => $sf->id, 'zona' => 'corrientes']);
+        $migracion = require database_path('migrations/2026_10_15_130000_clasificar_zonas_de_proveedores_y_compras.php');
+        $migracion->up();
+        $this->assertSame('corrientes', $p->fresh()->zona);
+        $this->assertSame('corrientes', $compra->fresh()->zona);
+        $this->assertSame('santa_fe', $sf->fresh()->zona);
+        $this->assertSame('corrientes', $vieja->fresh()->zona);
+        $migracion->up();
+        $this->assertSame('corrientes', $vieja->fresh()->zona);
+    }
+
+    public function test_el_trebol_historico_se_agrupa_y_enlaza_como_santa_fe(): void
+    {
+        $this->comprobante(['zona' => 'el_trebol']);
+        $this->comprobante(['zona' => 'santa_fe']);
+        $this->comprobante(['zona' => 'corrientes']);
+        Livewire::test(ReporteCompras::class)->set('zona', 'santa_fe')
+            ->assertViewHas('porZona', fn ($serie) => count($serie) === 1 && $serie[0]['cantidad'] === 2);
+        Livewire::test(GestionCompras::class)->set('filtroZona', 'santa_fe')
+            ->assertViewHas('compras', fn ($compras) => $compras->total() === 2);
     }
 }

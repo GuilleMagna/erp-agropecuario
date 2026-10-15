@@ -115,8 +115,7 @@ class MrbotService
                     // (catálogo importado de "Facturas AÑO 2024.xlsx" o cargada
                     // a mano, siempre trae actividad); si el proveedor es nuevo
                     // (recién autocreado acá arriba), queda sin clasificar. La
-                    // zona no se hereda acá: es del establecimiento, y esta
-                    // sincronización no elige uno (queda para completar a mano).
+                    // zona se hereda del CUIT al crear Compra.
                     'actividad' => $proveedor?->actividadPredeterminada(),
                     'rubro' => $proveedor?->rubro !== 'otro' ? $proveedor?->rubro : null,
                 ];

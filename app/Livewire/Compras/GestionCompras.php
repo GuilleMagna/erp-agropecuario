@@ -37,6 +37,9 @@ class GestionCompras extends Component
     public string $filtroRubro = '';
 
     #[Url]
+    public string $filtroZona = '';
+
+    #[Url]
     public string $filtroLote = '';
 
     #[Url]
@@ -245,7 +248,7 @@ class GestionCompras extends Component
             'busqueda', 'filtroProveedor', 'filtroEstado', 'filtroActividad',
             'filtroEstablecimiento', 'filtroFechaDesde', 'filtroFechaHasta',
             'filtroTipo', 'filtroPresentacion', 'filtroConIva',
-            'filtroRubro', 'filtroLote', 'filtroCampana', 'filtroExcluirCanceladas',
+            'filtroRubro', 'filtroZona', 'filtroLote', 'filtroCampana', 'filtroExcluirCanceladas',
         ]);
         $this->resetPage();
         $this->seleccionados = [];
@@ -260,7 +263,7 @@ class GestionCompras extends Component
             || $this->filtroActividad !== '' || $this->filtroEstablecimiento !== ''
             || $this->filtroFechaDesde !== '' || $this->filtroFechaHasta !== ''
             || $this->filtroTipo !== '' || $this->filtroPresentacion !== '' || $this->filtroConIva
-            || $this->filtroRubro !== '' || $this->filtroLote !== '' || $this->filtroCampana !== '' || $this->filtroExcluirCanceladas;
+            || $this->filtroZona !== '' || $this->filtroRubro !== '' || $this->filtroLote !== '' || $this->filtroCampana !== '' || $this->filtroExcluirCanceladas;
     }
 
     /**
@@ -319,6 +322,7 @@ class GestionCompras extends Component
     {
         $proveedor = $this->id_proveedor ? Proveedor::find($this->id_proveedor) : null;
         $this->rubro = $proveedor?->rubro ?? '';
+        $this->zona = $proveedor?->zonaPredeterminada() ?? '';
         if (! $this->actividadManual) {
             $this->actividad = $proveedor?->actividadPredeterminada() ?? 'general';
         }
@@ -345,20 +349,15 @@ class GestionCompras extends Component
             : (Rubro::predeterminada($this->rubro) ?? 'general');
     }
 
-    /**
-     * La zona es propiedad del campo, no del proveedor: se autocompleta al
-     * elegir el establecimiento de la compra.
-     */
     public function updatedIdEstablecimiento(): void
     {
-        if (! $this->id_establecimiento) {
-            return;
-        }
+        // La zona de gasto se hereda del CUIT, no del establecimiento.
+    }
 
-        $establecimiento = Establecimiento::find($this->id_establecimiento);
-        if ($establecimiento?->zona) {
-            $this->zona = $establecimiento->zona;
-        }
+    public function updatedFiltroZona(): void
+    {
+        $this->resetPage();
+        $this->seleccionados = [];
     }
 
     public function agregarItem(): void
@@ -418,7 +417,7 @@ class GestionCompras extends Component
         $this->estado = $compra->estado;
         $this->actividad = $compra->actividadSugerida() ?? 'general';
         $this->actividadManual = (bool) $compra->actividad;
-        $this->zona = $compra->zona ?? '';
+        $this->zona = $compra->zona ?: ($compra->proveedor?->zonaPredeterminada() ?? '');
         $this->rubro = $compra->rubroSugerido() ?? '';
         $this->id_lote = $compra->id_lote ?? '';
         $this->id_campana = $compra->id_campana ?? '';
@@ -758,6 +757,9 @@ class GestionCompras extends Component
             ->when($this->filtroEstado, fn ($q) => $q->where('estado', $this->filtroEstado))
             ->when($this->filtroActividad === 'sin_imputar', fn ($q) => $q->where(fn ($q) => $q->whereNull('actividad')->orWhere('actividad', '')))
             ->when($this->filtroActividad && $this->filtroActividad !== 'sin_imputar', fn ($q) => $q->where('actividad', $this->filtroActividad))
+            ->when($this->filtroZona === 'sin_clasificar', fn ($q) => $q->where(fn ($q) => $q->whereNull('zona')->orWhere('zona', '')))
+            ->when($this->filtroZona === 'santa_fe', fn ($q) => $q->whereIn('zona', ['santa_fe', 'el_trebol']))
+            ->when($this->filtroZona && ! in_array($this->filtroZona, ['sin_clasificar', 'santa_fe']), fn ($q) => $q->where('zona', $this->filtroZona))
             ->when($this->filtroRubro === 'sin_clasificar', fn ($q) => $q->where(fn ($q) => $q->whereNull('rubro')->orWhereIn('rubro', ['', 'otro'])))
             ->when($this->filtroRubro && $this->filtroRubro !== 'sin_clasificar', fn ($q) => $q->where('rubro', $this->filtroRubro))
             ->when($this->filtroLote === 'sin_asignar', fn ($q) => $q->whereNull('id_lote'))

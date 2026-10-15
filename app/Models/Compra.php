@@ -72,13 +72,24 @@ class Compra extends Model
     /** Categorías base compartidas; Rubro agrega el catálogo propio de cada empresa. */
     const RUBROS = Proveedor::RUBROS;
 
-    /** Mismas zonas que Establecimiento::ZONAS. Se autocompleta al elegir
-     *  el establecimiento de la compra (ver GestionCompras). */
+    /** Zona del gasto, heredada del CUIT. Se mantienen claves históricas para consulta. */
     const ZONAS = [
+        'santa_fe' => 'Santa Fe',
         'general' => 'General',
-        'el_trebol' => 'El Trébol',
+        'el_trebol' => 'Santa Fe (El Trébol)',
         'corrientes' => 'Corrientes',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $compra) {
+            if (! $compra->zona && $compra->id_proveedor) {
+                $proveedor = Proveedor::withoutGlobalScope('empresa')->where('id', $compra->id_proveedor)
+                    ->where('id_empresa', $compra->id_empresa)->first();
+                $compra->zona = $proveedor?->zonaPredeterminada();
+            }
+        });
+    }
 
     public function getActivitylogOptions(): LogOptions
     {

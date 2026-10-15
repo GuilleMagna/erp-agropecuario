@@ -50,6 +50,11 @@ class GestionProveedores extends Component
 
     public string $provincia = '';
 
+    public string $zona = 'santa_fe';
+
+    #[Locked]
+    public bool $zonaManual = false;
+
     public string $observaciones = '';
 
     public bool $activo = true;
@@ -161,6 +166,28 @@ class GestionProveedores extends Component
         session()->flash('success', "Rubro eliminado. {$proveedores} proveedores y {$compras} comprobantes quedaron sin rubro. Se conservaron sus actividades y demás datos.");
     }
 
+    public function updatedZona(): void
+    {
+        $this->zonaManual = true;
+    }
+
+    public function updatedProvincia(): void
+    {
+        if (! $this->zonaManual) {
+            $this->zona = Proveedor::inferirZona($this->provincia, $this->ciudad, $this->direccion);
+        }
+    }
+
+    public function updatedDireccion(): void
+    {
+        $this->updatedProvincia();
+    }
+
+    public function updatedCiudad(): void
+    {
+        $this->updatedProvincia();
+    }
+
     public function updatedRubro(): void
     {
         $this->actividad = Rubro::predeterminada($this->rubro) ?? '';
@@ -197,6 +224,7 @@ class GestionProveedores extends Component
             'direccion' => 'nullable|string|max:200',
             'ciudad' => 'nullable|string|max:100',
             'provincia' => 'nullable|string|max:80',
+            'zona' => 'required|in:santa_fe,corrientes',
             'observaciones' => 'nullable|string',
             'activo' => 'boolean',
         ];
@@ -240,6 +268,8 @@ class GestionProveedores extends Component
         $this->direccion = $p->direccion ?? '';
         $this->ciudad = $p->ciudad ?? '';
         $this->provincia = $p->provincia ?? '';
+        $this->zona = $p->zonaPredeterminada();
+        $this->zonaManual = true;
         $this->observaciones = $p->observaciones ?? '';
         $this->activo = (bool) $p->activo;
         $this->modoEdicion = true;
@@ -269,6 +299,7 @@ class GestionProveedores extends Component
             'direccion' => $this->direccion ?: null,
             'ciudad' => $this->ciudad ?: null,
             'provincia' => $this->provincia ?: null,
+            'zona' => $this->zona,
             'observaciones' => $this->observaciones ?: null,
             'activo' => $this->activo,
         ];
@@ -276,7 +307,12 @@ class GestionProveedores extends Component
         if ($this->modoEdicion) {
             $cantidad = DB::transaction(function () use ($data) {
                 $proveedor = Proveedor::findOrFail($this->proveedorEditandoId);
+                $zonaAnterior = $proveedor->zonaPredeterminada();
                 $proveedor->update($data);
+                if ($zonaAnterior !== $proveedor->zona && Gate::allows('compras.editar')) {
+                    Compra::where('id_empresa', $proveedor->id_empresa)->where('id_proveedor', $proveedor->id)
+                        ->update(['zona' => $proveedor->zona]);
+                }
 
                 return Gate::allows('compras.editar')
                     ? app(CompletarClasificacionCompras::class)->ejecutar($proveedor)
@@ -313,6 +349,8 @@ class GestionProveedores extends Component
         $this->direccion = '';
         $this->ciudad = '';
         $this->provincia = '';
+        $this->zona = 'santa_fe';
+        $this->zonaManual = false;
         $this->observaciones = '';
         $this->activo = true;
         $this->resetValidation();
@@ -338,6 +376,7 @@ class GestionProveedores extends Component
             'catalogoRubros' => Rubro::catalogo(),
             'actividadesProveedor' => $this->actividadesDelProveedor(),
             'actividades' => Proveedor::ACTIVIDADES,
+            'zonas' => Proveedor::ZONAS,
         ]);
     }
 }

@@ -153,6 +153,7 @@
             <small class="text-muted">Incluye todas las páginas. Filtrá por proveedor para corregir sus comprobantes.</small>
         </div>
     @endcan
+    <div class="mb-2"><select class="form-select form-select-sm w-auto" wire:model.live="filtroZona" aria-label="Filtrar zona"><option value="">Todas las zonas</option><option value="sin_clasificar">Sin zona</option>@foreach($zonas as $codigo=>$nombre)<option value="{{ $codigo }}">{{ $nombre }}</option>@endforeach</select></div>
     {{-- Tabla --}}
     <div class="card">
         <div class="card-body p-0">
@@ -203,7 +204,7 @@
                                         </span>
                                     @endunless
                                 </td>
-                                <td>{{ $compra->proveedor?->nombre ?? '—' }}@if($compra->proveedor?->cuit)<small class="d-block text-muted">CUIT {{ $compra->proveedor->cuit }}</small>@endif</td>
+                                <td>{{ $compra->proveedor?->nombre ?? '—' }}@if($compra->proveedor?->cuit)<small class="d-block text-muted">CUIT {{ $compra->proveedor->cuit }}</small>@endif<small class="d-block text-muted">Zona: {{ $compra->zona_label }}</small></td>
                                 <td>
                                     @if ($actividadMostrada = $compra->actividadSugerida())
                                         @php

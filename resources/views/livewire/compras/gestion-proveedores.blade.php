@@ -151,7 +151,7 @@
                         <td>
                             @if ($prov->rubro)
                                 <span class="badge rounded-pill bg-secondary-subtle text-secondary">{{ $prov->rubro_label }}</span>
-                                <small class="d-block text-muted">{{ $prov->actividad_label }}</small>
+                                <small class="d-block text-muted">{{ $prov->actividad_label }}</small><small class="d-block text-muted">Zona: {{ $zonas[$prov->zonaPredeterminada()] }}</small>
                             @else
                                 <span class="text-muted">—</span>
                             @endif
@@ -277,6 +277,7 @@
                             </div>
                         </div>
 
+                        <div class="mb-3"><label class="form-label fw-semibold">Zona del CUIT</label><select class="form-select" wire:model.live="zona">@foreach($zonas as $codigo=>$nombre)<option value="{{ $codigo }}">{{ $nombre }}</option>@endforeach</select>@error('zona')<small class="text-danger">{{ $message }}</small>@enderror<div class="form-text">Santa Fe por defecto. Al cambiarla se actualizarán todos los comprobantes de este proveedor en la empresa activa.</div></div>
                         <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">Contacto</h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-4">
