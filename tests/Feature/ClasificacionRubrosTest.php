@@ -632,4 +632,22 @@ class ClasificacionRubrosTest extends TestCase
         $this->assertSame('santa_fe', DB::table('gastos_no_arca')->where('nombre', 'EPE Santa Fe')->value('zona'));
         $this->assertSame('santa_fe', DB::table('gastos_no_arca')->where('nombre', 'EPE calle Corrientes 123')->value('zona'));
     }
+
+    public function test_zona_general_se_guarda_en_proveedores_gastos_y_reporte(): void
+    {
+        $this->prepararGastos();
+        $proveedor = $this->proveedor();
+        $compra = $this->comprobante(['id_proveedor' => $proveedor->id]);
+        Livewire::test(GestionProveedores::class)->call('abrirModalEditar', $proveedor->id)
+            ->set('zona', 'general')->call('guardar')->assertHasNoErrors();
+        $this->assertSame('general', $proveedor->fresh()->zonaPredeterminada());
+        $this->assertSame('general', $compra->fresh()->zona);
+        $gasto = GastoNoArca::create(['nombre' => 'Servicio general', 'categoria' => 'otros', 'id_empresa' => $this->empresaA]);
+        PagoGastoNoArca::create(['id_gasto' => $gasto->id, 'mes' => '2026-10-01', 'importe' => 50]);
+        Livewire::test(GestionGastosNoArca::class)->call('abrirModalEditar', $gasto->id)
+            ->set('zona', 'general')->call('guardarServicio')->assertHasNoErrors();
+        $this->assertSame('general', $gasto->fresh()->zona);
+        Livewire::test(ReporteGastos::class)->set('desde', '2026-10')->set('hasta', '2026-10')->set('zona', 'general')
+            ->assertViewHas('porZona', fn ($serie) => count($serie) === 1 && $serie[0]['codigo'] === 'general' && $serie[0]['importe'] === 171.0);
+    }
 }

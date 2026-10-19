@@ -44,7 +44,7 @@ class GastoNoArca extends Model
         'empleados' => 'Sueldos y RRHH', 'tarjetas' => 'Tarjetas de crédito', 'comunicaciones' => 'Telefonía / Internet',
     ];
 
-    const ZONAS = ['santa_fe' => 'Santa Fe', 'corrientes' => 'Corrientes'];
+    const ZONAS = ['corrientes' => 'Corrientes', 'general' => 'General', 'santa_fe' => 'Santa Fe'];
 
     public static function zonaSugerida(string $nombre): string
     {

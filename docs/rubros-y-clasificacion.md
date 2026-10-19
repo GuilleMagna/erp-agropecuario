@@ -88,3 +88,8 @@ Compras usa fecha del comprobante y total con IVA; notas de crédito restan y ca
 Cada servicio no ARCA tiene Zona propia (Santa Fe o Corrientes), independiente del proveedor y del rubro: EPE puede estar en cualquiera de las dos. Al editarla, su historial mensual se agrupa bajo la zona elegida sin cambiar importes ni fechas. La migración asigna Santa Fe por defecto y Corrientes cuando aparece explícitamente en el nombre; una calle Corrientes seguida de número no determina provincia.
 
 El catálogo permite filtrar por Zona y la muestra también en la grilla mensual. Gastos por rubro incluye Zona en la tabla y CSV, filtro para ambos orígenes y gráficos por zona. Los enlaces conservan la zona seleccionada. El Trébol histórico de Compras se agrupa como Santa Fe.
+
+
+### Zona General
+
+La opción General está disponible en proveedores, comprobantes, gastos no ARCA y filtros/gráficos de reportes. Se elige manualmente; Santa Fe continúa siendo la opción predeterminada. Las zonas disponibles están definidas en el sistema, sin pantalla de altas de zonas por el momento.

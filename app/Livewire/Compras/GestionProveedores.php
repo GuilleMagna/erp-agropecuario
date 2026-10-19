@@ -226,7 +226,7 @@ class GestionProveedores extends Component
             'direccion' => 'nullable|string|max:200',
             'ciudad' => 'nullable|string|max:100',
             'provincia' => 'nullable|string|max:80',
-            'zona' => 'required|in:santa_fe,corrientes',
+            'zona' => 'required|in:'.implode(',', array_keys(Proveedor::ZONAS)),
             'observaciones' => 'nullable|string',
             'activo' => 'boolean',
         ];

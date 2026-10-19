@@ -80,7 +80,7 @@ class Proveedor extends Model
         'gastos_bancarios' => 'Gastos bancarios / Financieros',
     ];
 
-    const ZONAS = ['santa_fe' => 'Santa Fe', 'corrientes' => 'Corrientes'];
+    const ZONAS = ['corrientes' => 'Corrientes', 'general' => 'General', 'santa_fe' => 'Santa Fe'];
 
     public static function inferirZona(?string $provincia, ?string $ciudad = null, ?string $direccion = null): string
     {

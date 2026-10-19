@@ -205,7 +205,7 @@ class GestionGastosNoArca extends Component
 
         $this->validate([
             'nombre' => 'required|string|max:200',
-            'zona' => 'required|in:santa_fe,corrientes',
+            'zona' => 'required|in:'.implode(',', array_keys(GastoNoArca::ZONAS)),
             'rubro' => 'nullable|in:'.implode(',', array_keys(GastoNoArca::RUBROS)),
             'categoria' => 'required|in:'.implode(',', array_keys(GastoNoArca::CATEGORIAS)),
             'id_inmueble' => 'nullable|exists:inmuebles,id',
