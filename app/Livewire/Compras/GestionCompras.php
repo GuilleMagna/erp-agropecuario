@@ -419,7 +419,7 @@ class GestionCompras extends Component
         $this->estado = $compra->estado;
         $this->actividad = $compra->actividadSugerida() ?? 'general';
         $this->actividadManual = (bool) $compra->actividad;
-        $this->zona = $compra->zona ?: ($compra->proveedor?->zonaPredeterminada() ?? '');
+        $this->zona = $compra->zona === 'el_trebol' ? 'santa_fe' : ($compra->zona ?: ($compra->proveedor?->zonaPredeterminada() ?? ''));
         $this->rubro = $compra->rubroSugerido() ?? '';
         $this->id_lote = $compra->id_lote ?? '';
         $this->id_campana = $compra->id_campana ?? '';

@@ -671,4 +671,19 @@ class ClasificacionRubrosTest extends TestCase
         $panel->set('seleccionados', [$ids[0], $ajena->id])->set('accionMasiva', 'zona')->set('valorMasivoZona', 'santa_fe')->call('aplicarMasivo');
         $this->assertSame('corrientes', $ajena->fresh()->zona);
     }
+
+    public function test_el_trebol_no_se_ofrece_y_su_historial_se_unifica_en_santa_fe(): void
+    {
+        $compra = $this->comprobante(['zona' => 'el_trebol']);
+        $general = $this->comprobante(['zona' => 'general']);
+        $this->assertSame(['corrientes', 'general', 'santa_fe'], array_keys(Compra::ZONAS));
+        $this->assertSame('Santa Fe', $compra->zona_label);
+        Livewire::test(GestionCompras::class)->call('abrirModalEditar', $compra->id)->assertSet('zona', 'santa_fe');
+        $m = require database_path('migrations/2026_10_19_160000_unificar_zona_el_trebol_en_santa_fe.php');
+        $m->up();
+        $m->up();
+        $this->assertSame('santa_fe', $compra->fresh()->zona);
+        $this->assertSame('121.00', $compra->fresh()->total);
+        $this->assertSame('general', $general->fresh()->zona);
+    }
 }

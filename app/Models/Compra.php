@@ -72,13 +72,8 @@ class Compra extends Model
     /** Categorías base compartidas; Rubro agrega el catálogo propio de cada empresa. */
     const RUBROS = Proveedor::RUBROS;
 
-    /** Zona del gasto, heredada del CUIT. Se mantienen claves históricas para consulta. */
-    const ZONAS = [
-        'santa_fe' => 'Santa Fe',
-        'general' => 'General',
-        'el_trebol' => 'Santa Fe (El Trébol)',
-        'corrientes' => 'Corrientes',
-    ];
+    /** Opciones vigentes compartidas con proveedores. */
+    const ZONAS = Proveedor::ZONAS;
 
     protected static function booted(): void
     {
@@ -165,7 +160,7 @@ class Compra extends Model
 
     public function getZonaLabelAttribute(): string
     {
-        return self::ZONAS[$this->zona] ?? ($this->zona ?? '—');
+        return $this->zona === 'el_trebol' ? 'Santa Fe' : (self::ZONAS[$this->zona] ?? ($this->zona ?? '—'));
     }
 
     public function proveedor()
