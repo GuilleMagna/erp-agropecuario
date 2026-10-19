@@ -27,22 +27,24 @@ class SincronizarRubroCuit
     {
         Gate::authorize('compras.proveedores.gestionar');
         $cuit = Proveedor::normalizarCuit($origen->cuit ?? '');
-        if (! $cuit || ! $origen->rubro || $origen->rubro === 'otro') {
+        if (! $cuit || ! $origen->rubro) {
             return 0;
         }
 
         return DB::transaction(function () use ($origen, $cuit) {
             $cantidad = 0;
             // Excepción al aislamiento limitada al mismo CUIT, autorizada desde su ficha.
-            $proveedores = Proveedor::withoutGlobalScope('empresa')->porCuit($cuit)->where('id', '!=', $origen->id)->get();
+            $proveedores = Proveedor::withoutGlobalScope('empresa')->porCuit($cuit)->get();
             foreach ($proveedores as $proveedor) {
                 self::asegurarCatalogo($origen->rubro, $origen->id_empresa, $proveedor->id_empresa);
-                Proveedor::withoutGlobalScope('empresa')->whereKey($proveedor->id)->where('id_empresa', $proveedor->id_empresa)
-                    ->update(['rubro' => $origen->rubro]);
+                if ($proveedor->id !== $origen->id) {
+                    Proveedor::withoutGlobalScope('empresa')->whereKey($proveedor->id)->where('id_empresa', $proveedor->id_empresa)
+                        ->update(['rubro' => $origen->rubro]);
+                }
                 if (Gate::allows('compras.editar')) {
                     $cantidad += Compra::withoutGlobalScope('empresa')->where('id_empresa', $proveedor->id_empresa)
                         ->where('id_proveedor', $proveedor->id)
-                        ->where(fn ($q) => $q->whereNull('rubro')->orWhereIn('rubro', ['', 'otro']))
+                        ->where(fn ($q) => $q->whereNull('rubro')->orWhere('rubro', '!=', $origen->rubro))
                         ->update(['rubro' => $origen->rubro]);
                 }
             }

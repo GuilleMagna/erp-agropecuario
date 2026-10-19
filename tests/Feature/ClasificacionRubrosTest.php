@@ -361,7 +361,7 @@ class ClasificacionRubrosTest extends TestCase
         }
         $this->assertSame('reparaciones', $actividadManual->fresh()->rubro);
         $this->assertSame('ganaderia', $actividadManual->fresh()->actividad);
-        $this->assertSame('combustible', $rubroManual->fresh()->rubro);
+        $this->assertSame('reparaciones', $rubroManual->fresh()->rubro);
         $this->assertSame('general', $rubroManual->fresh()->actividad);
         $this->assertNull($otraEmpresa->fresh()->rubro);
         $this->assertNull($otroProveedor->fresh()->rubro);
@@ -687,15 +687,19 @@ class ClasificacionRubrosTest extends TestCase
         $this->assertSame('general', $general->fresh()->zona);
     }
 
-    public function test_rubro_se_sincroniza_por_cuit_entre_empresas_sin_pisar_comprobantes_clasificados(): void
+    public function test_rubro_del_cuit_reemplaza_tambien_comprobantes_ya_clasificados_entre_empresas(): void
     {
         $origen = $this->proveedor(['rubro' => 'otro', 'cuit' => '30-12345678-9']);
         $destino = $this->proveedor(['id_empresa' => $this->empresaB, 'cuit' => '30.12345678.9', 'rubro' => 'combustible', 'actividad' => 'ganaderia', 'zona' => 'corrientes']);
+        $propia = $this->comprobante(['id_proveedor' => $origen->id, 'rubro' => 'seguros', 'actividad' => 'general', 'zona' => 'general']);
         $pendiente = $this->comprobante(['id_empresa' => $this->empresaB, 'id_proveedor' => $destino->id, 'rubro' => 'otro', 'actividad' => 'ganaderia', 'zona' => 'corrientes']);
         $manual = $this->comprobante(['id_empresa' => $this->empresaB, 'id_proveedor' => $destino->id, 'rubro' => 'seguros']);
         $otro = $this->proveedor(['id_empresa' => $this->empresaB, 'cuit' => '30888888888', 'rubro' => 'combustible']);
         Livewire::test(GestionProveedores::class)->call('abrirModalEditar', $origen->id)
             ->set('rubro', 'reparaciones')->set('actividad', 'agricultura')->call('guardar')->assertHasNoErrors();
+        $this->assertSame('reparaciones', $propia->fresh()->rubro);
+        $this->assertSame('general', $propia->fresh()->actividad);
+        $this->assertSame('general', $propia->fresh()->zona);
         $this->assertSame('reparaciones', $destino->fresh()->rubro);
         $this->assertSame('ganaderia', $destino->fresh()->actividad);
         $this->assertSame('corrientes', $destino->fresh()->zona);
@@ -703,7 +707,7 @@ class ClasificacionRubrosTest extends TestCase
         $this->assertSame('ganaderia', $pendiente->fresh()->actividad);
         $this->assertSame('corrientes', $pendiente->fresh()->zona);
         $this->assertSame('121.00', $pendiente->fresh()->total);
-        $this->assertSame('seguros', $manual->fresh()->rubro);
+        $this->assertSame('reparaciones', $manual->fresh()->rubro);
         $this->assertSame('combustible', $otro->fresh()->rubro);
     }
 
@@ -723,5 +727,18 @@ class ClasificacionRubrosTest extends TestCase
         $nuevo = $this->proveedor(['id_empresa' => $this->empresaB, 'cuit' => '30123456789', 'rubro' => 'otro', 'zona' => 'corrientes']);
         $this->assertSame('seguros', $nuevo->rubro);
         $this->assertSame('corrientes', $nuevo->zona);
+    }
+
+    public function test_asignar_otro_al_cuit_tambien_reemplaza_sus_rubros_anteriores(): void
+    {
+        $origen = $this->proveedor(['rubro' => 'seguros']);
+        $destino = $this->proveedor(['id_empresa' => $this->empresaB, 'rubro' => 'reparaciones']);
+        $compra = $this->comprobante(['id_proveedor' => $origen->id, 'rubro' => 'seguros', 'actividad' => 'ganaderia']);
+        $otra = $this->comprobante(['id_empresa' => $this->empresaB, 'id_proveedor' => $destino->id, 'rubro' => 'reparaciones', 'actividad' => 'general']);
+        Livewire::test(GestionProveedores::class)->call('abrirModalEditar', $origen->id)->set('rubro', 'otro')->call('guardar')->assertHasNoErrors();
+        $this->assertSame('otro', $compra->fresh()->rubro);
+        $this->assertSame('otro', $otra->fresh()->rubro);
+        $this->assertSame('ganaderia', $compra->fresh()->actividad);
+        $this->assertSame('general', $otra->fresh()->actividad);
     }
 }

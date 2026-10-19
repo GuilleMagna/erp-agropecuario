@@ -328,7 +328,7 @@ class GestionProveedores extends Component
                     ? app(CompletarClasificacionCompras::class)->ejecutar($proveedor)
                     : 0);
             });
-            session()->flash('success', "Proveedor actualizado y rubro sincronizado por CUIT entre empresas. {$cantidad} comprobantes pendientes completados; se conservaron los rubros e imputaciones existentes.");
+            session()->flash('success', 'Proveedor actualizado. El rubro se aplicó a todos los comprobantes del mismo CUIT entre empresas, reemplazando clasificaciones anteriores. Se conservaron las actividades existentes.');
         } else {
             DB::transaction(function () use ($data) {
                 $proveedor = Proveedor::create($data);

@@ -48,7 +48,7 @@ Los iconos, barras, porciones y leyendas abren los comprobantes del grupo conser
 
 ## Aplicar el rubro del CUIT a sus comprobantes
 
-Al guardar un proveedor, se completan automáticamente los comprobantes de ese proveedor en la misma empresa cuyo Rubro sea nulo, vacío u `otro`. Las actividades vacías también se completan; las actividades y los rubros específicos existentes se conservan. Se requiere permiso de edición de compras para actualizar sus comprobantes.
+Al guardar el rubro de un proveedor, se reemplaza en todos los comprobantes de ese CUIT entre empresas, aunque ya tengan rubro. Las actividades existentes se conservan. Se requiere permiso de edición de compras para actualizar sus comprobantes.
 
 Para proveedores clasificados antes de esta mejora, **Completar clasificación pendiente** aplica el mismo criterio, incluyendo `otro`. Al editar una compra pendiente, se muestra la sugerencia del proveedor para poder guardarla. El filtro **Sin rubro** consulta la clasificación guardada: una vez aplicada, el comprobante deja de pertenecer a ese grupo. No cambian importes, fechas, presentación fiscal, lote ni campaña.
 
@@ -99,6 +99,11 @@ En Compras, **Editar selección → Zona** permite reemplazar la zona de los com
 
 ## Rubro compartido por CUIT entre empresas
 
-Al guardar un proveedor con un rubro específico, se sincroniza automáticamente con todos los proveedores existentes del mismo CUIT normalizado, aunque esté escrito con guiones o puntos. Si es un rubro personalizado ausente del catálogo de destino, se agrega para poder utilizarlo allí. También se completan los comprobantes sin rubro de esos proveedores si el usuario puede editar compras.
+Al guardar un proveedor con un rubro específico, se sincroniza automáticamente con todos los proveedores existentes del mismo CUIT normalizado, aunque esté escrito con guiones o puntos. Si es un rubro personalizado ausente del catálogo de destino, se agrega para poder utilizarlo allí. También se reemplaza el rubro de todos sus comprobantes si el usuario puede editar compras.
 
-Se conservan los rubros específicos de los comprobantes, las actividades y las zonas de las otras empresas. No se crean proveedores vacíos en cuentas donde el CUIT no existe. Si más adelante se crea/importa allí sin clasificación, toma el rubro ya asignado al CUIT. Esta sincronización es una excepción acotada al aislamiento por empresa, aplicada sólo al CUIT que se está guardando. Las asignaciones existentes se sincronizan al volver a guardar el proveedor; no se resuelven conflictos históricos de forma masiva sin indicar cuál corresponde.
+Se reemplazan los rubros de los comprobantes; se conservan las actividades y las zonas de las otras empresas. No se crean proveedores vacíos en cuentas donde el CUIT no existe. Si más adelante se crea/importa allí sin clasificación, toma el rubro ya asignado al CUIT. Esta sincronización es una excepción acotada al aislamiento por empresa, aplicada sólo al CUIT que se está guardando. Las asignaciones existentes se sincronizan al volver a guardar el proveedor; no se resuelven conflictos históricos de forma masiva sin indicar cuál corresponde.
+
+
+## Reasignación completa del rubro por CUIT
+
+Al guardar el rubro de un proveedor, se reemplaza el rubro de TODOS los comprobantes del mismo CUIT normalizado en todas las empresas, incluidos los que ya estaban clasificados y los de la empresa de origen. No se modifica la actividad ni zona existente en las otras cuentas, ni importes, fechas o presentación fiscal. También se permite asignar Otro a todos sus comprobantes. El botón Completar clasificación pendiente conserva su función de completar únicamente faltantes; la edición individual o masiva de comprobantes sigue actuando sólo sobre los comprobantes elegidos.
