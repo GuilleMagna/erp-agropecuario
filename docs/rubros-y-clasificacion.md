@@ -93,3 +93,5 @@ El catálogo permite filtrar por Zona y la muestra también en la grilla mensual
 ### Zona General
 
 La opción General está disponible en proveedores, comprobantes, gastos no ARCA y filtros/gráficos de reportes. Se elige manualmente; Santa Fe continúa siendo la opción predeterminada. Las zonas disponibles están definidas en el sistema, sin pantalla de altas de zonas por el momento.
+
+En Compras, **Editar selección → Zona** permite reemplazar la zona de los comprobantes seleccionados, incluso al seleccionar todas las páginas filtradas. Conserva rubro, actividad y demás datos; no modifica la zona del proveedor.

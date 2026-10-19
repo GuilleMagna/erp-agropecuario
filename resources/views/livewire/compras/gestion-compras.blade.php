@@ -600,6 +600,9 @@
                                 <i class="bi bi-arrow-repeat me-1"></i>Estado
                             </label>
 
+                            <input type="radio" class="btn-check" name="accionMasiva" id="am-zona" wire:model.live="accionMasiva" value="zona">
+                            <label class="btn btn-sm btn-outline-secondary" for="am-zona"><i class="bi bi-geo-alt me-1"></i>Zona</label>
+
                             <input type="radio" class="btn-check" name="accionMasiva" id="am-rubro" wire:model.live="accionMasiva" value="rubro">
                             <label class="btn btn-sm btn-outline-secondary" for="am-rubro"><i class="bi bi-tags me-1"></i>Rubro</label>
 
@@ -639,6 +642,16 @@
                             @error('valorMasivoEstado') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
 
+                    @elseif ($accionMasiva === 'zona')
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Nueva zona *</label>
+                            <select class="form-select @error('valorMasivoZona') is-invalid @enderror" wire:model="valorMasivoZona">
+                                <option value="">— Seleccionar —</option>
+                                @foreach ($zonas as $codigo => $nombre)<option value="{{ $codigo }}">{{ $nombre }}</option>@endforeach
+                            </select>
+                            @error('valorMasivoZona')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            <div class="alert alert-warning mt-3 small">Se reemplazará la zona de los {{ count($seleccionados) }} comprobantes seleccionados. El rubro, la actividad, los importes y demás datos se conservan. Para futuras compras, corregí también la zona del proveedor.</div>
+                        </div>
                     @elseif ($accionMasiva === 'rubro')
                         <div class="mb-3">
                             <label class="form-label small fw-semibold">Nuevo rubro *</label>

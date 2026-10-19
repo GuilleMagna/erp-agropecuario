@@ -650,4 +650,25 @@ class ClasificacionRubrosTest extends TestCase
         Livewire::test(ReporteGastos::class)->set('desde', '2026-10')->set('hasta', '2026-10')->set('zona', 'general')
             ->assertViewHas('porZona', fn ($serie) => count($serie) === 1 && $serie[0]['codigo'] === 'general' && $serie[0]['importe'] === 171.0);
     }
+
+    public function test_zona_masiva_cambia_solo_la_seleccion_y_valida_opciones(): void
+    {
+        $p = $this->proveedor();
+        $ids = [];
+        for ($i = 0; $i < 24; $i++) {
+            $ids[] = $this->comprobante(['id_proveedor' => $p->id, 'rubro' => 'reparaciones', 'actividad' => 'agricultura', 'zona' => 'santa_fe'])->id;
+        }
+        $ajena = $this->comprobante(['id_empresa' => $this->empresaB, 'zona' => 'corrientes']);
+        $noSeleccionada = $this->comprobante(['zona' => 'santa_fe']);
+        $panel = Livewire::test(GestionCompras::class)->set('filtroProveedor', $p->id)->call('seleccionarFiltrados')
+            ->call('abrirModalMasivo')->assertSee('Zona')->set('accionMasiva', 'zona')
+            ->call('aplicarMasivo')->assertHasErrors('valorMasivoZona')
+            ->set('valorMasivoZona', 'invalida')->call('aplicarMasivo')->assertHasErrors('valorMasivoZona')
+            ->set('valorMasivoZona', 'general')->call('aplicarMasivo')->assertHasNoErrors()->assertSet('seleccionados', []);
+        $this->assertSame(24, Compra::whereIn('id', $ids)->where('zona', 'general')->where('rubro', 'reparaciones')->where('actividad', 'agricultura')->where('total', 121)->count());
+        $this->assertSame('santa_fe', $noSeleccionada->fresh()->zona);
+        $this->assertSame('santa_fe', $p->fresh()->zona);
+        $panel->set('seleccionados', [$ids[0], $ajena->id])->set('accionMasiva', 'zona')->set('valorMasivoZona', 'santa_fe')->call('aplicarMasivo');
+        $this->assertSame('corrientes', $ajena->fresh()->zona);
+    }
 }

@@ -135,13 +135,15 @@ class GestionCompras extends Component
 
     public bool $modalMasivoAbierto = false;
 
-    public string $accionMasiva = 'estado';      // 'estado' | 'rubro' | 'actividad' | 'imputacion' | 'presentacion'
+    public string $accionMasiva = 'estado';      // 'estado' | 'rubro' | 'zona' | 'actividad' | 'imputacion' | 'presentacion'
 
     public string $valorMasivoEstado = '';
 
     public string $valorMasivoActividad = '';
 
     public string $valorMasivoRubro = '';
+
+    public string $valorMasivoZona = '';
 
     public string $lotesMasivo = '';
 
@@ -618,6 +620,7 @@ class GestionCompras extends Component
         $this->valorMasivoEstado = '';
         $this->valorMasivoActividad = '';
         $this->valorMasivoRubro = '';
+        $this->valorMasivoZona = '';
         $this->lotesMasivo = '';
         $this->campanaMasivo = '';
         $this->valorMasivoPresentado = '';
@@ -639,6 +642,12 @@ class GestionCompras extends Component
                 $this->validate(['valorMasivoEstado' => 'required|in:'.implode(',', array_keys(Compra::ESTADOS))]);
                 $query->update(['estado' => $this->valorMasivoEstado]);
                 session()->flash('success', "{$count} comprobante(s) actualizados a estado «".Compra::ESTADOS[$this->valorMasivoEstado].'».');
+                break;
+
+            case 'zona':
+                $this->validate(['valorMasivoZona' => 'required|in:'.implode(',', array_keys(Compra::ZONAS))]);
+                $count = $query->update(['zona' => $this->valorMasivoZona]);
+                session()->flash('success', "{$count} comprobante(s) con zona actualizada a «".Compra::ZONAS[$this->valorMasivoZona].'».');
                 break;
 
             case 'rubro':
