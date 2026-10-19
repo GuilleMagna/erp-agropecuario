@@ -741,4 +741,21 @@ class ClasificacionRubrosTest extends TestCase
         $this->assertSame('ganaderia', $compra->fresh()->actividad);
         $this->assertSame('general', $otra->fresh()->actividad);
     }
+
+    public function test_filtro_proveedores_sin_rubro_incluye_vacios_y_otro(): void
+    {
+        $ids = [];
+        foreach ([null, '', 'otro'] as $i => $rubro) {
+            $p = $this->proveedor(['cuit' => '3012345678'.$i, 'rubro' => $rubro]);
+            $ids[] = $p->id;
+        }
+        $this->proveedor(['cuit' => '30999999999', 'rubro' => 'seguros']);
+        $this->proveedor(['id_empresa' => $this->empresaB, 'cuit' => '30888888888', 'rubro' => null]);
+        $panel = Livewire::test(GestionProveedores::class)->set('filtroRubro', 'sin_clasificar')
+            ->assertSee('Sin rubro')->assertViewHas('proveedores', fn ($proveedores) => $proveedores->total() === 3);
+        $panel->call('abrirModalEditar', $ids[0])->set('rubro', 'seguros')->set('actividad', 'general')
+            ->call('guardar')->assertHasNoErrors()
+            ->assertViewHas('proveedores', fn ($proveedores) => $proveedores->total() === 2);
+        $panel->set('filtroRubro', 'seguros')->assertViewHas('proveedores', fn ($proveedores) => $proveedores->total() === 2);
+    }
 }

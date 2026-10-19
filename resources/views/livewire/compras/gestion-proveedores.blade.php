@@ -104,6 +104,7 @@
                     <label class="form-label small fw-semibold text-muted mb-1">Rubro</label>
                     <select class="form-select" wire:model.live="filtroRubro">
                         <option value="">Todos</option>
+                        <option value="sin_clasificar">Sin rubro</option>
                         @foreach ($rubros as $val => $etq)
                             <option value="{{ $val }}">{{ $etq }}</option>
                         @endforeach
