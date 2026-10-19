@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\SincronizarRubroCuit;
 use App\Traits\PerteneceAEmpresa;
 use App\Traits\UsaUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -110,6 +111,15 @@ class Proveedor extends Model
     protected static function booted(): void
     {
         static::creating(function (self $proveedor) {
+            if ((! $proveedor->rubro || $proveedor->rubro === 'otro') && self::normalizarCuit($proveedor->cuit ?? '')) {
+                $existente = self::withoutGlobalScope('empresa')->porCuit($proveedor->cuit)
+                    ->where('id_empresa', '!=', $proveedor->id_empresa)->whereNotNull('rubro')->whereNotIn('rubro', ['', 'otro'])
+                    ->orderByDesc('updated_at')->orderBy('id')->first();
+                if ($existente) {
+                    SincronizarRubroCuit::asegurarCatalogo($existente->rubro, $existente->id_empresa, $proveedor->id_empresa);
+                    $proveedor->rubro = $existente->rubro;
+                }
+            }
             $proveedor->zona ??= self::inferirZona($proveedor->provincia, $proveedor->ciudad, $proveedor->direccion);
         });
     }

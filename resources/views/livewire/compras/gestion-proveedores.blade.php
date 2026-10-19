@@ -239,7 +239,7 @@
                 <div class="modal-body pt-3">
                     <form wire:submit="guardar" id="form-proveedor">
                         @can('compras.editar')
-                            <div class="alert alert-info py-2 small">Al guardar, el rubro y la actividad completarán los campos pendientes de todos los comprobantes de este proveedor en la empresa activa. Se conservarán los rubros específicos y las actividades ya elegidas.</div>
+                            <div class="alert alert-info py-2 small">Al guardar, el rubro se sincroniza automáticamente con el mismo CUIT en todas las empresas y completa sus comprobantes sin rubro. Las actividades y zonas de otras empresas se conservan, igual que los rubros específicos de los comprobantes.</div>
                         @endcan
 
                         <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">Identificación</h6>

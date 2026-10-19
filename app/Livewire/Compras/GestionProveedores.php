@@ -6,6 +6,7 @@ use App\Models\Compra;
 use App\Models\Proveedor;
 use App\Models\Rubro;
 use App\Services\CompletarClasificacionCompras;
+use App\Services\SincronizarRubroCuit;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
@@ -321,14 +322,19 @@ class GestionProveedores extends Component
                         ->update(['zona' => $proveedor->zona]);
                 }
 
-                return Gate::allows('compras.editar')
+                $otras = app(SincronizarRubroCuit::class)->ejecutar($proveedor);
+
+                return $otras + (Gate::allows('compras.editar')
                     ? app(CompletarClasificacionCompras::class)->ejecutar($proveedor)
-                    : 0;
+                    : 0);
             });
-            session()->flash('success', "Proveedor actualizado. {$cantidad} comprobantes pendientes completados; se conservaron los rubros e imputaciones existentes.");
+            session()->flash('success', "Proveedor actualizado y rubro sincronizado por CUIT entre empresas. {$cantidad} comprobantes pendientes completados; se conservaron los rubros e imputaciones existentes.");
         } else {
-            Proveedor::create($data);
-            session()->flash('success', 'Proveedor creado correctamente.');
+            DB::transaction(function () use ($data) {
+                $proveedor = Proveedor::create($data);
+                app(SincronizarRubroCuit::class)->ejecutar($proveedor);
+            });
+            session()->flash('success', 'Proveedor creado y rubro sincronizado por CUIT entre empresas.');
         }
 
         $this->modalAbierto = false;

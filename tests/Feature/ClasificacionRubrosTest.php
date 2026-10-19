@@ -686,4 +686,42 @@ class ClasificacionRubrosTest extends TestCase
         $this->assertSame('121.00', $compra->fresh()->total);
         $this->assertSame('general', $general->fresh()->zona);
     }
+
+    public function test_rubro_se_sincroniza_por_cuit_entre_empresas_sin_pisar_comprobantes_clasificados(): void
+    {
+        $origen = $this->proveedor(['rubro' => 'otro', 'cuit' => '30-12345678-9']);
+        $destino = $this->proveedor(['id_empresa' => $this->empresaB, 'cuit' => '30.12345678.9', 'rubro' => 'combustible', 'actividad' => 'ganaderia', 'zona' => 'corrientes']);
+        $pendiente = $this->comprobante(['id_empresa' => $this->empresaB, 'id_proveedor' => $destino->id, 'rubro' => 'otro', 'actividad' => 'ganaderia', 'zona' => 'corrientes']);
+        $manual = $this->comprobante(['id_empresa' => $this->empresaB, 'id_proveedor' => $destino->id, 'rubro' => 'seguros']);
+        $otro = $this->proveedor(['id_empresa' => $this->empresaB, 'cuit' => '30888888888', 'rubro' => 'combustible']);
+        Livewire::test(GestionProveedores::class)->call('abrirModalEditar', $origen->id)
+            ->set('rubro', 'reparaciones')->set('actividad', 'agricultura')->call('guardar')->assertHasNoErrors();
+        $this->assertSame('reparaciones', $destino->fresh()->rubro);
+        $this->assertSame('ganaderia', $destino->fresh()->actividad);
+        $this->assertSame('corrientes', $destino->fresh()->zona);
+        $this->assertSame('reparaciones', $pendiente->fresh()->rubro);
+        $this->assertSame('ganaderia', $pendiente->fresh()->actividad);
+        $this->assertSame('corrientes', $pendiente->fresh()->zona);
+        $this->assertSame('121.00', $pendiente->fresh()->total);
+        $this->assertSame('seguros', $manual->fresh()->rubro);
+        $this->assertSame('combustible', $otro->fresh()->rubro);
+    }
+
+    public function test_rubro_personalizado_se_copia_al_catalogo_de_la_otra_empresa(): void
+    {
+        Rubro::create(['codigo' => 'salud_privada', 'nombre' => 'Salud privada', 'actividades' => ['general'], 'actividad_default' => 'general']);
+        $p = $this->proveedor(['rubro' => 'otro']);
+        $otro = $this->proveedor(['id_empresa' => $this->empresaB, 'rubro' => 'otro']);
+        Livewire::test(GestionProveedores::class)->call('abrirModalEditar', $p->id)->set('rubro', 'salud_privada')->set('actividad', 'general')->call('guardar')->assertHasNoErrors();
+        $this->assertSame('salud_privada', $otro->fresh()->rubro);
+        $this->assertSame('Salud privada', Rubro::opciones($this->empresaB)['salud_privada']);
+    }
+
+    public function test_nuevo_proveedor_de_otra_empresa_hereda_rubro_del_cuit(): void
+    {
+        $this->proveedor(['cuit' => '30-12345678-9', 'rubro' => 'seguros']);
+        $nuevo = $this->proveedor(['id_empresa' => $this->empresaB, 'cuit' => '30123456789', 'rubro' => 'otro', 'zona' => 'corrientes']);
+        $this->assertSame('seguros', $nuevo->rubro);
+        $this->assertSame('corrientes', $nuevo->zona);
+    }
 }

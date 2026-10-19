@@ -95,3 +95,10 @@ El catálogo permite filtrar por Zona y la muestra también en la grilla mensual
 La opción General está disponible en proveedores, comprobantes, gastos no ARCA y filtros/gráficos de reportes. Se elige manualmente; Santa Fe continúa siendo la opción predeterminada. Las zonas disponibles están definidas en el sistema, sin pantalla de altas de zonas por el momento.
 
 En Compras, **Editar selección → Zona** permite reemplazar la zona de los comprobantes seleccionados, incluso al seleccionar todas las páginas filtradas. Conserva rubro, actividad y demás datos; no modifica la zona del proveedor.
+
+
+## Rubro compartido por CUIT entre empresas
+
+Al guardar un proveedor con un rubro específico, se sincroniza automáticamente con todos los proveedores existentes del mismo CUIT normalizado, aunque esté escrito con guiones o puntos. Si es un rubro personalizado ausente del catálogo de destino, se agrega para poder utilizarlo allí. También se completan los comprobantes sin rubro de esos proveedores si el usuario puede editar compras.
+
+Se conservan los rubros específicos de los comprobantes, las actividades y las zonas de las otras empresas. No se crean proveedores vacíos en cuentas donde el CUIT no existe. Si más adelante se crea/importa allí sin clasificación, toma el rubro ya asignado al CUIT. Esta sincronización es una excepción acotada al aislamiento por empresa, aplicada sólo al CUIT que se está guardando. Las asignaciones existentes se sincronizan al volver a guardar el proveedor; no se resuelven conflictos históricos de forma masiva sin indicar cuál corresponde.
