@@ -355,7 +355,7 @@
                                 @endforeach
                             </select>
                             @error('tipo_comprobante') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                            @if ($tipo_comprobante === 'nota_credito')
+                            @if (! $modoEdicion && $tipo_comprobante === 'nota_credito')
                                 <small class="text-danger">
                                     Cargá los ítems en positivo: se guarda en negativo para que reste.
                                 </small>
@@ -389,7 +389,7 @@
                         </div>
                         <div class="col-md-3">
                             <label class="form-label small fw-semibold">Establecimiento</label>
-                            <select class="form-select form-select-sm" wire:model="id_establecimiento">
+                            <select class="form-select form-select-sm" wire:model.live="id_establecimiento">
                                 <option value="">— Todos —</option>
                                 @foreach ($establecimientos as $e)
                                     <option value="{{ $e->id }}">{{ $e->nombre }}</option>
@@ -408,7 +408,7 @@
                             <label class="form-label small fw-semibold">IVA %</label>
                             <input type="number" step="0.01" min="0" max="100"
                                    class="form-control form-control-sm @error('iva_porc') is-invalid @enderror"
-                                   wire:model.live="iva_porc" placeholder="21">
+                                   wire:model.live="iva_porc" placeholder="21" @readonly($modoEdicion)>
                             @error('iva_porc') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                     </div>
@@ -472,6 +472,7 @@
                     </div>
 
                     {{-- Ítems --}}
+                    @if (! $modoEdicion)
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h6 class="mb-0">Ítems</h6>
                         <button type="button" class="btn btn-outline-secondary btn-sm" wire:click="agregarItem">
@@ -541,6 +542,7 @@
                     </div>
 
                     {{-- Totales --}}
+                    @endif
                     <div class="row justify-content-end">
                         <div class="col-md-4">
                             <table class="table table-sm mb-0">

@@ -171,10 +171,12 @@ class GestionCompras extends Component
             'id_campana' => 'nullable|exists:campanas,id',
             'iva_porc' => 'nullable|numeric|min:0|max:100',
             'observaciones' => 'nullable|string',
-            'items' => 'required|array|min:1',
-            'items.*.descripcion' => 'required|string|max:200',
-            'items.*.cantidad' => 'required|numeric|min:0.001',
-            'items.*.precio_unitario' => 'required|numeric|min:0',
+            ...($this->modoEdicion ? [] : [
+                'items' => 'required|array|min:1',
+                'items.*.descripcion' => 'required|string|max:200',
+                'items.*.cantidad' => 'required|numeric|min:0.001',
+                'items.*.precio_unitario' => 'required|numeric|min:0',
+            ]),
         ];
     }
 
@@ -390,6 +392,10 @@ class GestionCompras extends Component
 
     private function calcularTotales(): void
     {
+        if ($this->modoEdicion) {
+            return;
+        }
+
         $sub = collect($this->items)->sum(fn ($i) => (float) ($i['subtotal'] ?? 0));
         $this->subtotal = number_format($sub, 2, '.', '');
 
@@ -446,10 +452,6 @@ class GestionCompras extends Component
             'subtotal' => (string) $item->subtotal,
         ])->toArray();
 
-        if (empty($this->items)) {
-            $this->agregarItem();
-        }
-
         $this->modoEdicion = true;
         $this->modalAbierto = true;
     }
@@ -486,6 +488,18 @@ class GestionCompras extends Component
             'observaciones' => $this->observaciones ?: null,
         ];
 
+        if ($this->modoEdicion) {
+            // La edición clasifica el comprobante sin reconstruir el detalle ni los importes de origen.
+            unset($data['subtotal'], $data['iva_porc'], $data['iva_importe'], $data['total']);
+            $compra = Compra::findOrFail($this->compraEditandoId);
+            $compra->update($data);
+            session()->flash('success', 'Compra actualizada correctamente.');
+            $this->modalAbierto = false;
+            $this->resetForm();
+
+            return;
+        }
+
         // Las notas de crédito se guardan en negativo, igual que las que entran
         // por ARCA: los ítems se cargan con importes positivos y acá se invierte
         // el signo para que resten del total de compras y del crédito fiscal.
@@ -497,15 +511,8 @@ class GestionCompras extends Component
             }
         }
 
-        if ($this->modoEdicion) {
-            $compra = Compra::findOrFail($this->compraEditandoId);
-            $compra->update($data);
-            $compra->items()->delete();
-            session()->flash('success', 'Compra actualizada correctamente.');
-        } else {
-            $compra = Compra::create($data);
-            session()->flash('success', 'Compra registrada correctamente.');
-        }
+        $compra = Compra::create($data);
+        session()->flash('success', 'Compra registrada correctamente.');
 
         foreach ($this->items as $item) {
             if (empty($item['descripcion']) && empty($item['id_insumo'])) {

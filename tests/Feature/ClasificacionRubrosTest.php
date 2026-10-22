@@ -251,6 +251,60 @@ class ClasificacionRubrosTest extends TestCase
         ], $datos));
     }
 
+    public function test_editar_imputacion_sin_items_conserva_importes_originales_de_arca(): void
+    {
+        $compra = $this->comprobante([
+            'subtotal' => 49336.72, 'iva_porc' => 21, 'iva_importe' => 10360.71, 'total' => 59697.43,
+            'observaciones' => 'Sincronizado desde ARCA',
+        ]);
+        Livewire::test(GestionCompras::class)->call('abrirModalEditar', $compra->id)
+            ->assertSet('items', [])
+            ->assertDontSee('Agregar ítem')->assertDontSee('Insumo (opcional)')
+            ->set('rubro', 'reparaciones')->set('zona', 'corrientes')->set('actividad', 'agricultura')
+            ->call('guardar')->assertHasNoErrors()->assertSet('modalAbierto', false);
+        $compra->refresh();
+        $this->assertSame('reparaciones', $compra->rubro);
+        $this->assertSame('corrientes', $compra->zona);
+        $this->assertSame('agricultura', $compra->actividad);
+        $this->assertSame('49336.72', $compra->subtotal);
+        $this->assertSame('10360.71', $compra->iva_importe);
+        $this->assertSame('59697.43', $compra->total);
+        $this->assertSame('Sincronizado desde ARCA', $compra->observaciones);
+        $this->assertSame(0, $compra->items()->count());
+    }
+
+    public function test_editar_nota_credito_preserva_detalle_stock_y_signos_aunque_cambie_el_estado_del_formulario(): void
+    {
+        $compra = $this->comprobante([
+            'tipo_comprobante' => 'nota_credito', 'subtotal' => -100, 'iva_porc' => 21,
+            'iva_importe' => -21, 'total' => -121, 'stock_registrado' => true,
+        ]);
+        $item = $compra->items()->create([
+            'descripcion' => 'Detalle original', 'cantidad' => 1, 'precio_unitario' => 100, 'subtotal' => 100,
+        ]);
+        $original = $item->fresh()->getAttributes();
+        Livewire::test(GestionCompras::class)->call('abrirModalEditar', $compra->id)
+            ->set('items', [])->set('subtotal', '0')->set('total', '0')->set('iva_importe', '0')->set('iva_porc', '0')
+            ->set('rubro', 'seguros')->set('zona', 'general')->call('guardar')->assertHasNoErrors();
+        $compra->refresh();
+        $this->assertSame('seguros', $compra->rubro);
+        $this->assertSame('general', $compra->zona);
+        $this->assertSame('-100.00', $compra->subtotal);
+        $this->assertSame('-21.00', $compra->iva_importe);
+        $this->assertSame('-121.00', $compra->total);
+        $this->assertEquals(21, $compra->iva_porc);
+        $this->assertTrue($compra->stock_registrado);
+        $this->assertSame(1, $compra->items()->count());
+        $this->assertSame($original, $item->fresh()->getAttributes());
+    }
+
+    public function test_creacion_manual_sigue_validando_el_detalle_del_comprobante(): void
+    {
+        Livewire::test(GestionCompras::class)->call('abrirModalCrear')->assertSee('Agregar ítem')
+            ->call('guardar')->assertHasErrors(['items.0.descripcion', 'items.0.cantidad', 'items.0.precio_unitario']);
+        $this->assertSame(0, Compra::count());
+    }
+
     public function test_completar_pendientes_preserva_manuales_y_aisla_empresa(): void
     {
         $p = $this->proveedor();
