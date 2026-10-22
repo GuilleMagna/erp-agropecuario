@@ -130,7 +130,7 @@ class Compra extends Model
         if ($proveedor && $proveedor->id_empresa !== $this->id_empresa) {
             $proveedor = null;
         }
-        if ($this->rubro && $this->rubro !== 'otro' && $this->rubro !== $proveedor?->rubro) {
+        if ($this->rubro && $this->rubro !== $proveedor?->rubro) {
             return Rubro::predeterminada($this->rubro, $this->id_empresa);
         }
 
@@ -139,12 +139,12 @@ class Compra extends Model
 
     public function rubroSugerido(): ?string
     {
-        if ($this->rubro && $this->rubro !== 'otro') {
+        if ($this->rubro) {
             return $this->rubro;
         }
         $proveedor = $this->proveedor;
 
-        return $proveedor && $proveedor->id_empresa === $this->id_empresa && $proveedor->rubro !== 'otro'
+        return $proveedor && $proveedor->id_empresa === $this->id_empresa
             ? $proveedor->rubro : $this->rubro;
     }
 

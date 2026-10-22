@@ -52,9 +52,9 @@ class ReporteCompras extends Component
             ->when($this->zona === 'sin_clasificar', fn ($q) => $q->where(fn ($q) => $q->whereNull('zona')->orWhere('zona', '')))
             ->when($this->zona === 'santa_fe', fn ($q) => $q->whereIn('zona', ['santa_fe', 'el_trebol']))
             ->when($this->zona && ! in_array($this->zona, ['sin_clasificar', 'santa_fe']), fn ($q) => $q->where('zona', $this->zona))
-            ->when($this->rubro === 'sin_clasificar', fn ($q) => $q->where(fn ($q) => $q->whereNull('rubro')->orWhereIn('rubro', ['', 'otro'])))
+            ->when($this->rubro === 'sin_clasificar', fn ($q) => $q->where(fn ($q) => $q->whereNull('rubro')->orWhere('rubro', '')))
             ->when($this->rubro && $this->rubro !== 'sin_clasificar', fn ($q) => $q->where('rubro', $this->rubro))
-            ->selectRaw("COALESCE(NULLIF(rubro, ''), 'otro') AS rubro, COALESCE(NULLIF(actividad, ''), '') AS actividad, CASE WHEN zona = 'el_trebol' THEN 'santa_fe' ELSE COALESCE(zona, '') END AS zona, id_lote, id_campana, COUNT(*) AS cantidad, SUM(subtotal) AS neto, SUM(COALESCE(iva_importe,0)) AS iva, SUM(total) AS importe")
+            ->selectRaw("COALESCE(NULLIF(rubro, ''), 'sin_clasificar') AS rubro, COALESCE(NULLIF(actividad, ''), '') AS actividad, CASE WHEN zona = 'el_trebol' THEN 'santa_fe' ELSE COALESCE(zona, '') END AS zona, id_lote, id_campana, COUNT(*) AS cantidad, SUM(subtotal) AS neto, SUM(COALESCE(iva_importe,0)) AS iva, SUM(total) AS importe")
             ->groupBy('rubro', 'actividad', 'zona', 'id_lote', 'id_campana')
             ->orderBy('rubro')->orderBy('actividad')->get()
             ->groupBy(fn ($fila) => json_encode([$fila->rubro, $fila->actividad, $fila->zona, $fila->id_lote, $fila->id_campana]))
@@ -79,7 +79,7 @@ class ReporteCompras extends Component
             fwrite($f, "\xEF\xBB\xBF");
             fputcsv($f, ['Rubro', 'Actividad / Imputación', 'Lote', 'Campaña', 'Zona', 'Comprobantes', 'Neto', 'IVA', 'Total'], ';');
             foreach ($filas as $fila) {
-                $datos = [$rubros[$fila->rubro] ?? $fila->rubro, Compra::ACTIVIDADES[$fila->actividad] ?? 'Sin clasificar', $fila->lote?->nombre ?? '', $fila->campana?->nombre ?? '', Compra::ZONAS[$fila->zona] ?? 'Sin zona', $fila->cantidad, $fila->neto, $fila->iva, $fila->importe];
+                $datos = [$fila->rubro === 'sin_clasificar' ? 'Sin rubro' : ($rubros[$fila->rubro] ?? $fila->rubro), Compra::ACTIVIDADES[$fila->actividad] ?? 'Sin clasificar', $fila->lote?->nombre ?? '', $fila->campana?->nombre ?? '', Compra::ZONAS[$fila->zona] ?? 'Sin zona', $fila->cantidad, $fila->neto, $fila->iva, $fila->importe];
                 foreach (array_slice($datos, 0, 5) as $i => $texto) {
                     if (preg_match('/^[=+@\-\t\r]/', $texto)) {
                         $datos[$i] = "'".$texto;
@@ -112,7 +112,7 @@ class ReporteCompras extends Component
         $colores = ['#198754', '#0d6efd', '#fd7e14', '#6f42c1', '#0dcaf0', '#d63384', '#64748b', '#a16207'];
 
         return $filas->groupBy(fn ($fila) => $campo === 'rubro'
-            ? ($fila->rubro && $fila->rubro !== 'otro' ? $fila->rubro : 'sin_clasificar')
+            ? ($fila->rubro ?: 'sin_clasificar')
             : ($fila->{$campo} ?: 'sin_clasificar'))
             ->map(function ($grupo, $codigo) use ($campo, $etiquetas) {
                 return [

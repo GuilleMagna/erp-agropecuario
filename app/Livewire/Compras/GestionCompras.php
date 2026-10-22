@@ -747,7 +747,7 @@ class GestionCompras extends Component
         $this->resetValidation();
     }
 
-    /** Completa campos vacíos y rubros pendientes (otro) de la empresa activa. */
+    /** Completa campos vacíos de la empresa activa. */
     public function completarClasificacion(): void
     {
         Gate::authorize('compras.editar');
@@ -769,7 +769,7 @@ class GestionCompras extends Component
             ->when($this->filtroZona === 'sin_clasificar', fn ($q) => $q->where(fn ($q) => $q->whereNull('zona')->orWhere('zona', '')))
             ->when($this->filtroZona === 'santa_fe', fn ($q) => $q->whereIn('zona', ['santa_fe', 'el_trebol']))
             ->when($this->filtroZona && ! in_array($this->filtroZona, ['sin_clasificar', 'santa_fe']), fn ($q) => $q->where('zona', $this->filtroZona))
-            ->when($this->filtroRubro === 'sin_clasificar', fn ($q) => $q->where(fn ($q) => $q->whereNull('rubro')->orWhereIn('rubro', ['', 'otro'])))
+            ->when($this->filtroRubro === 'sin_clasificar', fn ($q) => $q->where(fn ($q) => $q->whereNull('rubro')->orWhere('rubro', '')))
             ->when($this->filtroRubro && $this->filtroRubro !== 'sin_clasificar', fn ($q) => $q->where('rubro', $this->filtroRubro))
             ->when($this->filtroLote === 'sin_asignar', fn ($q) => $q->whereNull('id_lote'))
             ->when($this->filtroLote && $this->filtroLote !== 'sin_asignar', fn ($q) => $q->where('id_lote', $this->filtroLote))

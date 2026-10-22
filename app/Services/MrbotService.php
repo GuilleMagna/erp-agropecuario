@@ -87,7 +87,7 @@ class MrbotService
                             'nombre' => $fila['nombre'] ?: $fila['cuit'],
                             'razon_social' => $fila['nombre'] ?: null,
                             'cuit' => $fila['cuit'],
-                            'rubro' => 'otro',
+                            'rubro' => null,
                             'activo' => true,
                         ];
                         if ($idEmpresa) {
@@ -117,7 +117,7 @@ class MrbotService
                     // (recién autocreado acá arriba), queda sin clasificar. La
                     // zona se hereda del CUIT al crear Compra.
                     'actividad' => $proveedor?->actividadPredeterminada(),
-                    'rubro' => $proveedor?->rubro !== 'otro' ? $proveedor?->rubro : null,
+                    'rubro' => $proveedor?->rubro,
                 ];
                 if ($idEmpresa) {
                     $compraAttrs['id_empresa'] = $idEmpresa;

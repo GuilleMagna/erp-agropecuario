@@ -310,10 +310,10 @@ class ClasificacionRubrosTest extends TestCase
         $this->comprobante(['id_empresa' => $this->empresaB, 'total' => 9000]);
         Livewire::test(ReporteCompras::class)
             ->assertSee('Sin rubro')->assertSee('Ver y completar')
-            ->assertViewHas('filas', fn ($filas) => $filas->count() === 2)
-            ->assertViewHas('porRubro', fn ($serie) => count($serie) === 2
-                && collect($serie)->firstWhere('codigo', 'sin_clasificar')['cantidad'] === 3
-                && collect($serie)->firstWhere('codigo', 'sin_clasificar')['importe'] === 363.0
+            ->assertViewHas('filas', fn ($filas) => $filas->count() === 3)
+            ->assertViewHas('porRubro', fn ($serie) => count($serie) === 3
+                && collect($serie)->firstWhere('codigo', 'sin_clasificar')['cantidad'] === 2
+                && collect($serie)->firstWhere('codigo', 'sin_clasificar')['importe'] === 242.0
                 && collect($serie)->firstWhere('codigo', 'cosecha')['importe'] === -25.0)
             ->assertViewHas('porActividad', fn ($serie) => count($serie) === 2)
             ->set('rubro', 'cosecha')->assertViewHas('porRubro', fn ($serie) => count($serie) === 1);
@@ -369,17 +369,17 @@ class ClasificacionRubrosTest extends TestCase
             ->assertViewHas('compras', fn ($compras) => $compras->total() === 0);
     }
 
-    public function test_completar_y_editar_incluyen_rubro_otro_como_pendiente(): void
+    public function test_completar_y_editar_conservan_otro_como_rubro_valido(): void
     {
         $p = $this->proveedor(['rubro' => 'reparaciones', 'actividad' => 'agricultura']);
         $compra = $this->comprobante(['id_proveedor' => $p->id, 'rubro' => 'otro']);
         $manual = $this->comprobante(['id_proveedor' => $p->id, 'rubro' => 'otro', 'actividad' => 'ganaderia']);
         Livewire::test(GestionCompras::class)->call('abrirModalEditar', $compra->id)
-            ->assertSet('rubro', 'reparaciones')->assertSet('actividad', 'agricultura');
+            ->assertSet('rubro', 'otro');
         Livewire::test(GestionCompras::class)->call('completarClasificacion')->assertHasNoErrors();
-        $this->assertSame('reparaciones', $compra->fresh()->rubro);
-        $this->assertSame('agricultura', $compra->fresh()->actividad);
-        $this->assertSame('reparaciones', $manual->fresh()->rubro);
+        $this->assertSame('otro', $compra->fresh()->rubro);
+        $this->assertNull($compra->fresh()->actividad);
+        $this->assertSame('otro', $manual->fresh()->rubro);
         $this->assertSame('ganaderia', $manual->fresh()->actividad);
     }
 
@@ -724,7 +724,7 @@ class ClasificacionRubrosTest extends TestCase
     public function test_nuevo_proveedor_de_otra_empresa_hereda_rubro_del_cuit(): void
     {
         $this->proveedor(['cuit' => '30-12345678-9', 'rubro' => 'seguros']);
-        $nuevo = $this->proveedor(['id_empresa' => $this->empresaB, 'cuit' => '30123456789', 'rubro' => 'otro', 'zona' => 'corrientes']);
+        $nuevo = $this->proveedor(['id_empresa' => $this->empresaB, 'cuit' => '30123456789', 'rubro' => null, 'zona' => 'corrientes']);
         $this->assertSame('seguros', $nuevo->rubro);
         $this->assertSame('corrientes', $nuevo->zona);
     }
@@ -742,7 +742,7 @@ class ClasificacionRubrosTest extends TestCase
         $this->assertSame('general', $otra->fresh()->actividad);
     }
 
-    public function test_filtro_proveedores_sin_rubro_incluye_vacios_y_otro(): void
+    public function test_filtro_proveedores_sin_rubro_excluye_otro(): void
     {
         $ids = [];
         foreach ([null, '', 'otro'] as $i => $rubro) {
@@ -752,10 +752,26 @@ class ClasificacionRubrosTest extends TestCase
         $this->proveedor(['cuit' => '30999999999', 'rubro' => 'seguros']);
         $this->proveedor(['id_empresa' => $this->empresaB, 'cuit' => '30888888888', 'rubro' => null]);
         $panel = Livewire::test(GestionProveedores::class)->set('filtroRubro', 'sin_clasificar')
-            ->assertSee('Sin rubro')->assertViewHas('proveedores', fn ($proveedores) => $proveedores->total() === 3);
+            ->assertSee('Sin rubro')->assertViewHas('proveedores', fn ($proveedores) => $proveedores->total() === 2);
         $panel->call('abrirModalEditar', $ids[0])->set('rubro', 'seguros')->set('actividad', 'general')
             ->call('guardar')->assertHasNoErrors()
-            ->assertViewHas('proveedores', fn ($proveedores) => $proveedores->total() === 2);
+            ->assertViewHas('proveedores', fn ($proveedores) => $proveedores->total() === 1);
         $panel->set('filtroRubro', 'seguros')->assertViewHas('proveedores', fn ($proveedores) => $proveedores->total() === 2);
+    }
+
+    public function test_otro_es_un_grupo_independiente_de_sin_clasificar_en_ambos_reportes(): void
+    {
+        $this->prepararGastos();
+        $otro = $this->comprobante(['rubro' => 'otro', 'total' => 100]);
+        $this->comprobante(['rubro' => null, 'total' => 50]);
+        Livewire::test(ReporteCompras::class)
+            ->assertViewHas('sinRubro', fn ($grupo) => $grupo['cantidad'] === 1 && $grupo['importe'] === 50.0)
+            ->assertViewHas('porRubro', fn ($serie) => collect($serie)->firstWhere('codigo', 'otro')['importe'] === 100.0)
+            ->set('rubro', 'otro')->assertViewHas('filas', fn ($filas) => $filas->count() === 1 && (float) $filas->sum('importe') === 100.0);
+        Livewire::test(ReporteGastos::class)->set('rubro', 'otro')
+            ->assertViewHas('filas', fn ($filas) => $filas->count() === 1 && $filas->sum('importe') === 100.0);
+        Livewire::test(GestionCompras::class)->set('filtroRubro', 'sin_clasificar')
+            ->assertViewHas('compras', fn ($compras) => $compras->total() === 1 && $compras->first()->id !== $otro->id)
+            ->set('filtroRubro', 'otro')->assertViewHas('compras', fn ($compras) => $compras->total() === 1 && $compras->first()->id === $otro->id);
     }
 }

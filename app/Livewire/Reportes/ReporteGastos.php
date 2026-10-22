@@ -54,7 +54,7 @@ class ReporteGastos extends Component
         if ($this->origen !== 'no_arca') {
             $filas = Compra::where('estado', '!=', 'cancelada')->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()])
                 ->selectRaw("COALESCE(NULLIF(rubro, ''), 'sin_clasificar') AS rubro, CASE WHEN zona = 'el_trebol' THEN 'santa_fe' ELSE COALESCE(NULLIF(zona, ''), 'sin_clasificar') END AS zona, COUNT(*) AS cantidad, SUM(total) AS importe")
-                ->groupBy('rubro', 'zona')->get()->map(fn ($fila) => ['rubro' => $fila->rubro === 'otro' ? 'sin_clasificar' : $fila->rubro, 'origen' => 'compras', 'zona' => $fila->zona, 'cantidad' => (int) $fila->cantidad, 'importe' => (float) $fila->importe]);
+                ->groupBy('rubro', 'zona')->get()->map(fn ($fila) => ['rubro' => $fila->rubro, 'origen' => 'compras', 'zona' => $fila->zona, 'cantidad' => (int) $fila->cantidad, 'importe' => (float) $fila->importe]);
         }
         if ($this->origen !== 'compras') {
             $pagos = DB::table('pagos_gasto_no_arca as p')->join('gastos_no_arca as g', 'g.id', '=', 'p.id_gasto')

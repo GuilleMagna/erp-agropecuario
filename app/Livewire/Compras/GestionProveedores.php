@@ -378,7 +378,7 @@ class GestionProveedores extends Component
                 ->orWhere('email', 'like', "%{$this->busqueda}%")
             ))
             ->when($this->filtroZona, fn ($q) => $q->where('zona', $this->filtroZona))
-            ->when($this->filtroRubro === 'sin_clasificar', fn ($q) => $q->where(fn ($q) => $q->whereNull('rubro')->orWhereIn('rubro', ['', 'otro'])))
+            ->when($this->filtroRubro === 'sin_clasificar', fn ($q) => $q->where(fn ($q) => $q->whereNull('rubro')->orWhere('rubro', '')))
             ->when($this->filtroRubro && $this->filtroRubro !== 'sin_clasificar', fn ($q) => $q->where('rubro', $this->filtroRubro))
             ->when($this->filtroActivo !== '', fn ($q) => $q->where('activo', (bool) $this->filtroActivo))
             ->withCount('compras')

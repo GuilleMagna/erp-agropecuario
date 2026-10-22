@@ -6,7 +6,7 @@ Al editar un proveedor, seleccioná el Rubro: se sugerirá su Actividad. Podés 
 
 Al crear una compra, el proveedor completa Rubro y Actividad. **La Actividad es la imputación del gasto**, utilizada por los reportes. Podés cambiarla libremente para ese comprobante, junto con Zona, Lote y Campaña. El botón **Usar predeterminada** vuelve a la clasificación del proveedor o del Rubro seleccionado.
 
-Modificar el catálogo o un proveedor no reclasifica automáticamente compras anteriores. Una compra editada conserva su imputación hasta que el usuario la cambie. Los proveedores recién importados con Rubro Otro continúan sin clasificar.
+Modificar el catálogo no reclasifica compras anteriores. Guardar el rubro de un proveedor lo aplica a los comprobantes del mismo CUIT entre empresas; conserva sus actividades existentes. Otro es un rubro válido. Los proveedores nuevos sin información de rubro quedan con ese campo vacío.
 
 ## Catálogo ampliado
 
@@ -43,14 +43,14 @@ El informe de compras incluye barras y tortas por Rubro y por Actividad / Imputa
 
 Los iconos, barras, porciones y leyendas abren los comprobantes del grupo conservando empresa, fechas y proveedor. El detalle de la tabla conserva también Actividad, Lote y Campaña. El listado muestra CUIT del proveedor para facilitar la revisión.
 
-**Sin rubro** reúne campos nulos, vacíos y `otro`. Tiene cantidad, importe y enlace **Ver y completar**. El filtro también está disponible en Compras. La clasificación del informe sigue siendo la guardada en el comprobante, aunque el listado muestre una sugerencia del proveedor.
+**Sin rubro** reúne únicamente campos nulos o vacíos. Tiene cantidad, importe y enlace **Ver y completar**. El filtro también está disponible en Compras. La clasificación del informe sigue siendo la guardada en el comprobante, aunque el listado muestre una sugerencia del proveedor.
 
 
 ## Aplicar el rubro del CUIT a sus comprobantes
 
 Al guardar el rubro de un proveedor, se reemplaza en todos los comprobantes de ese CUIT entre empresas, aunque ya tengan rubro. Las actividades existentes se conservan. Se requiere permiso de edición de compras para actualizar sus comprobantes.
 
-Para proveedores clasificados antes de esta mejora, **Completar clasificación pendiente** aplica el mismo criterio, incluyendo `otro`. Al editar una compra pendiente, se muestra la sugerencia del proveedor para poder guardarla. El filtro **Sin rubro** consulta la clasificación guardada: una vez aplicada, el comprobante deja de pertenecer a ese grupo. No cambian importes, fechas, presentación fiscal, lote ni campaña.
+Para proveedores clasificados antes de esta mejora, **Completar clasificación pendiente** completa únicamente campos vacíos y conserva `otro`. Al editar una compra pendiente, se muestra la sugerencia del proveedor para poder guardarla. El filtro **Sin rubro** consulta la clasificación guardada: una vez aplicada, el comprobante deja de pertenecer a ese grupo. No cambian importes, fechas, presentación fiscal, lote ni campaña.
 
 
 ## Corregir una clasificación ya aplicada
@@ -107,3 +107,8 @@ Se reemplazan los rubros de los comprobantes; se conservan las actividades y las
 ## Reasignación completa del rubro por CUIT
 
 Al guardar el rubro de un proveedor, se reemplaza el rubro de TODOS los comprobantes del mismo CUIT normalizado en todas las empresas, incluidos los que ya estaban clasificados y los de la empresa de origen. No se modifica la actividad ni zona existente en las otras cuentas, ni importes, fechas o presentación fiscal. También se permite asignar Otro a todos sus comprobantes. El botón Completar clasificación pendiente conserva su función de completar únicamente faltantes; la edición individual o masiva de comprobantes sigue actuando sólo sobre los comprobantes elegidos.
+
+
+## Otro es una clasificación válida
+
+El rubro `otro` se muestra como Otro, con su propio total, filtros y enlaces. No forma parte de Sin rubro/Sin clasificar: estos grupos incluyen únicamente valores nulos o vacíos. Completar clasificación pendiente respeta Otro y no lo sustituye por la sugerencia del proveedor. Las importaciones nuevas dejan Rubro vacío cuando no existe información, y conservan Otro si el proveedor lo tiene asignado. La reasignación explícita desde el CUIT sigue reemplazando todos sus comprobantes según el comportamiento solicitado.

@@ -186,7 +186,7 @@ class ImportarComprasArca extends Component
                             'nombre' => $fila['nombre'] ?: $fila['cuit'],
                             'razon_social' => $fila['nombre'] ?: null,
                             'cuit' => $fila['cuit'],
-                            'rubro' => 'otro',
+                            'rubro' => null,
                             'activo' => true,
                         ]);
                         $fila['proveedor_creado'] = true;
@@ -210,7 +210,7 @@ class ImportarComprasArca extends Component
                     // Heredado del proveedor si ya tiene clasificación cargada.
                     // La zona se hereda del CUIT al crear Compra.
                     'actividad' => $proveedor?->actividadPredeterminada(),
-                    'rubro' => $proveedor?->rubro !== 'otro' ? $proveedor?->rubro : null,
+                    'rubro' => $proveedor?->rubro,
                 ]);
 
                 $fila['estado'] = 'importado';

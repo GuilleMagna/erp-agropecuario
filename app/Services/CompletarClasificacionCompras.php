@@ -14,7 +14,7 @@ class CompletarClasificacionCompras
             ->when($proveedor, fn ($q) => $q->where('id_proveedor', $proveedor->id)->where('id_empresa', $proveedor->id_empresa))
             ->where(function ($q) {
                 $q->whereNull('actividad')->orWhere('actividad', '')
-                    ->orWhereNull('rubro')->orWhereIn('rubro', ['', 'otro'])->orWhereNull('zona')->orWhere('zona', '');
+                    ->orWhereNull('rubro')->orWhere('rubro', '')->orWhereNull('zona')->orWhere('zona', '');
             })->chunkById(200, function ($compras) use (&$cantidad) {
                 foreach ($compras as $compra) {
                     if (! $compra->proveedor || $compra->proveedor->id_empresa !== $compra->id_empresa) {
@@ -22,7 +22,7 @@ class CompletarClasificacionCompras
                     }
                     $cambios = [];
                     $rubro = $compra->rubroSugerido();
-                    if ((! $compra->rubro || $compra->rubro === 'otro') && $rubro && $rubro !== 'otro') {
+                    if (! $compra->rubro && $rubro) {
                         $cambios['rubro'] = $rubro;
                     }
                     if (! $compra->actividad && ($actividad = $compra->actividadSugerida())) {

@@ -111,9 +111,9 @@ class Proveedor extends Model
     protected static function booted(): void
     {
         static::creating(function (self $proveedor) {
-            if ((! $proveedor->rubro || $proveedor->rubro === 'otro') && self::normalizarCuit($proveedor->cuit ?? '')) {
+            if (! $proveedor->rubro && self::normalizarCuit($proveedor->cuit ?? '')) {
                 $existente = self::withoutGlobalScope('empresa')->porCuit($proveedor->cuit)
-                    ->where('id_empresa', '!=', $proveedor->id_empresa)->whereNotNull('rubro')->whereNotIn('rubro', ['', 'otro'])
+                    ->where('id_empresa', '!=', $proveedor->id_empresa)->whereNotNull('rubro')->where('rubro', '!=', '')
                     ->orderByDesc('updated_at')->orderBy('id')->first();
                 if ($existente) {
                     SincronizarRubroCuit::asegurarCatalogo($existente->rubro, $existente->id_empresa, $proveedor->id_empresa);
