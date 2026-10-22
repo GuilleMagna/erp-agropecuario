@@ -5,6 +5,7 @@ namespace App\Livewire\Reportes;
 use App\Models\Compra;
 use App\Models\Proveedor;
 use App\Models\Rubro;
+use App\Models\Ubicacion;
 use App\Traits\CambiaEmpresaDesdeQuery;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
@@ -38,7 +39,7 @@ class ReporteCompras extends Component
             'desde' => 'nullable|date',
             'hasta' => 'nullable|date|after_or_equal:desde',
             'actividad' => 'nullable|in:sin_clasificar,'.implode(',', array_keys(Compra::ACTIVIDADES)),
-            'zona' => 'nullable|in:sin_clasificar,'.implode(',', array_keys(Compra::ZONAS)),
+            'zona' => 'nullable|in:sin_clasificar,'.implode(',', array_keys(Ubicacion::opciones())),
             'rubro' => 'nullable|in:sin_clasificar,'.implode(',', array_keys(Rubro::opciones())),
         ]);
 
@@ -50,8 +51,7 @@ class ReporteCompras extends Component
             ->when($this->actividad === 'sin_clasificar', fn ($q) => $q->where(fn ($q) => $q->whereNull('actividad')->orWhere('actividad', '')))
             ->when($this->actividad && $this->actividad !== 'sin_clasificar', fn ($q) => $q->where('actividad', $this->actividad))
             ->when($this->zona === 'sin_clasificar', fn ($q) => $q->where(fn ($q) => $q->whereNull('zona')->orWhere('zona', '')))
-            ->when($this->zona === 'santa_fe', fn ($q) => $q->whereIn('zona', ['santa_fe', 'el_trebol']))
-            ->when($this->zona && ! in_array($this->zona, ['sin_clasificar', 'santa_fe']), fn ($q) => $q->where('zona', $this->zona))
+            ->when($this->zona && $this->zona !== 'sin_clasificar', fn ($q) => $q->whereIn('zona', Ubicacion::descendientes($this->zona)))
             ->when($this->rubro === 'sin_clasificar', fn ($q) => $q->where(fn ($q) => $q->whereNull('rubro')->orWhere('rubro', '')))
             ->when($this->rubro && $this->rubro !== 'sin_clasificar', fn ($q) => $q->where('rubro', $this->rubro))
             ->selectRaw("COALESCE(NULLIF(rubro, ''), 'sin_clasificar') AS rubro, COALESCE(NULLIF(actividad, ''), '') AS actividad, CASE WHEN zona = 'el_trebol' THEN 'santa_fe' ELSE COALESCE(zona, '') END AS zona, id_lote, id_campana, COUNT(*) AS cantidad, SUM(subtotal) AS neto, SUM(COALESCE(iva_importe,0)) AS iva, SUM(total) AS importe")
@@ -77,9 +77,9 @@ class ReporteCompras extends Component
         return response()->streamDownload(function () use ($filas, $rubros) {
             $f = fopen('php://output', 'w');
             fwrite($f, "\xEF\xBB\xBF");
-            fputcsv($f, ['Rubro', 'Actividad / Imputación', 'Lote', 'Campaña', 'Zona', 'Comprobantes', 'Neto', 'IVA', 'Total'], ';');
+            fputcsv($f, ['Rubro', 'Actividad / Imputación', 'Lote', 'Campaña', 'Ubicación', 'Comprobantes', 'Neto', 'IVA', 'Total'], ';');
             foreach ($filas as $fila) {
-                $datos = [$fila->rubro === 'sin_clasificar' ? 'Sin rubro' : ($rubros[$fila->rubro] ?? $fila->rubro), Compra::ACTIVIDADES[$fila->actividad] ?? 'Sin clasificar', $fila->lote?->nombre ?? '', $fila->campana?->nombre ?? '', Compra::ZONAS[$fila->zona] ?? 'Sin zona', $fila->cantidad, $fila->neto, $fila->iva, $fila->importe];
+                $datos = [$fila->rubro === 'sin_clasificar' ? 'Sin rubro' : ($rubros[$fila->rubro] ?? $fila->rubro), Compra::ACTIVIDADES[$fila->actividad] ?? 'Sin clasificar', $fila->lote?->nombre ?? '', $fila->campana?->nombre ?? '', Ubicacion::opciones()[$fila->zona] ?? 'Sin zona', $fila->cantidad, $fila->neto, $fila->iva, $fila->importe];
                 foreach (array_slice($datos, 0, 5) as $i => $texto) {
                     if (preg_match('/^[=+@\-\t\r]/', $texto)) {
                         $datos[$i] = "'".$texto;
@@ -110,10 +110,11 @@ class ReporteCompras extends Component
     private function serie($filas, string $campo, array $etiquetas): array
     {
         $colores = ['#198754', '#0d6efd', '#fd7e14', '#6f42c1', '#0dcaf0', '#d63384', '#64748b', '#a16207'];
+        $agrupaciones = $campo === 'zona' ? Ubicacion::agrupaciones($this->zona ?: null) : [];
 
         return $filas->groupBy(fn ($fila) => $campo === 'rubro'
             ? ($fila->rubro ?: 'sin_clasificar')
-            : ($fila->{$campo} ?: 'sin_clasificar'))
+            : ($agrupaciones[$fila->{$campo}] ?? ($fila->{$campo} ?: 'sin_clasificar')))
             ->map(function ($grupo, $codigo) use ($campo, $etiquetas) {
                 return [
                     'codigo' => $codigo,
@@ -138,8 +139,8 @@ class ReporteCompras extends Component
         return view('livewire.reportes.reporte-compras', [
             'filas' => $filas,
             'porRubro' => $porRubro,
-            'porZona' => $this->serie($filas, 'zona', Compra::ZONAS),
-            'zonas' => Compra::ZONAS,
+            'porZona' => $this->serie($filas, 'zona', Ubicacion::opciones()),
+            'zonas' => Ubicacion::opciones(),
             'porActividad' => $this->serie($filas, 'actividad', Compra::ACTIVIDADES),
             'sinRubro' => collect($porRubro)->firstWhere('codigo', 'sin_clasificar'),
             'rubros' => Rubro::opciones(),

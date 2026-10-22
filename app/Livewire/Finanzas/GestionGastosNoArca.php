@@ -5,6 +5,7 @@ namespace App\Livewire\Finanzas;
 use App\Models\GastoNoArca;
 use App\Models\Inmueble;
 use App\Models\PagoGastoNoArca;
+use App\Models\Ubicacion;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
@@ -205,7 +206,7 @@ class GestionGastosNoArca extends Component
 
         $this->validate([
             'nombre' => 'required|string|max:200',
-            'zona' => 'required|in:'.implode(',', array_keys(GastoNoArca::ZONAS)),
+            'zona' => 'required|in:'.implode(',', array_keys(Ubicacion::opciones())),
             'rubro' => 'nullable|in:'.implode(',', array_keys(GastoNoArca::RUBROS)),
             'categoria' => 'required|in:'.implode(',', array_keys(GastoNoArca::CATEGORIAS)),
             'id_inmueble' => 'nullable|exists:inmuebles,id',
@@ -326,7 +327,7 @@ class GestionGastosNoArca extends Component
         $catalogo = GastoNoArca::query()
             ->with('inmueble')
             ->withCount('pagos')
-            ->when($this->filtroZona, fn ($q) => $q->where('zona', $this->filtroZona))
+            ->when($this->filtroZona, fn ($q) => $q->whereIn('zona', Ubicacion::descendientes($this->filtroZona)))
             ->when($this->filtroRubro === 'sin_clasificar', fn ($q) => $q->whereNull('rubro'))
             ->when($this->filtroRubro && $this->filtroRubro !== 'sin_clasificar', fn ($q) => $q->where('rubro', $this->filtroRubro))
             ->when($this->filtroCategoria, fn ($q) => $q->where('categoria', $this->filtroCategoria))
@@ -344,7 +345,7 @@ class GestionGastosNoArca extends Component
             'totalCatalogo' => GastoNoArca::count(),
             'categorias' => GastoNoArca::CATEGORIAS,
             'rubros' => GastoNoArca::RUBROS,
-            'zonas' => GastoNoArca::ZONAS,
+            'zonas' => Ubicacion::opciones(),
             'inmuebles' => Inmueble::where('activo', true)->orderBy('nombre')->get(),
             'mesLabel' => $this->formatearMes($this->mesSeleccionado),
         ]);

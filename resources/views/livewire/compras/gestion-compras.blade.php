@@ -153,7 +153,7 @@
             <small class="text-muted">Incluye todas las páginas. Filtrá por proveedor para corregir sus comprobantes.</small>
         </div>
     @endcan
-    <div class="mb-2"><select class="form-select form-select-sm w-auto" wire:model.live="filtroZona" aria-label="Filtrar zona"><option value="">Todas las zonas</option><option value="sin_clasificar">Sin zona</option>@foreach($zonas as $codigo=>$nombre)<option value="{{ $codigo }}">{{ $nombre }}</option>@endforeach</select></div>
+    <div class="mb-2"><select class="form-select form-select-sm w-auto" wire:model.live="filtroZona" aria-label="Filtrar ubicación"><option value="">Todas las ubicaciones</option><option value="sin_clasificar">Sin ubicación</option>@foreach($zonas as $codigo=>$nombre)<option value="{{ $codigo }}">{{ $nombre }}</option>@endforeach</select></div>
     {{-- Tabla --}}
     <div class="card">
         <div class="card-body p-0">
@@ -204,7 +204,7 @@
                                         </span>
                                     @endunless
                                 </td>
-                                <td>{{ $compra->proveedor?->nombre ?? '—' }}@if($compra->proveedor?->cuit)<small class="d-block text-muted">CUIT {{ $compra->proveedor->cuit }}</small>@endif<small class="d-block text-muted">Zona: {{ $compra->zona_label }}</small></td>
+                                <td>{{ $compra->proveedor?->nombre ?? '—' }}@if($compra->proveedor?->cuit)<small class="d-block text-muted">CUIT {{ $compra->proveedor->cuit }}</small>@endif<small class="d-block text-muted">Ubicación: {{ $compra->zona_label }}</small></td>
                                 <td>
                                     @if ($actividadMostrada = $compra->actividadSugerida())
                                         @php
@@ -432,13 +432,14 @@
                                 </select>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label small">Zona</label>
-                                <select class="form-select form-select-sm" wire:model="zona">
-                                    <option value="">— Sin zona —</option>
+                                <label class="form-label small">Ubicación</label>
+                                <select class="form-select form-select-sm" wire:model="zona" @disabled($id_establecimiento)>
+                                    <option value="">— Sin ubicación —</option>
                                     @foreach ($zonas as $k => $v)
                                         <option value="{{ $k }}">{{ $v }}</option>
                                     @endforeach
                                 </select>
+                                @if($id_establecimiento)<div class="form-text">Se toma de la ubicación del establecimiento seleccionado.</div>@endif
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label small">Rubro</label>
@@ -601,7 +602,7 @@
                             </label>
 
                             <input type="radio" class="btn-check" name="accionMasiva" id="am-zona" wire:model.live="accionMasiva" value="zona">
-                            <label class="btn btn-sm btn-outline-secondary" for="am-zona"><i class="bi bi-geo-alt me-1"></i>Zona</label>
+                            <label class="btn btn-sm btn-outline-secondary" for="am-zona"><i class="bi bi-geo-alt me-1"></i>Ubicación</label>
 
                             <input type="radio" class="btn-check" name="accionMasiva" id="am-rubro" wire:model.live="accionMasiva" value="rubro">
                             <label class="btn btn-sm btn-outline-secondary" for="am-rubro"><i class="bi bi-tags me-1"></i>Rubro</label>
@@ -644,13 +645,13 @@
 
                     @elseif ($accionMasiva === 'zona')
                         <div class="mb-3">
-                            <label class="form-label small fw-semibold">Nueva zona *</label>
+                            <label class="form-label small fw-semibold">Nueva ubicación *</label>
                             <select class="form-select @error('valorMasivoZona') is-invalid @enderror" wire:model="valorMasivoZona">
                                 <option value="">— Seleccionar —</option>
                                 @foreach ($zonas as $codigo => $nombre)<option value="{{ $codigo }}">{{ $nombre }}</option>@endforeach
                             </select>
                             @error('valorMasivoZona')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            <div class="alert alert-warning mt-3 small">Se reemplazará la zona de los {{ count($seleccionados) }} comprobantes seleccionados. El rubro, la actividad, los importes y demás datos se conservan. Para futuras compras, corregí también la zona del proveedor.</div>
+                            <div class="alert alert-warning mt-3 small">Se reemplazará la ubicación de los {{ count($seleccionados) }} comprobantes seleccionados. El rubro, la actividad, los importes y demás datos se conservan. Para futuras compras, corregí también la ubicación del proveedor.</div>
                         </div>
                     @elseif ($accionMasiva === 'rubro')
                         <div class="mb-3">

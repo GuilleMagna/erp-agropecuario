@@ -406,7 +406,7 @@
                 @endcan
                 @endcan
                 @can('reportes.economicos.ver')
-                <a href="{{ route('reportes.compras') }}" class="nav-link {{ request()->routeIs('reportes.compras') ? 'active' : '' }}"><i class="bi bi-tags me-2"></i> Compras: rubros y zonas</a>
+                <a href="{{ route('reportes.compras') }}" class="nav-link {{ request()->routeIs('reportes.compras') ? 'active' : '' }}"><i class="bi bi-tags me-2"></i> Compras: rubros y ubicaciones</a>
                 @endcan
                 @can('reportes.fiscales.ver')
                 <a href="{{ route('reportes.fiscal') }}"
@@ -462,6 +462,9 @@
                 </a>
                 @endcan
                 @can('admin.establecimientos.gestionar')
+                <a href="{{ route('admin.ubicaciones.index') }}" class="nav-link {{ request()->routeIs('admin.ubicaciones.*') ? 'active' : '' }}">
+                    <i class="bi bi-map me-2"></i> Ubicaciones
+                </a>
                 <a href="{{ route('admin.establecimientos.index') }}"
                    class="nav-link {{ request()->routeIs('admin.establecimientos.*') ? 'active' : '' }}">
                     <i class="bi bi-geo-alt me-2"></i> Establecimientos

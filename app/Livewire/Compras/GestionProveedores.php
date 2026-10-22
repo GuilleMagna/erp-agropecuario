@@ -5,6 +5,7 @@ namespace App\Livewire\Compras;
 use App\Models\Compra;
 use App\Models\Proveedor;
 use App\Models\Rubro;
+use App\Models\Ubicacion;
 use App\Services\CompletarClasificacionCompras;
 use App\Services\SincronizarRubroCuit;
 use Illuminate\Support\Facades\DB;
@@ -227,7 +228,7 @@ class GestionProveedores extends Component
             'direccion' => 'nullable|string|max:200',
             'ciudad' => 'nullable|string|max:100',
             'provincia' => 'nullable|string|max:80',
-            'zona' => 'required|in:'.implode(',', array_keys(Proveedor::ZONAS)),
+            'zona' => 'required|in:'.implode(',', array_keys(Ubicacion::opciones())),
             'observaciones' => 'nullable|string',
             'activo' => 'boolean',
         ];
@@ -319,6 +320,7 @@ class GestionProveedores extends Component
                 $proveedor->update($data);
                 if ($zonaAnterior !== $proveedor->zona && Gate::allows('compras.editar')) {
                     Compra::where('id_empresa', $proveedor->id_empresa)->where('id_proveedor', $proveedor->id)
+                        ->whereNull('id_establecimiento')->where('zona', $zonaAnterior)
                         ->update(['zona' => $proveedor->zona]);
                 }
 
@@ -377,7 +379,7 @@ class GestionProveedores extends Component
                 ->orWhere('cuit', 'like', "%{$this->busqueda}%")
                 ->orWhere('email', 'like', "%{$this->busqueda}%")
             ))
-            ->when($this->filtroZona, fn ($q) => $q->where('zona', $this->filtroZona))
+            ->when($this->filtroZona, fn ($q) => $q->whereIn('zona', Ubicacion::descendientes($this->filtroZona)))
             ->when($this->filtroRubro === 'sin_clasificar', fn ($q) => $q->where(fn ($q) => $q->whereNull('rubro')->orWhere('rubro', '')))
             ->when($this->filtroRubro && $this->filtroRubro !== 'sin_clasificar', fn ($q) => $q->where('rubro', $this->filtroRubro))
             ->when($this->filtroActivo !== '', fn ($q) => $q->where('activo', (bool) $this->filtroActivo))
@@ -391,7 +393,7 @@ class GestionProveedores extends Component
             'catalogoRubros' => Rubro::catalogo(),
             'actividadesProveedor' => $this->actividadesDelProveedor(),
             'actividades' => Proveedor::ACTIVIDADES,
-            'zonas' => Proveedor::ZONAS,
+            'zonas' => Ubicacion::opciones(),
         ]);
     }
 }

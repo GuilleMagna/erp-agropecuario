@@ -126,7 +126,7 @@
                                 <tr wire:key="gasto-pago-{{ $gasto->id }}"
                                     @class(['fila-importe-pendiente' => trim((string) $imp) === '' && $gasto->activo])>
                                     <td class="ps-4">
-                                        {{ $gasto->nombre }}<small class="d-block text-muted">{{ $rubros[$gasto->rubro] ?? 'Sin rubro' }} · {{ $zonas[$gasto->zona] ?? 'Sin zona' }}</small>
+                                        {{ $gasto->nombre }}<small class="d-block text-muted">{{ $rubros[$gasto->rubro] ?? 'Sin rubro' }} · {{ $zonas[$gasto->zona] ?? 'Sin ubicación' }}</small>
                                         @unless ($gasto->activo)
                                             <span class="badge bg-secondary-subtle text-secondary border ms-1"
                                                   title="Dado de baja: se muestra sólo porque tiene un pago cargado en este mes">
@@ -236,7 +236,7 @@
             </button>
         </div>
 
-        <select class="form-select form-select-sm w-auto mb-2" wire:model.live="filtroZona"><option value="">Todas las zonas</option>@foreach($zonas as $codigo=>$nombre)<option value="{{ $codigo }}">{{ $nombre }}</option>@endforeach</select>
+        <select class="form-select form-select-sm w-auto mb-2" wire:model.live="filtroZona"><option value="">Todas las ubicaciones</option>@foreach($zonas as $codigo=>$nombre)<option value="{{ $codigo }}">{{ $nombre }}</option>@endforeach</select>
         <select class="form-select form-select-sm w-auto mb-3" wire:model.live="filtroRubro"><option value="">Todos los rubros</option><option value="sin_clasificar">Sin rubro</option>@foreach($rubros as $codigo=>$nombre)<option value="{{ $codigo }}">{{ $nombre }}</option>@endforeach</select>
         <div class="card border-0 shadow-sm">
             <div class="table-responsive">
@@ -245,7 +245,7 @@
                         <tr>
                             <th style="width:40px">#</th>
                             <th>Nombre</th>
-                            <th>Categoría</th><th>Rubro</th><th>Zona</th>
+                            <th>Categoría</th><th>Rubro</th><th>Ubicación</th>
                             <th>Inmueble</th>
                             <th class="text-center">Pagos</th>
                             <th class="text-center">Estado</th>
@@ -262,7 +262,7 @@
                                         {{ \App\Models\GastoNoArca::CATEGORIAS[$gasto->categoria] ?? $gasto->categoria }}
                                     </span>
                                 </td>
-                                <td>{{ $rubros[$gasto->rubro] ?? 'Sin rubro' }}</td><td>{{ $zonas[$gasto->zona] ?? 'Sin zona' }}</td>
+                                <td>{{ $rubros[$gasto->rubro] ?? 'Sin rubro' }}</td><td>{{ $zonas[$gasto->zona] ?? 'Sin ubicación' }}</td>
                                 <td>
                                     @if ($gasto->inmueble)
                                         <span class="badge bg-info-subtle text-info border border-info-subtle">
@@ -334,7 +334,7 @@
                         </h5>
                         <button type="button" class="btn-close" wire:click="cerrarModal"></button>
                     </div>
-                    <div class="modal-body"><div class="mb-3"><label class="form-label">Zona</label><select class="form-select" wire:model="zona">@foreach($zonas as $codigo=>$nombre)<option value="{{ $codigo }}">{{ $nombre }}</option>@endforeach</select>@error('zona')<small class="text-danger">{{ $message }}</small>@enderror<div class="form-text">La zona corresponde a este servicio, aunque el proveedor sea EPE. Al cambiarla se reclasifica su historial mensual.</div></div><div class="mb-3"><label class="form-label">Rubro</label><select class="form-select" wire:model="rubro"><option value="">Sugerir según servicio / categoría</option>@foreach($rubros as $codigo=>$nombre)<option value="{{ $codigo }}">{{ $nombre }}</option>@endforeach</select>@error('rubro')<small class="text-danger">{{ $message }}</small>@enderror</div>
+                    <div class="modal-body"><div class="mb-3"><label class="form-label">Ubicación</label><select class="form-select" wire:model="zona">@foreach($zonas as $codigo=>$nombre)<option value="{{ $codigo }}">{{ $nombre }}</option>@endforeach</select>@error('zona')<small class="text-danger">{{ $message }}</small>@enderror<div class="form-text">La ubicación corresponde a este servicio, aunque el proveedor sea EPE. Al cambiarla se reclasifica su historial mensual.</div></div><div class="mb-3"><label class="form-label">Rubro</label><select class="form-select" wire:model="rubro"><option value="">Sugerir según servicio / categoría</option>@foreach($rubros as $codigo=>$nombre)<option value="{{ $codigo }}">{{ $nombre }}</option>@endforeach</select>@error('rubro')<small class="text-danger">{{ $message }}</small>@enderror</div>
                         <div class="mb-3">
                             <label class="form-label small fw-semibold">Nombre <span class="text-danger">*</span></label>
                             <input type="text" class="form-control @error('nombre') is-invalid @enderror"

@@ -3,7 +3,9 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Establecimiento;
+use App\Models\Ubicacion;
 use App\Models\Usuario;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 use Livewire\Component;
@@ -96,7 +98,7 @@ class GestionEstablecimientos extends Component
             'provincia' => 'nullable|string|max:100',
             'partido_departamento' => 'nullable|string|max:100',
             'localidad' => 'nullable|string|max:100',
-            'zona' => 'nullable|in:'.implode(',', array_keys(Establecimiento::ZONAS)),
+            'zona' => 'nullable|in:'.implode(',', array_keys(Ubicacion::opciones())),
             'latitud' => 'nullable|numeric|between:-90,90',
             'longitud' => 'nullable|numeric|between:-180,180',
             'superficie_total_ha' => 'nullable|numeric|min:0',
@@ -171,14 +173,16 @@ class GestionEstablecimientos extends Component
             }
         }
 
-        if ($this->modoEdicion) {
-            $est = Establecimiento::findOrFail($this->establecimientoEditandoId);
-            $est->update(array_merge($datos, ['activo' => $this->activo]));
-            session()->flash('success', "Establecimiento \"{$est->nombre}\" actualizado correctamente.");
-        } else {
-            $est = Establecimiento::create($datos);
-            session()->flash('success', "Establecimiento \"{$est->nombre}\" creado correctamente.");
-        }
+        DB::transaction(function () use ($datos) {
+            if ($this->modoEdicion) {
+                $est = Establecimiento::findOrFail($this->establecimientoEditandoId);
+                $est->update(array_merge($datos, ['activo' => $this->activo]));
+                session()->flash('success', "Establecimiento \"{$est->nombre}\" actualizado correctamente.");
+            } else {
+                $est = Establecimiento::create($datos);
+                session()->flash('success', "Establecimiento \"{$est->nombre}\" creado correctamente.");
+            }
+        });
 
         $this->cerrarModal();
     }
@@ -250,7 +254,7 @@ class GestionEstablecimientos extends Component
             'usuariosOpciones' => $usuariosOpciones,
             'tiposTenencia' => self::TIPOS_TENENCIA,
             'provinciasLista' => self::PROVINCIAS,
-            'zonas' => Establecimiento::ZONAS,
+            'zonas' => Ubicacion::opciones(),
         ]);
     }
 }

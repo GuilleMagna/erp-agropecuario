@@ -10,9 +10,11 @@ use App\Models\Lote;
 use App\Models\MovimientoInsumo;
 use App\Models\Proveedor;
 use App\Models\Rubro;
+use App\Models\Ubicacion;
 use App\Services\CompletarClasificacionCompras;
 use App\Traits\CambiaEmpresaDesdeQuery;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -163,7 +165,7 @@ class GestionCompras extends Component
             'fecha_vencimiento' => 'nullable|date',
             'estado' => 'required|in:'.implode(',', array_keys(Compra::ESTADOS)),
             'actividad' => 'nullable|in:'.implode(',', array_keys(Compra::ACTIVIDADES)),
-            'zona' => 'nullable|in:'.implode(',', array_keys(Compra::ZONAS)),
+            'zona' => 'nullable|in:'.implode(',', array_keys(Ubicacion::opciones())),
             'rubro' => 'nullable|in:'.implode(',', array_keys(Rubro::opciones())),
             'id_lote' => 'nullable|exists:lotes,id',
             'id_campana' => 'nullable|exists:campanas,id',
@@ -325,6 +327,9 @@ class GestionCompras extends Component
         $proveedor = $this->id_proveedor ? Proveedor::find($this->id_proveedor) : null;
         $this->rubro = $proveedor?->rubro ?? '';
         $this->zona = $proveedor?->zonaPredeterminada() ?? '';
+        if ($this->id_establecimiento) {
+            $this->updatedIdEstablecimiento();
+        }
         if (! $this->actividadManual) {
             $this->actividad = $proveedor?->actividadPredeterminada() ?? 'general';
         }
@@ -353,7 +358,10 @@ class GestionCompras extends Component
 
     public function updatedIdEstablecimiento(): void
     {
-        // La zona de gasto se hereda del CUIT, no del establecimiento.
+        $campo = $this->id_establecimiento ? Establecimiento::findOrFail($this->id_establecimiento) : null;
+        if ($campo) {
+            $this->zona = $campo->id_ubicacion ?: ($campo->zona ?? '');
+        }
     }
 
     public function updatedFiltroZona(): void
@@ -645,9 +653,15 @@ class GestionCompras extends Component
                 break;
 
             case 'zona':
-                $this->validate(['valorMasivoZona' => 'required|in:'.implode(',', array_keys(Compra::ZONAS))]);
+                $this->validate(['valorMasivoZona' => 'required|in:'.implode(',', array_keys(Ubicacion::opciones()))]);
+                if (Schema::hasColumn('establecimientos', 'id_ubicacion')
+                    && (clone $query)->whereNotNull('id_establecimiento')->whereHas('establecimiento', fn ($q) => $q->where('id_ubicacion', '!=', $this->valorMasivoZona))->exists()) {
+                    $this->addError('valorMasivoZona', 'La selección incluye comprobantes de otro establecimiento. Quitalos de la selección o editá su establecimiento primero.');
+
+                    return;
+                }
                 $count = $query->update(['zona' => $this->valorMasivoZona]);
-                session()->flash('success', "{$count} comprobante(s) con zona actualizada a «".Compra::ZONAS[$this->valorMasivoZona].'».');
+                session()->flash('success', "{$count} comprobante(s) con zona actualizada a «".Ubicacion::opciones()[$this->valorMasivoZona].'».');
                 break;
 
             case 'rubro':
@@ -767,8 +781,7 @@ class GestionCompras extends Component
             ->when($this->filtroActividad === 'sin_imputar', fn ($q) => $q->where(fn ($q) => $q->whereNull('actividad')->orWhere('actividad', '')))
             ->when($this->filtroActividad && $this->filtroActividad !== 'sin_imputar', fn ($q) => $q->where('actividad', $this->filtroActividad))
             ->when($this->filtroZona === 'sin_clasificar', fn ($q) => $q->where(fn ($q) => $q->whereNull('zona')->orWhere('zona', '')))
-            ->when($this->filtroZona === 'santa_fe', fn ($q) => $q->whereIn('zona', ['santa_fe', 'el_trebol']))
-            ->when($this->filtroZona && ! in_array($this->filtroZona, ['sin_clasificar', 'santa_fe']), fn ($q) => $q->where('zona', $this->filtroZona))
+            ->when($this->filtroZona && $this->filtroZona !== 'sin_clasificar', fn ($q) => $q->whereIn('zona', Ubicacion::descendientes($this->filtroZona)))
             ->when($this->filtroRubro === 'sin_clasificar', fn ($q) => $q->where(fn ($q) => $q->whereNull('rubro')->orWhere('rubro', '')))
             ->when($this->filtroRubro && $this->filtroRubro !== 'sin_clasificar', fn ($q) => $q->where('rubro', $this->filtroRubro))
             ->when($this->filtroLote === 'sin_asignar', fn ($q) => $q->whereNull('id_lote'))
@@ -817,7 +830,7 @@ class GestionCompras extends Component
             'tiposComprobante' => Compra::TIPOS_COMPROBANTE,
             'estados' => Compra::ESTADOS,
             'actividades' => Compra::ACTIVIDADES,
-            'zonas' => Compra::ZONAS,
+            'zonas' => Ubicacion::opciones(),
             'rubros' => Rubro::opciones(),
         ]);
     }

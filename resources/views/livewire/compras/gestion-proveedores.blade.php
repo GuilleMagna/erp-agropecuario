@@ -119,7 +119,7 @@
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small fw-semibold text-muted mb-1">Zona</label>
+                    <label class="form-label small fw-semibold text-muted mb-1">Ubicación</label>
                     <select class="form-select" wire:model.live="filtroZona">
                         <option value="">Todas</option>
                         @foreach ($zonas as $codigo => $nombre)<option value="{{ $codigo }}">{{ $nombre }}</option>@endforeach
@@ -140,7 +140,7 @@
                         <th class="ps-4">Nombre / Razón social</th>
                         <th>CUIT</th>
                         <th>Rubro / Actividad</th>
-                        <th>Zona</th>
+                        <th>Ubicación</th>
                         <th>Contacto</th>
                         <th class="text-center">Compras</th>
                         <th>Estado</th>
@@ -287,7 +287,7 @@
                             </div>
                         </div>
 
-                        <div class="mb-3"><label class="form-label fw-semibold">Zona</label><select class="form-select" wire:model.live="zona">@foreach($zonas as $codigo=>$nombre)<option value="{{ $codigo }}">{{ $nombre }}</option>@endforeach</select>@error('zona')<small class="text-danger">{{ $message }}</small>@enderror<div class="form-text">Santa Fe por defecto. Al cambiarla se actualizarán todos los comprobantes de este proveedor en la empresa activa.</div></div>
+                        <div class="mb-3"><label class="form-label fw-semibold">Ubicación</label><select class="form-select" wire:model.live="zona">@foreach($zonas as $codigo=>$nombre)<option value="{{ $codigo }}">{{ $nombre }}</option>@endforeach</select>@error('zona')<small class="text-danger">{{ $message }}</small>@enderror<div class="form-text">Santa Fe por defecto. Al cambiarla se actualizarán los comprobantes que conservan su ubicación predeterminada en la empresa activa. Las imputaciones específicas se conservan.</div></div>
                         <h6 class="text-muted text-uppercase fw-bold small mb-3 border-bottom pb-2">Contacto</h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-4">

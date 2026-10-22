@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -41,17 +43,24 @@ class Establecimiento extends Model
 
     protected $table = 'establecimientos';
 
-    /**
-     * Región geográfica del campo (distinta de provincia/localidad): usada
-     * para clasificar las compras imputadas a este establecimiento. Mismas
-     * claves que Compra::ZONAS. Gestionable: se puede sumar una zona nueva
-     * simplemente agregándola acá.
-     */
-    const ZONAS = [
-        'general' => 'General',
-        'el_trebol' => 'El Trébol',
-        'corrientes' => 'Corrientes',
-    ];
+    protected static function booted(): void
+    {
+        static::saving(function (self $campo) {
+            if (! Schema::hasColumn('establecimientos', 'id_ubicacion')) {
+                return;
+            }
+            if ($campo->id_ubicacion && in_array($campo->zona, Ubicacion::descendientes($campo->id_ubicacion), true)) {
+                throw ValidationException::withMessages(['zona' => 'El campo no puede contenerse a sí mismo.']);
+            }
+            $ubicacion = $campo->id_ubicacion ? Ubicacion::findOrFail($campo->id_ubicacion) : new Ubicacion;
+            $ubicacion->fill(['nombre' => $campo->nombre, 'tipo' => 'campo', 'id_padre' => $campo->zona ?: null]);
+            $ubicacion->save();
+            $campo->id_ubicacion = $ubicacion->id;
+        });
+    }
+
+    /** @deprecated Usar Ubicacion::opciones() para el catálogo editable. */
+    const ZONAS = Proveedor::ZONAS;
 
     protected $fillable = [
         'id_empresa',
@@ -60,6 +69,7 @@ class Establecimiento extends Model
         'partido_departamento',
         'localidad',
         'zona',
+        'id_ubicacion',
         'latitud',
         'longitud',
         'superficie_total_ha',
@@ -94,12 +104,17 @@ class Establecimiento extends Model
 
     public function getZonaLabelAttribute(): string
     {
-        return self::ZONAS[$this->zona] ?? ($this->zona ?? '—');
+        return Ubicacion::opciones()[$this->zona] ?? ($this->zona ?? '—');
     }
 
     public function responsable(): BelongsTo
     {
         return $this->belongsTo(Usuario::class, 'responsable_id');
+    }
+
+    public function ubicacion(): BelongsTo
+    {
+        return $this->belongsTo(Ubicacion::class, 'id_ubicacion');
     }
 
     /** Usuarios que tienen acceso a este establecimiento (N:M). */

@@ -15,6 +15,10 @@ Route::middleware(['auth'])->group(function () {
     })->name('dashboard');
 
     // Módulo Admin
+    Route::get('/admin/ubicaciones', fn () => view('admin.gestion-ubicaciones'))
+        ->middleware('can:admin.establecimientos.gestionar')
+        ->name('admin.ubicaciones.index');
+
     Route::get('/admin/usuarios', fn () => view('admin.gestion-usuarios'))
         ->middleware('can:admin.usuarios.ver')
         ->name('admin.usuarios.index');

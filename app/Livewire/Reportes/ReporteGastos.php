@@ -5,6 +5,7 @@ namespace App\Livewire\Reportes;
 use App\Models\Compra;
 use App\Models\GastoNoArca;
 use App\Models\Rubro;
+use App\Models\Ubicacion;
 use App\Traits\CambiaEmpresaDesdeQuery;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -45,7 +46,7 @@ class ReporteGastos extends Component
     {
         Gate::authorize('finanzas.gastos.gestionar');
         Gate::authorize('compras.ver');
-        $this->validate(['desde' => 'required|date_format:Y-m', 'hasta' => 'required|date_format:Y-m|after_or_equal:desde', 'origen' => 'nullable|in:compras,no_arca', 'zona' => 'nullable|in:sin_clasificar,'.implode(',', array_keys(Compra::ZONAS))]);
+        $this->validate(['desde' => 'required|date_format:Y-m', 'hasta' => 'required|date_format:Y-m|after_or_equal:desde', 'origen' => 'nullable|in:compras,no_arca', 'zona' => 'nullable|in:sin_clasificar,'.implode(',', array_keys(Ubicacion::opciones()))]);
         $desde = Carbon::parse($this->desde.'-01');
         $hasta = Carbon::parse($this->hasta.'-01')->endOfMonth();
         $empresa = Compra::resolverEmpresaActiva();
@@ -67,7 +68,7 @@ class ReporteGastos extends Component
         }
         $filas = $filas->groupBy(fn ($fila) => $fila['rubro'].'|'.$fila['origen'].'|'.$fila['zona'])->map(fn ($grupo) => array_replace($grupo->first(), ['cantidad' => $grupo->sum('cantidad'), 'importe' => round($grupo->sum('importe'), 2)]))->values();
 
-        return $filas->when($this->zona, fn ($c) => $c->where('zona', $this->zona))->when($this->rubro, fn ($c) => $c->where('rubro', $this->rubro))->values();
+        return $filas->when($this->zona, fn ($c) => $c->whereIn('zona', Ubicacion::descendientes($this->zona)))->when($this->rubro, fn ($c) => $c->where('rubro', $this->rubro))->values();
     }
 
     public function enlace(string $rubro, string $origen, ?string $zona = null): string
@@ -87,13 +88,17 @@ class ReporteGastos extends Component
         return response()->streamDownload(function () use ($filas, $rubros) {
             $f = fopen('php://output', 'w');
             fwrite($f, "\xEF\xBB\xBF");
-            fputcsv($f, ['Rubro', 'Zona', 'Origen', 'Cantidad', 'Importe'], ';');
+            fputcsv($f, ['Rubro', 'Ubicación', 'Origen', 'Cantidad', 'Importe'], ';');
             foreach ($filas as $fila) {
                 $nombre = $rubros[$fila['rubro']] ?? 'Sin rubro';
                 if (preg_match('/^[=+@\-\t\r]/', $nombre)) {
                     $nombre = "'".$nombre;
                 }
-                fputcsv($f, [$nombre, Compra::ZONAS[$fila['zona']] ?? 'Sin zona', $fila['origen'], $fila['cantidad'], $fila['importe']], ';');
+                $ubicacion = Ubicacion::opciones()[$fila['zona']] ?? 'Sin ubicación';
+                if (preg_match('/^[=+@\-\t\r]/', $ubicacion)) {
+                    $ubicacion = "'".$ubicacion;
+                }
+                fputcsv($f, [$nombre, $ubicacion, $fila['origen'], $fila['cantidad'], $fila['importe']], ';');
             }
             fclose($f);
         }, 'informe-gastos.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
@@ -109,8 +114,9 @@ class ReporteGastos extends Component
             'cantidad' => $grupo->sum('cantidad'), 'url' => route('reportes.gastos', ['empresa' => Compra::resolverEmpresaActiva(), 'zona' => $this->zona, 'origen' => $this->origen, 'incluirGenerales' => $this->incluirGenerales, 'rubro' => $codigo, 'desde' => $this->desde, 'hasta' => $this->hasta]),
         ])->sortByDesc('importe')->values()->map(fn ($grupo, $i) => $grupo + ['color' => ['#198754', '#0d6efd', '#fd7e14', '#6f42c1', '#d63384', '#64748b'][$i % 6]])->all();
 
-        $zonas = Compra::ZONAS;
-        $porZona = $filas->groupBy('zona')->map(fn ($grupo, $codigo) => [
+        $zonas = Ubicacion::opciones();
+        $agrupaciones = Ubicacion::agrupaciones($this->zona ?: null);
+        $porZona = $filas->groupBy(fn ($fila) => $agrupaciones[$fila['zona']] ?? $fila['zona'])->map(fn ($grupo, $codigo) => [
             'codigo' => $codigo, 'nombre' => $zonas[$codigo] ?? 'Sin zona', 'importe' => round($grupo->sum('importe'), 2),
             'cantidad' => $grupo->sum('cantidad'), 'url' => route('reportes.gastos', ['zona' => $codigo, 'rubro' => $this->rubro, 'desde' => $this->desde, 'hasta' => $this->hasta, 'origen' => $this->origen, 'incluirGenerales' => $this->incluirGenerales, 'empresa' => Compra::resolverEmpresaActiva()]),
         ])->sortByDesc('importe')->values()->map(fn ($grupo, $i) => $grupo + ['color' => ['#198754', '#0d6efd', '#fd7e14', '#6f42c1'][$i % 4]])->all();

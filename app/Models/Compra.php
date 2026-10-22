@@ -6,6 +6,7 @@ use App\Traits\PerteneceAEmpresa;
 use App\Traits\UsaUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\ValidationException;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -77,6 +78,18 @@ class Compra extends Model
 
     protected static function booted(): void
     {
+        static::saving(function (self $compra) {
+            if ($compra->id_establecimiento) {
+                $campo = Establecimiento::withoutGlobalScope('empresa')->where('id_empresa', $compra->id_empresa ?: self::resolverEmpresaActiva())
+                    ->find($compra->id_establecimiento);
+                if (! $campo) {
+                    throw ValidationException::withMessages(['id_establecimiento' => 'El campo no pertenece a la empresa activa.']);
+                }
+                if ($campo->id_ubicacion) {
+                    $compra->zona = $campo->id_ubicacion;
+                }
+            }
+        });
         static::creating(function (self $compra) {
             if (! $compra->zona && $compra->id_proveedor) {
                 $proveedor = Proveedor::withoutGlobalScope('empresa')->where('id', $compra->id_proveedor)
@@ -160,7 +173,7 @@ class Compra extends Model
 
     public function getZonaLabelAttribute(): string
     {
-        return $this->zona === 'el_trebol' ? 'Santa Fe' : (self::ZONAS[$this->zona] ?? ($this->zona ?? '—'));
+        return $this->zona === 'el_trebol' ? 'Santa Fe' : (Ubicacion::opciones()[$this->zona] ?? ($this->zona ?? '—'));
     }
 
     public function proveedor()

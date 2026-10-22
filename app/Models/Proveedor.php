@@ -104,7 +104,7 @@ class Proveedor extends Model
 
     public function zonaPredeterminada(): string
     {
-        return array_key_exists($this->zona ?? '', self::ZONAS)
+        return array_key_exists($this->zona ?? '', Ubicacion::opciones())
             ? $this->zona : self::inferirZona($this->provincia, $this->ciudad, $this->direccion);
     }
 
