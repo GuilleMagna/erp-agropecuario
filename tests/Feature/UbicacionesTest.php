@@ -102,14 +102,31 @@ class UbicacionesTest extends TestCase
         Ubicacion::findOrFail('corrientes')->update(['id_padre' => $campo->id]);
     }
 
-    public function test_compra_hereda_ubicacion_del_establecimiento_y_rechaza_otra_empresa(): void
+    public function test_las_tres_cuentas_comparten_el_campo_pero_conservan_compras_separadas(): void
     {
         $this->migrar();
         $campo = Establecimiento::create(['nombre' => 'Campo A', 'zona' => 'corrientes']);
-        $compra = Compra::create(['id_establecimiento' => $campo->id, 'zona' => 'santa_fe']);
-        $this->assertSame($campo->id_ubicacion, $compra->zona);
+        $empresas = [$this->empresa, '22222222-2222-4222-8222-222222222222', '33333333-3333-4333-8333-333333333333'];
+        foreach (array_slice($empresas, 1) as $empresa) {
+            DB::table('empresas')->insert(['id' => $empresa]);
+        }
+        foreach ($empresas as $empresa) {
+            $this->actingAs(new Usuario(['id_empresa' => $empresa]));
+            $this->assertSame($campo->id, Establecimiento::sole()->id);
+            $compra = Compra::create(['id_establecimiento' => $campo->id, 'zona' => 'santa_fe']);
+            $this->assertSame($campo->id_ubicacion, $compra->zona);
+            $this->assertSame($empresa, $compra->id_empresa);
+            $this->assertSame(1, Compra::count());
+        }
+        $this->assertSame(3, Compra::withoutGlobalScope('empresa')->count());
+        $this->assertSame(1, Establecimiento::count());
+    }
+
+    public function test_compra_rechaza_un_establecimiento_inexistente(): void
+    {
+        $this->migrar();
         $this->expectException(ValidationException::class);
-        Compra::create(['id_empresa' => 'otra-empresa', 'id_establecimiento' => $campo->id]);
+        Compra::create(['id_establecimiento' => 'campo-inexistente']);
     }
 
     public function test_reporte_suma_provincia_y_descendientes_una_sola_vez_y_permite_filtrar_campo(): void

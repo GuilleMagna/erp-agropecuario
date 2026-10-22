@@ -32,7 +32,7 @@
             @if($tipo === 'campo')
                 <div class="form-check mt-3">
                     <input id="crear-ficha" type="checkbox" class="form-check-input" wire:model="crearFicha">
-                    <label for="crear-ficha" class="form-check-label">Crear también la ficha en Establecimientos de la empresa activa, si todavía no existe.</label>
+                    <label for="crear-ficha" class="form-check-label">Crear también la ficha en Establecimientos, compartida por las tres cuentas, si todavía no existe.</label>
                     <div class="form-text">Luego podés completar hectáreas, tenencia, responsable y lotes en Establecimientos.</div>
                 </div>
             @endif

@@ -43,6 +43,14 @@ class Establecimiento extends Model
 
     protected $table = 'establecimientos';
 
+    /** Los campos son compartidos; id_empresa conserva únicamente la empresa de alta. */
+    protected static function bootPerteneceAEmpresa(): void
+    {
+        static::creating(function (self $campo) {
+            $campo->id_empresa ??= self::resolverEmpresaActiva();
+        });
+    }
+
     protected static function booted(): void
     {
         static::saving(function (self $campo) {

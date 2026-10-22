@@ -18,7 +18,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h5 class="mb-0 fw-bold text-dark">Establecimientos</h5>
-            <small class="text-muted">Campos y propiedades de la empresa</small>
+            <small class="text-muted">Campos productivos compartidos por las tres cuentas</small>
         </div>
         @can('admin.establecimientos.gestionar')
         <button class="btn btn-primary" wire:click="abrirModalCrear" wire:loading.attr="disabled">

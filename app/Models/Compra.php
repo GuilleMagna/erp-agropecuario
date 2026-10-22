@@ -80,10 +80,9 @@ class Compra extends Model
     {
         static::saving(function (self $compra) {
             if ($compra->id_establecimiento) {
-                $campo = Establecimiento::withoutGlobalScope('empresa')->where('id_empresa', $compra->id_empresa ?: self::resolverEmpresaActiva())
-                    ->find($compra->id_establecimiento);
+                $campo = Establecimiento::find($compra->id_establecimiento);
                 if (! $campo) {
-                    throw ValidationException::withMessages(['id_establecimiento' => 'El campo no pertenece a la empresa activa.']);
+                    throw ValidationException::withMessages(['id_establecimiento' => 'El establecimiento seleccionado no existe.']);
                 }
                 if ($campo->id_ubicacion) {
                     $compra->zona = $campo->id_ubicacion;
